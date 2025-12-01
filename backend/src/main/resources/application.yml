@@ -1,0 +1,23 @@
+spring:
+    security:
+        user:
+            name: admin
+            password: admin
+    datasource:
+        url: jdbc:postgresql://localhost:5432/spo-prca-em
+        username: admin5346
+        password: admin2143
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+server:
+    port: 8080
+    servlet:
+        context-path: /api
+logging:
+    level:
+        root: INFO
+        '[ru.laspace.spo]': DEBUG
+        '[org.springframework.web]': DEBUG
+    
