@@ -20,11 +20,13 @@ import ru.laspace.spo.service.AuthService;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    
     @Override
-    public User authenticate(String username, String rawPassword) {
-        log.info("Попытка авторизации: {}", username);
+    public User authenticate(String username, String password) {
+        log.info("Попытка аутентификации: {}", username);
 
         User user = userRepository.findByUsername(username).orElseThrow(() -> {
             log.warn("Пользователь не найден: {}", username);
@@ -41,7 +43,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Пароль не установлен");
         }
 
-        boolean passwordValid = passwordEncoder.matches(rawPassword, user.getPasswordHash());
+        boolean passwordValid = passwordEncoder.matches(password, user.getPasswordHash());
 
         if (!passwordValid) {
             log.warn("Неверный пароль, ID: {}", user.getId());
@@ -55,10 +57,13 @@ public class AuthServiceImpl implements AuthService {
 
         return updatedUser;
     }
+
     @Override
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
     }
+
+    @SuppressWarnings("null")
     @Override
     public User findById(Long userId) {
         log.debug("Поиск пользователя по ID: {}", userId);
