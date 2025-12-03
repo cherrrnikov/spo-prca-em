@@ -20,4 +20,8 @@ logging:
         root: INFO
         '[ru.laspace.spo]': DEBUG
         '[org.springframework.web]': DEBUG
-    
+jwt:
+    secret: in0SEH1ByPc6qdxA2pCidEtLRV23PWBRADWdbrqcdxX
+    access-token-expiration: 900000
+    refresh-token-expiration: 604800000
+    issuer: spo-app
