@@ -16,7 +16,6 @@ import ru.laspace.spo.repository.UserRepository;
 @Transactional
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
-
     private final UserRepository userRepository;
 
     @Override
@@ -28,7 +27,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         if (!user.isEnabled()) {
             log.warn("Аккаунт отключен, ID: {}", user.getId());
-            throw new UsernameNotFoundException("Account is disabled.");
+            throw new UsernameNotFoundException("Аккаунт отключен.");
         }
 
         return new UserDetailsImpl(user);

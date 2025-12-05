@@ -14,7 +14,6 @@ import ru.laspace.spo.entity.User;
 @Getter
 @RequiredArgsConstructor
 public class UserDetailsImpl implements UserDetails {
-
     private final User user;
 
     @Override

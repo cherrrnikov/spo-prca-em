@@ -14,16 +14,14 @@ import ru.laspace.spo.exception.NotFoundException;
 import ru.laspace.spo.repository.UserRepository;
 import ru.laspace.spo.service.AuthService;
 
-
 @Service
 @Transactional
 @Slf4j
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    
+
     @Override
     public User authenticate(String username, String password) {
         log.info("Попытка аутентификации: {}", username);
@@ -32,7 +30,7 @@ public class AuthServiceImpl implements AuthService {
             log.warn("Пользователь не найден: {}", username);
             return new AuthException("Неверный логин или пароль");
         });
-        
+
         if (!user.isEnabled()) {
             log.warn("Аккаунт отключен, ID: {}", user.getId());
             throw new AuthException("Аккаунт отключен");
@@ -53,7 +51,8 @@ public class AuthServiceImpl implements AuthService {
         user.setLastLoginAt(LocalDateTime.now());
 
         User updatedUser = userRepository.save(user);
-        log.info("Пользователь успешно аутентифицирован, ID: {}, username: {}", updatedUser.getId(), updatedUser.getUsername());
+        log.info("Пользователь успешно аутентифицирован, ID: {}, username: {}", updatedUser.getId(),
+                updatedUser.getUsername());
 
         return updatedUser;
     }
