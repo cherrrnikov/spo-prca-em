@@ -28,7 +28,6 @@ import ru.laspace.spo.config.JwtProperties;
 @Component
 @RequiredArgsConstructor
 public class JwtProvider {
-
     private final JwtProperties jwtProperties;
 
     private SecretKey getSigningKey() {
@@ -55,7 +54,7 @@ public class JwtProvider {
                 .compact();
     }
 
-    public String getRefreshToken(String username, Long userId) {
+    public String generateRefreshToken(String username, Long userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtProperties.getRefreshTokenExpiration());
 
