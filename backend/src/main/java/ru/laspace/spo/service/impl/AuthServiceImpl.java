@@ -148,7 +148,7 @@ public class AuthServiceImpl implements AuthService {
     @SuppressWarnings("null")
     @Override
     public JwtResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
-        log.info("Запрос на RefreshToken");
+        log.info("Запрос на refreshToken");
         String refreshToken = refreshTokenRequest.getRefreshToken();
 
         if (!jwtProvider.validateToken(refreshToken)) {
