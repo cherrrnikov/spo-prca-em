@@ -13,8 +13,8 @@ spring:
         show-sql: true
 server:
     port: 8080
-    servlet:
-        context-path: /api
+    # servlet:
+    #     context-path: /api
 logging:
     level:
         root: INFO
@@ -25,3 +25,20 @@ jwt:
     access-token-expiration: 900000
     refresh-token-expiration: 604800000
     issuer: spo-app
+springdoc:
+    api-docs:
+        path: /v3/api-docs 
+    swagger-ui:
+        path: /swagger-ui.html
+        operations-sorter: method
+        tags-sorter: alpha
+        display-request-duration: true
+        default-model-expand-depth: 2
+        default-model-rendering: example
+        doc-expansion: none
+        filter: true
+        display-operation-id: false 
+        try-it-out-enabled: true
+    show-actuator: true
+    default-produces-media-type: application/json
+    default-consumes-media-type: application/json

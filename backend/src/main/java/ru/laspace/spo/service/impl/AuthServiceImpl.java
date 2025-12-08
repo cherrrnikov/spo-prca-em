@@ -44,37 +44,18 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public User authenticate(String username, String password) {
-        log.info("Попытка аутентификации: {}", username);
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password));
 
-        User user = userRepository.findByUsername(username).orElseThrow(() -> {
-            log.warn("Пользователь не найден: {}", username);
-            return new AuthException("Неверный логин или пароль");
-        });
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            return userDetails.getUser();
 
-        if (!user.isEnabled()) {
-            log.warn("Аккаунт отключен, ID: {}", user.getId());
-            throw new AuthException("Аккаунт отключен");
+        } catch (BadCredentialsException e) {
+            throw new AuthException("Неверный логин или пароль");
+        } catch (AuthenticationException e) {
+            throw new AuthException("Аутентификация провалена");
         }
-
-        if (user.getPasswordHash() == null || user.getPasswordHash().isEmpty()) {
-            log.warn("У пользователя не установлен пароль, ID: {}", user.getId());
-            throw new AuthException("Пароль не установлен");
-        }
-
-        boolean passwordValid = passwordEncoder.matches(password, user.getPasswordHash());
-
-        if (!passwordValid) {
-            log.warn("Неверный пароль, ID: {}", user.getId());
-            throw new AuthException("Неверный пароль");
-        }
-
-        user.setLastLoginAt(LocalDateTime.now());
-
-        User updatedUser = userRepository.save(user);
-        log.info("Пользователь успешно аутентифицирован, ID: {}, username: {}", updatedUser.getId(),
-                updatedUser.getUsername());
-
-        return updatedUser;
     }
 
     @Override
@@ -97,9 +78,10 @@ public class AuthServiceImpl implements AuthService {
     public JwtResponse login(LoginRequest loginRequest) {
         log.info("Попытка входа: {}", loginRequest.getUsername());
         try {
+            log.debug("Пытаемся аутентифицировать через AuthenticationManager...");
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
-
+            log.debug("Аутентификация успешна!");
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();

@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
     private final JwtProvider jwtProvider;
 
     @SuppressWarnings("null")
@@ -28,6 +27,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
+
+        if (shouldNotFilter(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
             String jwt = parseJwt(request);
 
@@ -53,4 +58,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getServletPath();
+
+        return path.startsWith("/api/auth/") ||
+                path.startsWith("/v3/api-docs") ||
+                path.startsWith("/swagger-ui") ||
+                path.startsWith("/swagger-ui.html") ||
+                path.startsWith("/webjars/") ||
+                path.startsWith("/swagger-resources") ||
+                path.equals("/actuator/health") ||
+                path.equals("/favicon.ico") ||
+                "OPTIONS".equals(request.getMethod());
+    }
 }
