@@ -83,6 +83,7 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/favicon.ico")
                         .permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 // .authenticationManager(authenticationManager)
                 .authenticationProvider(authenticationProvider())
