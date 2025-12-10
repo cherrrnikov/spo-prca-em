@@ -34,7 +34,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
 
         if (user.getRoles() != null) {
-            user.getRoles().size(); // Это загрузит LAZY коллекцию
+            user.getRoles().size(); // Это загрузит роли
             log.info("Роли загружены: {}",
                     user.getRoles().stream().map(Role::getName).collect(Collectors.toList()));
         } else {

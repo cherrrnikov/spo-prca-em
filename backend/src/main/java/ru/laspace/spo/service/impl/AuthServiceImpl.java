@@ -1,6 +1,7 @@
 package ru.laspace.spo.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -10,10 +11,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.laspace.spo.dto.request.LoginRequest;
@@ -25,11 +25,13 @@ import ru.laspace.spo.entity.User;
 import ru.laspace.spo.exception.AuthException;
 import ru.laspace.spo.exception.NotFoundException;
 import ru.laspace.spo.exception.TokenRefreshException;
+import ru.laspace.spo.mapper.UserMapper;
 import ru.laspace.spo.repository.RefreshTokenRepository;
 import ru.laspace.spo.repository.UserRepository;
 import ru.laspace.spo.security.JwtProvider;
 import ru.laspace.spo.security.UserDetailsImpl;
 import ru.laspace.spo.service.AuthService;
+import ru.laspace.spo.service.RefreshTokenService;
 
 @Service
 @Transactional
@@ -37,43 +39,13 @@ import ru.laspace.spo.service.AuthService;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
-
-    @Override
-    public User authenticate(String username, String password) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(username, password));
-
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-            return userDetails.getUser();
-
-        } catch (BadCredentialsException e) {
-            throw new AuthException("Неверный логин или пароль");
-        } catch (AuthenticationException e) {
-            throw new AuthException("Аутентификация провалена");
-        }
-    }
-
-    @Override
-    public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
-    }
+    private final UserMapper userMapper;
+    private final RefreshTokenService refreshTokenService;
 
     @SuppressWarnings("null")
-    @Override
-    public User findById(Long userId) {
-        log.debug("Поиск пользователя по ID: {}", userId);
-
-        return userRepository.findById(userId).orElseThrow(() -> {
-            log.warn("Пользователь не найден по ID: {}", userId);
-            return new NotFoundException("Пользователь не найден");
-        });
-    }
-
     @Override
     public JwtResponse login(LoginRequest loginRequest) {
         log.info("Попытка входа: {}", loginRequest.getUsername());
@@ -92,32 +64,29 @@ public class AuthServiceImpl implements AuthService {
                     .collect(Collectors.toSet());
 
             String accessToken = jwtProvider.generateAccessToken(authentication, user.getId(), roles);
-            String refreshToken = jwtProvider.generateRefreshToken(user.getUsername(), user.getId());
 
-            RefreshToken refreshTokenEntity = new RefreshToken();
+            String refreshTokenValue = null;
 
-            refreshTokenEntity.setUser(user);
-            refreshTokenEntity.setToken(refreshToken);
-            refreshTokenEntity.setExpiryDate(LocalDateTime.now().plusDays(7));
-            refreshTokenEntity.setCreatedAt(LocalDateTime.now());
-            refreshTokenEntity.setRevoked(false);
+            Optional<RefreshToken> existingToken = refreshTokenRepository
+                    .findAllValidTokensByUser(user.getId())
+                    .stream()
+                    .filter(token -> token.getExpiryDate().isAfter(LocalDateTime.now()))
+                    .findFirst();
 
-            refreshTokenRepository.save(refreshTokenEntity);
+            if (existingToken.isPresent()) {
+                refreshTokenValue = existingToken.get().getToken();
+                log.debug("Используем существующий refresh token для пользователя ID={}", user.getId());
+            } else {
+                refreshTokenValue = jwtProvider.generateRefreshToken(user.getUsername(), user.getId());
+                RefreshToken refreshTokenEntity = refreshTokenService.createRefreshToken(user, refreshTokenValue);
+                refreshTokenRepository.save(refreshTokenEntity);
+                log.debug("Создан новый refresh token для пользователя ID={}", user.getId());
+            }
 
             user.setLastLoginAt(LocalDateTime.now());
-
             userRepository.save(user);
 
-            return JwtResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .userId(user.getId())
-                    .username(user.getUsername())
-                    .firstName(user.getFirstName())
-                    .lastName(user.getLastName())
-                    .roles(roles)
-                    .lastLoginAt(user.getLastLoginAt())
-                    .build();
+            return userMapper.toJwtResponse(accessToken, refreshTokenValue, user);
         } catch (BadCredentialsException e) {
             log.warn("Неверный логин или пароль: {}", loginRequest.getUsername());
             throw new AuthException("Неверный логин или пароль");
@@ -131,25 +100,15 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public JwtResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
         log.info("Запрос на refreshToken");
-        String refreshToken = refreshTokenRequest.getRefreshToken();
+        String refreshTokenValue = refreshTokenRequest.getRefreshToken();
 
-        if (!jwtProvider.validateToken(refreshToken)) {
+        if (!jwtProvider.validateToken(refreshTokenValue)) {
             throw new TokenRefreshException("Неверный refreshToken");
         }
 
-        String username = jwtProvider.getUsernameFromToken(refreshToken);
-        Long userId = jwtProvider.getUserIdFromToken(refreshToken);
+        Long userId = jwtProvider.getUserIdFromToken(refreshTokenValue);
 
-        RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new TokenRefreshException("RefreshToken не найден"));
-
-        if (storedToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            throw new TokenRefreshException("RefreshToken истёк");
-        }
-
-        if (storedToken.isRevoked()) {
-            throw new TokenRefreshException("RefreshToken аннулирован");
-        }
+        RefreshToken storedToken = refreshTokenService.verifyRefreshToken(refreshTokenValue);
 
         User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 
@@ -167,56 +126,44 @@ public class AuthServiceImpl implements AuthService {
                 userDetails.getAuthorities());
 
         String newAccessToken = jwtProvider.generateAccessToken(authentication, user.getId(), roles);
-        String newRefreshToken = jwtProvider.generateRefreshToken(user.getUsername(), user.getId());
-
-        storedToken.setRevoked(true);
-        refreshTokenRepository.save(storedToken);
-
-        RefreshToken newRefreshTokenEntity = new RefreshToken();
-
-        newRefreshTokenEntity.setUser(user);
-        newRefreshTokenEntity.setToken(newRefreshToken);
-        newRefreshTokenEntity.setExpiryDate(LocalDateTime.now().plusDays(7));
-        newRefreshTokenEntity.setCreatedAt(LocalDateTime.now());
-        newRefreshTokenEntity.setRevoked(false);
-
-        refreshTokenRepository.save(newRefreshTokenEntity);
+        String sameRefreshToken = storedToken.getToken();
 
         user.setLastLoginAt(LocalDateTime.now());
-
         userRepository.save(user);
 
-        return JwtResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
-                .userId(user.getId())
-                .username(user.getUsername())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .roles(roles)
-                .lastLoginAt(user.getLastLoginAt())
-                .build();
+        log.debug("Refresh token успешно использован для пользователя ID={}. Выдан новый access token", userId);
+
+        return userMapper.toJwtResponse(newAccessToken, sameRefreshToken, user);
     }
 
     @SuppressWarnings("null")
     @Override
-    public void logout(String refreshToken, Long userId) {
-        log.info("Выход из системы: {}", userId);
+    public void logout(String refreshToken) {
+        log.info("Запрос на выход из системы");
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        if (!jwtProvider.validateToken(refreshToken)) {
+            throw new TokenRefreshException("Неверный refresh token");
+        }
+
+        RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new TokenRefreshException("Refresh token не найден"));
+
+        if (storedToken.isRevoked()) {
+            throw new TokenRefreshException("Refresh token уже отозван");
+        }
+
+        if (storedToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            throw new TokenRefreshException("Refresh token истек");
+        }
+
+        User user = storedToken.getUser();
 
         user.setLastLogoutAt(LocalDateTime.now());
-
         userRepository.save(user);
 
-        refreshTokenRepository.findByToken(refreshToken)
-                .ifPresent(token -> {
-                    if (token.getUser().getId().equals(userId)) {
-                        token.setRevoked(true);
-                        refreshTokenRepository.save(token);
-                    } else {
-                        log.warn("Попытка отозвать чужой refreshToken для пользователя {}", userId);
-                    }
-                });
+        storedToken.setRevoked(true);
+        refreshTokenRepository.save(storedToken);
+
+        log.info("Пользователь ID={} вышел из системы. Refresh token отозван", user.getId());
     }
 }

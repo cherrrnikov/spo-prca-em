@@ -1,6 +1,5 @@
 package ru.laspace.spo.service.impl;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -17,6 +16,7 @@ import ru.laspace.spo.dto.response.UserResponse;
 import ru.laspace.spo.entity.Role;
 import ru.laspace.spo.entity.User;
 import ru.laspace.spo.exception.NotFoundException;
+import ru.laspace.spo.mapper.UserMapper;
 import ru.laspace.spo.repository.RoleRepository;
 import ru.laspace.spo.repository.UserRepository;
 import ru.laspace.spo.service.AdminService;
@@ -26,10 +26,10 @@ import ru.laspace.spo.service.AdminService;
 @Transactional
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
-
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     @Override
     public UserResponse createUser(CreateUserRequest request) {
@@ -57,7 +57,7 @@ public class AdminServiceImpl implements AdminService {
         log.info("Пользователь создан: ID={}, username={}",
                 savedUser.getId(), savedUser.getUsername());
 
-        return mapToUserResponse(savedUser);
+        return userMapper.toResponse(savedUser);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class AdminServiceImpl implements AdminService {
     public List<UserResponse> getAllUsers() {
         log.info("Получение списка всех пользователей");
         return userRepository.findAll().stream()
-                .map(this::mapToUserResponse)
+                .map(user -> userMapper.toResponse(user))
                 .collect(Collectors.toList());
     }
 
@@ -77,7 +77,7 @@ public class AdminServiceImpl implements AdminService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Пользователь с ID=%d не найден", id)));
-        return mapToUserResponse(user);
+        return userMapper.toResponse(user);
     }
 
     @Override
@@ -87,9 +87,10 @@ public class AdminServiceImpl implements AdminService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Пользователь '%s' не найден", username)));
-        return mapToUserResponse(user);
+        return userMapper.toResponse(user);
     }
 
+    @SuppressWarnings("null")
     @Override
     public UserResponse updateUserRoles(Long userId, UpdateUserRolesRequest request) {
         log.info("Обновление ролей пользователя ID={}, новые роли: {}",
@@ -109,7 +110,7 @@ public class AdminServiceImpl implements AdminService {
         User updatedUser = userRepository.save(user);
         log.info("Роли пользователя ID={} обновлены", userId);
 
-        return mapToUserResponse(updatedUser);
+        return userMapper.toResponse(updatedUser);
     }
 
     @SuppressWarnings("null")
@@ -137,7 +138,7 @@ public class AdminServiceImpl implements AdminService {
         user.setEnabled(false);
         User updatedUser = userRepository.save(user);
 
-        return mapToUserResponse(updatedUser);
+        return userMapper.toResponse(updatedUser);
     }
 
     @Override
@@ -152,36 +153,15 @@ public class AdminServiceImpl implements AdminService {
         user.setEnabled(true);
         User updatedUser = userRepository.save(user);
 
-        return mapToUserResponse(updatedUser);
+        return userMapper.toResponse(updatedUser);
     }
 
     private Set<Role> fetchRolesByName(Set<String> roleNames) {
-        Set<Role> roles = new HashSet<>();
-
-        for (String roleName : roleNames) {
-            Role role = roleRepository.findByName(roleName)
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            String.format("Роль '%s' не найдена", roleName)));
-            roles.add(role);
-        }
-
-        return roles;
+        return roleNames.stream()
+                .map(roleName -> roleRepository.findByName(roleName).orElseThrow(
+                        () -> new IllegalArgumentException(
+                                String.format("Роль %s не найдена", roleName))))
+                .collect(Collectors.toSet());
     }
 
-    private UserResponse mapToUserResponse(User user) {
-        return UserResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .enabled(user.isEnabled())
-                .lastLoginAt(user.getLastLoginAt())
-                .lastLogoutAt(user.getLastLogoutAt())
-                .roles(user.getRoles() != null
-                        ? user.getRoles().stream()
-                                .map(Role::getName)
-                                .collect(Collectors.toSet())
-                        : new HashSet<>())
-                .build();
-    }
 }

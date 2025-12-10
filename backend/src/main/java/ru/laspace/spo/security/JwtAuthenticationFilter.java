@@ -3,6 +3,7 @@ package ru.laspace.spo.security;
 import java.io.IOException;
 
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -43,6 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (Exception e) {
             log.error("Не удается установить пользователя: {}", e.getMessage());
+            throw new BadCredentialsException("Неверный токен", e);
         }
 
         filterChain.doFilter(request, response);
@@ -61,15 +63,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String path = request.getServletPath();
+        String method = request.getMethod();
 
-        return path.startsWith("/api/auth/") ||
+        if (path.startsWith("/swagger-ui") ||
                 path.startsWith("/v3/api-docs") ||
-                path.startsWith("/swagger-ui") ||
-                path.startsWith("/swagger-ui.html") ||
                 path.startsWith("/webjars/") ||
                 path.startsWith("/swagger-resources") ||
-                path.equals("/actuator/health") ||
+                path.equals("/swagger-ui.html") ||
                 path.equals("/favicon.ico") ||
-                "OPTIONS".equals(request.getMethod());
+                path.equals("/actuator/health")) {
+            return true;
+        }
+
+        if ("OPTIONS".equals(method)) {
+            return true;
+        }
+
+        if (path.equals("/api/auth/login") && "POST".equals(method)) {
+            return true;
+        }
+
+        return false;
     }
 }

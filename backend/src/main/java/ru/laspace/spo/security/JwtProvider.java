@@ -13,22 +13,26 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.laspace.spo.config.JwtProperties;
+import ru.laspace.spo.entity.User;
+import ru.laspace.spo.repository.UserRepository;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtProvider {
     private final JwtProperties jwtProperties;
+    private final UserRepository userRepository;
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
@@ -70,14 +74,23 @@ public class JwtProvider {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser()
+            Claims claims = Jwts.parser()
                     .verifyWith(getSigningKey())
                     .build()
-                    .parseSignedClaims(token);
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            if (claims.getExpiration().before(new Date())) {
+                log.debug("JWT токен истек");
+                return false;
+            }
 
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            log.error("Ошибка валидации JWT: {}", e.getMessage());
+        } catch (ExpiredJwtException e) {
+            log.debug("JWT токен истек");
+            return false;
+        } catch (JwtException e) {
+            log.debug("Невалидный JWT токен: {}", e.getClass().getSimpleName());
             return false;
         }
     }
@@ -107,14 +120,32 @@ public class JwtProvider {
                 .parseSignedClaims(token)
                 .getPayload();
 
+        Long userId = getUserIdFromToken(token);
+
+        User user = userRepository.findById(userId).orElseThrow(() -> {
+            log.warn("Пользователь не найден: {}", userId);
+            return new UsernameNotFoundException("Пользователь не найден");
+        });
+
+        if (!user.isEnabled()) {
+            log.warn("Аккаунт отключен, ID: {}", userId);
+            throw new UsernameNotFoundException("Аккаунт отключен.");
+        }
+
         String rolesString = claims.get("roles", String.class);
+        if (rolesString == null || rolesString.trim().isEmpty()) {
+            log.warn("Токен не содержит ролей");
+            throw new JwtException("Токен не содержит ролей");
+        }
+
         Collection<? extends GrantedAuthority> authorities = Arrays.stream(rolesString.split(","))
                 .filter(auth -> !auth.trim().isEmpty())
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
 
-        User principal = new User(claims.getSubject(), "", authorities);
+        UserDetailsImpl userDetails = new UserDetailsImpl(user);
 
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        return new UsernamePasswordAuthenticationToken(userDetails, token, authorities);
     }
+
 }

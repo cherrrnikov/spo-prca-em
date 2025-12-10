@@ -198,7 +198,7 @@ class AdminServiceImplTest {
         // Act & Assert
         assertThatThrownBy(() -> adminService.createUser(request))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Роль 'NONEXISTENT' не найдена");
+                .hasMessage("Роль NONEXISTENT не найдена");
     }
 
     @Test

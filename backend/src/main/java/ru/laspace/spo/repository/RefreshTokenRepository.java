@@ -22,4 +22,5 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 
     @Query("SELECT rt FROM RefreshToken rt WHERE rt.user.id = :userId AND rt.revoked = false")
     List<RefreshToken> findAllValidTokensByUser(@Param("userId") Long userId);
+
 }

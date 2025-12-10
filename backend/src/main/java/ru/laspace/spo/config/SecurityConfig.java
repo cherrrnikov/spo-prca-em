@@ -43,18 +43,6 @@ public class SecurityConfig {
         return authProvider;
     }
 
-    // @Bean
-    // public AuthenticationManager authenticationManager(HttpSecurity http) throws
-    // Exception {
-    // AuthenticationManagerBuilder authenticationManagerBuilder = http
-    // .getSharedObject(AuthenticationManagerBuilder.class);
-
-    // authenticationManagerBuilder
-    // .userDetailsService(userDetailsService)
-    // .passwordEncoder(passwordEncoder());
-
-    // return authenticationManagerBuilder.build();
-    // }
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
@@ -70,22 +58,27 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
-                                "/api/auth/**",
+                                "/api/auth/login",
                                 "/api/debug/**",
                                 "/v3/api-docs/**",
-                                "/v3/api-docs",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
+                                "/swagger-ui/**",
                                 "/swagger-ui/index.html",
+                                "/swagger-ui/swagger-initializer.js",
+                                "/swagger-ui/index.css",
+                                "/swagger-ui/swagger-ui-bundle.js",
+                                "/swagger-ui/swagger-ui-standalone-preset.js",
+                                "/swagger-ui/favicon-32x32.png",
                                 "/webjars/**",
                                 "/swagger-resources/**",
                                 "/configuration/**",
                                 "/actuator/health",
-                                "/favicon.ico")
+                                "/favicon.ico",
+                                "/error")
                         .permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
-                // .authenticationManager(authenticationManager)
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

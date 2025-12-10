@@ -1,34 +1,32 @@
 package ru.laspace.spo.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import ru.laspace.spo.dto.request.LoginRequest;
@@ -109,93 +107,6 @@ class AuthServiceImplTest {
                 refreshToken.setUser(testUser);
                 refreshToken.setExpiryDate(LocalDateTime.now().plusDays(7));
                 refreshToken.setRevoked(false);
-        }
-
-        @Test
-        @DisplayName("authenticate - успешная аутентификация")
-        void authenticate_WhenValidCredentials_ReturnsUser() {
-                // Arrange
-                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                                .thenReturn(authentication);
-
-                // Act
-                User result = authService.authenticate("testuser", "password123");
-
-                // Assert
-                assertThat(result).isEqualTo(testUser);
-                verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        }
-
-        @Test
-        @DisplayName("authenticate - неверный пароль")
-        void authenticate_WhenInvalidPassword_ThrowsAuthException() {
-                // Arrange
-                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                                .thenThrow(new BadCredentialsException("Bad credentials"));
-
-                // Act & Assert
-                assertThatThrownBy(() -> authService.authenticate("testuser", "wrongpassword"))
-                                .isInstanceOf(AuthException.class)
-                                .hasMessage("Неверный логин или пароль");
-        }
-
-        @Test
-        @DisplayName("authenticate - другая ошибка аутентификации")
-        void authenticate_WhenOtherAuthenticationError_ThrowsAuthException() {
-                // Arrange
-                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                                .thenThrow(new AuthenticationException("Authentication failed") {
-                                });
-
-                // Act & Assert
-                // Проверяем только тип исключения, не сообщение
-                assertThatThrownBy(() -> authService.authenticate("testuser", "password123"))
-                                .isInstanceOf(AuthException.class);
-
-                // Или проверяем, что сообщение содержит "провалена" (без строгой проверки)
-                assertThatThrownBy(() -> authService.authenticate("testuser", "password123"))
-                                .isInstanceOf(AuthException.class)
-                                .hasMessageContaining("провалена");
-        }
-
-        @Test
-        @DisplayName("existsByUsername - проверка существования пользователя")
-        void existsByUsername_WhenCalled_CallsRepository() {
-                // Arrange
-                when(userRepository.existsByUsername("testuser")).thenReturn(true);
-
-                // Act
-                boolean exists = authService.existsByUsername("testuser");
-
-                // Assert
-                assertThat(exists).isTrue();
-                verify(userRepository).existsByUsername("testuser");
-        }
-
-        @Test
-        @DisplayName("findById - успешное получение пользователя")
-        void findById_WhenUserExists_ReturnsUser() {
-                // Arrange
-                when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-
-                // Act
-                User result = authService.findById(1L);
-
-                // Assert
-                assertThat(result).isEqualTo(testUser);
-                verify(userRepository).findById(1L);
-        }
-
-        @Test
-        @DisplayName("findById - пользователь не найден")
-        void findById_WhenUserNotFound_ThrowsNotFoundException() {
-                // Arrange
-                when(userRepository.findById(999L)).thenReturn(Optional.empty());
-
-                // Act & Assert
-                assertThatThrownBy(() -> authService.findById(999L))
-                                .isInstanceOf(NotFoundException.class)
-                                .hasMessage("Пользователь не найден");
         }
 
         @Test
@@ -381,7 +292,7 @@ class AuthServiceImplTest {
                 when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(refreshToken);
 
                 // Act
-                authService.logout("refreshToken123", 1L);
+                authService.logout("refreshToken123");
 
                 // Assert
                 verify(userRepository).save(any(User.class));
@@ -396,7 +307,7 @@ class AuthServiceImplTest {
                 when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
                 // Act & Assert
-                assertThatThrownBy(() -> authService.logout("refreshToken123", 999L))
+                assertThatThrownBy(() -> authService.logout("refreshToken123"))
                                 .isInstanceOf(NotFoundException.class)
                                 .hasMessage("Пользователь не найден");
         }
@@ -417,7 +328,7 @@ class AuthServiceImplTest {
                 when(userRepository.save(any(User.class))).thenReturn(testUser);
 
                 // Act
-                authService.logout("refreshToken123", 1L);
+                authService.logout("refreshToken123");
 
                 // Assert
                 // Проверяем, что токен НЕ сохраняется (userId=1, token.userId=2)
