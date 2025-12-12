@@ -20,6 +20,7 @@ import ru.laspace.spo.mapper.UserMapper;
 import ru.laspace.spo.repository.RoleRepository;
 import ru.laspace.spo.repository.UserRepository;
 import ru.laspace.spo.service.AdminService;
+import ru.laspace.spo.service.LoginAttemptService;
 
 @Slf4j
 @Service
@@ -30,6 +31,7 @@ public class AdminServiceImpl implements AdminService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final LoginAttemptService loginAttemptService;
 
     @Override
     public UserResponse createUser(CreateUserRequest request) {
@@ -156,6 +158,38 @@ public class AdminServiceImpl implements AdminService {
         return userMapper.toResponse(updatedUser);
     }
 
+    @Override
+    public UserResponse unlockUserAccount(Long userId) {
+        log.info("Разблокировка аккаунта пользователя ID={}", userId);
+
+        @SuppressWarnings("null")
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Пользователь с ID=%d не найден", userId)));
+
+        loginAttemptService.unlockAccount(user.getUsername());
+        User updatedUser = userRepository.findById(userId).orElseThrow();
+
+        return userMapper.toResponse(updatedUser);
+    }
+
+    @Override
+    public UserResponse resetUserPassword(Long userId, String newPassword) {
+        log.info("Сброс пароля пользователя ID={}", userId);
+
+        @SuppressWarnings("null")
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Пользователь с ID=%d не найден", userId)));
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.resetFailedAttempts();
+
+        User updatedUser = userRepository.save(user);
+
+        return userMapper.toResponse(updatedUser);
+    }
+
     private Set<Role> fetchRolesByName(Set<String> roleNames) {
         return roleNames.stream()
                 .map(roleName -> roleRepository.findByName(roleName).orElseThrow(
@@ -163,5 +197,4 @@ public class AdminServiceImpl implements AdminService {
                                 String.format("Роль %s не найдена", roleName))))
                 .collect(Collectors.toSet());
     }
-
 }

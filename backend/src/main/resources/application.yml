@@ -5,8 +5,8 @@ spring:
             password: admin
     datasource:
         url: jdbc:postgresql://localhost:5432/spo-prca-em
-        username: admin5346
-        password: admin2143
+        username: admin1
+        password: admin2
     jpa:
         hibernate:
             ddl-auto: update
@@ -25,6 +25,11 @@ jwt:
     access-token-expiration: 900000
     refresh-token-expiration: 604800000
     issuer: spo-app
+security:
+    max-failed-attempts: 5
+    account-lock-duration-minutes: 15
+    enable-brute-force-protection: true
+    login-delay-millis: 1000
 springdoc:
     api-docs:
         path: /v3/api-docs 

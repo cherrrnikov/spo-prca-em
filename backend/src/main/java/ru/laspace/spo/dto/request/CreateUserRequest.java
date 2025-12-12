@@ -27,6 +27,8 @@ public class CreateUserRequest {
     private String lastName;
 
     private boolean enabled = true;
+    private boolean accountLocked = false;
+    private int failedAttempts = 0;
 
     private Set<String> roles;
 }

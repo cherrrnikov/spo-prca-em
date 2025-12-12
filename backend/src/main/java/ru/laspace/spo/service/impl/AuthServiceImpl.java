@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ru.laspace.spo.config.SecurityProperties;
 import ru.laspace.spo.dto.request.LoginRequest;
 import ru.laspace.spo.dto.request.RefreshTokenRequest;
 import ru.laspace.spo.dto.response.JwtResponse;
@@ -31,6 +32,7 @@ import ru.laspace.spo.repository.UserRepository;
 import ru.laspace.spo.security.JwtProvider;
 import ru.laspace.spo.security.UserDetailsImpl;
 import ru.laspace.spo.service.AuthService;
+import ru.laspace.spo.service.LoginAttemptService;
 import ru.laspace.spo.service.RefreshTokenService;
 
 @Service
@@ -44,20 +46,49 @@ public class AuthServiceImpl implements AuthService {
     private final JwtProvider jwtProvider;
     private final UserMapper userMapper;
     private final RefreshTokenService refreshTokenService;
+    private final LoginAttemptService loginAttemptService;
+    private final SecurityProperties securityProperties;
 
     @SuppressWarnings("null")
     @Override
     public JwtResponse login(LoginRequest loginRequest) {
         log.info("Попытка входа: {}", loginRequest.getUsername());
+
+        // Проверяем, не заблокирован ли аккаунт
+        if (securityProperties.isEnableBruteForceProtection() &&
+                loginAttemptService.isAccountLocked(loginRequest.getUsername())) {
+            int remainingAttempts = loginAttemptService.getRemainingAttempts(loginRequest.getUsername());
+            log.warn("Попытка входа в заблокированный аккаунт: {}. Осталось попыток: {}",
+                    loginRequest.getUsername(), remainingAttempts);
+            throw new AuthException(
+                    "Аккаунт заблокирован из-за слишком большого количества неудачных попыток. Попробуйте позже.");
+        }
+
         try {
             log.debug("Пытаемся аутентифицировать через AuthenticationManager...");
+
+            // Загружаем пользователя до аутентификации, чтобы проверить состояние
+            User user = userRepository.findByUsername(loginRequest.getUsername())
+                    .orElseThrow(() -> {
+                        // Для несуществующего пользователя тоже применяем задержку
+                        if (securityProperties.isEnableBruteForceProtection()) {
+                            loginAttemptService.applyLoginDelay();
+                        }
+                        return new BadCredentialsException("Неверный логин или пароль");
+                    });
+
+            // Пробуем аутентифицировать
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
             log.debug("Аутентификация успешна!");
+
+            // Сбрасываем счетчик неудачных попыток
+            loginAttemptService.loginSucceeded(loginRequest.getUsername());
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-            User user = userDetails.getUser();
+            user = userDetails.getUser(); // Получаем обновленного пользователя
 
             Set<String> roles = user.getRoles().stream()
                     .map(Role::getName)
@@ -84,15 +115,27 @@ public class AuthServiceImpl implements AuthService {
             }
 
             user.setLastLoginAt(LocalDateTime.now());
-            userRepository.save(user);
+            userRepository.save(user); // Явное сохранение
 
             return userMapper.toJwtResponse(accessToken, refreshTokenValue, user);
         } catch (BadCredentialsException e) {
             log.warn("Неверный логин или пароль: {}", loginRequest.getUsername());
-            throw new AuthException("Неверный логин или пароль");
+
+            // Увеличиваем счетчик неудачных попыток
+            loginAttemptService.loginFailed(loginRequest.getUsername());
+
+            // Получаем обновленное количество оставшихся попыток
+            int remainingAttempts = loginAttemptService.getRemainingAttempts(loginRequest.getUsername());
+
+            throw new AuthException(
+                    String.format("Неверный логин или пароль. Осталось попыток: %d", remainingAttempts));
         } catch (AuthenticationException e) {
             log.error("Ошибка входа {}: {}", loginRequest.getUsername(), e.getMessage());
-            throw new AuthException("Аутентификация провалена");
+
+            // Увеличиваем счетчик неудачных попыток для других ошибок аутентификации
+            loginAttemptService.loginFailed(loginRequest.getUsername());
+
+            throw new AuthException("Аутентификация провалена: " + e.getMessage());
         }
     }
 
@@ -116,11 +159,15 @@ public class AuthServiceImpl implements AuthService {
             throw new TokenRefreshException("Аккаунт отключен");
         }
 
+        // Проверяем блокировку аккаунта при refresh
+        UserDetailsImpl userDetails = new UserDetailsImpl(user, securityProperties);
+        if (!userDetails.isAccountNonLocked()) {
+            throw new TokenRefreshException("Аккаунт заблокирован");
+        }
+
         Set<String> roles = user.getRoles().stream()
                 .map(Role::getName)
                 .collect(Collectors.toSet());
-
-        UserDetailsImpl userDetails = new UserDetailsImpl(user);
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
                 userDetails.getAuthorities());
@@ -131,7 +178,7 @@ public class AuthServiceImpl implements AuthService {
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
 
-        log.debug("Refresh token успешно использован для пользователя ID={}. Выдан новый access token", userId);
+        log.debug("Refresh token успешно использован для пользователя ID={}. Выдан новый accessToken", userId);
 
         return userMapper.toJwtResponse(newAccessToken, sameRefreshToken, user);
     }

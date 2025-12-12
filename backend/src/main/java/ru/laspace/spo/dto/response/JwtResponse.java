@@ -27,8 +27,8 @@ public class JwtResponse {
     @Schema(description = "Тип токена")
     private String tokenType = "Bearer";
 
-    @Schema(description = "ID пользователя")
-    private Long userId;
+    // @Schema(description = "ID пользователя")
+    // private Long userId;
     @Schema(description = "Имя пользователя")
     private String username;
     @Schema(description = "Имя")

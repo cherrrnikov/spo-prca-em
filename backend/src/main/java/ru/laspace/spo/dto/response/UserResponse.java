@@ -13,11 +13,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserResponse {
-    private Long id;
+    // private Long id;
     private String username;
     private String firstName;
     private String lastName;
     private boolean enabled;
+    private boolean accountLocked;
+    private int failedAttempts;
     private LocalDateTime lastLoginAt;
     private LocalDateTime lastLogoutAt;
     private Set<String> roles;

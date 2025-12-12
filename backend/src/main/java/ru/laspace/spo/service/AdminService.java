@@ -22,4 +22,8 @@ public interface AdminService {
     UserResponse disableUser(Long userId);
 
     UserResponse enableUser(Long userId);
+
+    UserResponse unlockUserAccount(Long userId);
+
+    UserResponse resetUserPassword(Long userId, String newPassword);
 }

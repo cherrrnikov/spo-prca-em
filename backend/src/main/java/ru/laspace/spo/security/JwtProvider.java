@@ -24,6 +24,7 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.laspace.spo.config.JwtProperties;
+import ru.laspace.spo.config.SecurityProperties;
 import ru.laspace.spo.entity.User;
 import ru.laspace.spo.repository.UserRepository;
 
@@ -33,6 +34,7 @@ import ru.laspace.spo.repository.UserRepository;
 public class JwtProvider {
     private final JwtProperties jwtProperties;
     private final UserRepository userRepository;
+    private final SecurityProperties securityProperties;
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
@@ -143,7 +145,7 @@ public class JwtProvider {
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
 
-        UserDetailsImpl userDetails = new UserDetailsImpl(user);
+        UserDetailsImpl userDetails = new UserDetailsImpl(user, securityProperties);
 
         return new UsernamePasswordAuthenticationToken(userDetails, token, authorities);
     }

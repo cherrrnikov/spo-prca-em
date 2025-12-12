@@ -56,14 +56,50 @@ public class User {
     @NotNull
     private boolean enabled = true;
 
+    @Column(name = "failed_attempts", nullable = false)
+    private int failedAttempts = 0;
+
+    @Column(name = "account_locked")
+    private boolean accountLocked = false;
+
+    @Column(name = "lock_time")
+    private LocalDateTime lockTime;
+
+    @Column(name = "last_failed_login")
+    private LocalDateTime lastFailedLogin;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
-    @ToString.Exclude // ВАЖНО!
+    @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Set<Role> roles = new HashSet<>();
+
+    public void incrementFailedAttempts() {
+        this.failedAttempts++;
+        this.lastFailedLogin = LocalDateTime.now();
+    }
+
+    public void resetFailedAttempts() {
+        this.failedAttempts = 0;
+        this.accountLocked = false;
+        this.lockTime = null;
+    }
+
+    public void lockAccount() {
+        this.accountLocked = true;
+        this.lockTime = LocalDateTime.now();
+    }
+
+    public boolean isAccountLockExpired() {
+        if (lockTime == null) {
+            return true;
+        }
+        return LocalDateTime.now().isAfter(lockTime.plusMinutes(15)); // 15 минут блокировки
+    }
 
     @Override
     public String toString() {
         return "User{id=" + id + ", username='" + username + "'}";
     }
+
 }
