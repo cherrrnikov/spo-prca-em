@@ -3,7 +3,6 @@ package ru.laspace.spo.security;
 import java.io.IOException;
 
 import org.springframework.lang.NonNull;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -21,7 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtProvider jwtProvider;
+    private final JwtValidator jwtValidator;
+    private final JwtAuthenticationProvider jwtAuthenticationProvider;
 
     @SuppressWarnings("null")
     @Override
@@ -37,14 +37,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = parseJwt(request);
 
-            if (jwt != null && jwtProvider.validateToken(jwt)) {
-                Authentication authentication = jwtProvider.getAuthentication(jwt);
+            if (jwt != null && jwtValidator.validateToken(jwt)) {
+                Authentication authentication = jwtAuthenticationProvider.getAuthentication(jwt);
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("Аутентификация установлена для пользователя: {}", authentication.getName());
             }
         } catch (Exception e) {
             log.error("Не удается установить пользователя: {}", e.getMessage());
-            throw new BadCredentialsException("Неверный токен", e);
+            // Не выбрасываем исключение, чтобы запрос мог продолжиться (но без
+            // аутентификации)
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
