@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ru.laspace.spo.dto.cache.UserCacheDto;
 import ru.laspace.spo.service.UserCacheService;
 
 @Slf4j
@@ -18,6 +19,7 @@ public class JwtAuthenticationProvider {
     private final JwtParser jwtParser;
     private final JwtValidator jwtValidator;
     private final UserCacheService userCacheService;
+    private final UserDetailsServiceImpl userDetailsService;
 
     public Authentication getAuthentication(String token) {
         if (!jwtValidator.validateToken(token)) {
@@ -27,11 +29,17 @@ public class JwtAuthenticationProvider {
 
         String username = jwtParser.getUsername(token);
 
-        UserDetails userDetails = userCacheService.getUserByUsername(username);
+        UserCacheDto cachedUser = userCacheService.getCachedUserByUsername(username);
+        UserDetails userDetails;
 
-        if (userDetails == null) {
-            log.warn("Пользователь не найден в кэше: {}", username);
-            throw new UsernameNotFoundException("Пользователь не найден");
+        if (cachedUser != null) {
+            userDetails = userCacheService.createUserDetailsFromCache(cachedUser);
+            log.debug("Пользователь загружен из кэша (DTO): {}", username);
+        } else {
+            userDetails = userDetailsService.loadUserByUsername(username);
+            UserCacheDto newCacheDTO = userCacheService.convertToCacheDTO((UserDetailsImpl) userDetails);
+            userCacheService.cacheUser(username, newCacheDTO);
+            log.debug("Пользователь загружен из БД и закэширован: {}", username);
         }
 
         if (!userDetails.isEnabled()) {
@@ -40,9 +48,6 @@ public class JwtAuthenticationProvider {
         }
 
         var authorities = jwtParser.getAuthorities(token);
-
-        // Кэшируем связку токен-пользователь для последующих запросов
-        userCacheService.getUserFromToken(token, userDetails);
 
         log.debug("Создана аутентификация для пользователя: {}", username);
 
@@ -59,20 +64,5 @@ public class JwtAuthenticationProvider {
                 userDetails,
                 token,
                 authorities);
-    }
-
-    public boolean canCreateAuthentication(String token) {
-        if (!jwtValidator.validateToken(token)) {
-            return false;
-        }
-
-        try {
-            String username = jwtParser.getUsername(token);
-            UserDetails userDetails = userCacheService.getUserByUsername(username);
-            return userDetails != null && userDetails.isEnabled();
-        } catch (Exception e) {
-            log.debug("Не удалось создать аутентификацию: {}", e.getMessage());
-            return false;
-        }
     }
 }

@@ -27,7 +27,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Transactional(readOnly = true)
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Проверяем, не заблокирован ли аккаунт
         if (securityProperties.isEnableBruteForceProtection() &&
                 loginAttemptService.isAccountLocked(username)) {
             log.warn("Попытка входа в заблокированный аккаунт: {}", username);
@@ -56,7 +55,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("Аккаунт отключен.");
         }
 
-        // Проверяем состояние аккаунта
         UserDetailsImpl userDetails = new UserDetailsImpl(user, securityProperties);
 
         if (!userDetails.isAccountNonLocked()) {
@@ -78,7 +76,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return userDetails;
     }
 
-    // Добавляем метод для загрузки по ID
     @Transactional(readOnly = true)
     public UserDetails loadUserById(Long userId) throws UsernameNotFoundException {
         User user = userRepository.findById(userId).orElseThrow(() -> {
@@ -91,7 +88,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("Аккаунт отключен.");
         }
 
-        // Проверяем состояние аккаунта
         UserDetailsImpl userDetails = new UserDetailsImpl(user, securityProperties);
 
         if (!userDetails.isAccountNonLocked()) {

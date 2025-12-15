@@ -59,7 +59,7 @@ public class User {
     @Column(name = "failed_attempts", nullable = false)
     private int failedAttempts = 0;
 
-    @Column(name = "account_locked")
+    @Column(name = "account_locked", nullable = false)
     private boolean accountLocked = false;
 
     @Column(name = "lock_time")
@@ -94,7 +94,7 @@ public class User {
         if (lockTime == null) {
             return true;
         }
-        return LocalDateTime.now().isAfter(lockTime.plusMinutes(15)); // 15 минут блокировки
+        return LocalDateTime.now().isAfter(lockTime.plusMinutes(15));
     }
 
     @Override

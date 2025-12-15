@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.laspace.spo.config.SecurityProperties;
+import ru.laspace.spo.dto.cache.UserCacheDto;
 import ru.laspace.spo.dto.request.LoginRequest;
 import ru.laspace.spo.dto.request.RefreshTokenRequest;
 import ru.laspace.spo.dto.response.JwtResponse;
@@ -31,6 +32,7 @@ import ru.laspace.spo.security.JwtGenerator;
 import ru.laspace.spo.security.JwtParser;
 import ru.laspace.spo.security.JwtValidator;
 import ru.laspace.spo.security.UserDetailsImpl;
+import ru.laspace.spo.security.UserDetailsServiceImpl;
 import ru.laspace.spo.service.AuthService;
 import ru.laspace.spo.service.LoginAttemptService;
 import ru.laspace.spo.service.RefreshTokenService;
@@ -53,6 +55,7 @@ public class AuthServiceImpl implements AuthService {
     private final LoginAttemptService loginAttemptService;
     private final SecurityProperties securityProperties;
     private final UserCacheService userCacheService;
+    private final UserDetailsServiceImpl userDetailsService;
 
     @SuppressWarnings("null")
     @Override
@@ -104,7 +107,8 @@ public class AuthServiceImpl implements AuthService {
             user.setLastLoginAt(LocalDateTime.now());
             userRepository.save(user);
 
-            userCacheService.updateUserCache(user.getUsername(), userDetails);
+            UserCacheDto userCacheDto = userCacheService.convertToCacheDTO(userDetails);
+            userCacheService.cacheUser(user.getUsername(), userCacheDto);
 
             return userMapper.toJwtResponse(accessToken, refreshTokenValue, user);
         } catch (BadCredentialsException e) {
@@ -139,8 +143,16 @@ public class AuthServiceImpl implements AuthService {
 
         RefreshToken storedToken = refreshTokenService.verifyRefreshToken(refreshTokenValue);
 
-        // Используем кэш вместо запроса к БД
-        UserDetailsImpl userDetails = (UserDetailsImpl) userCacheService.getUserById(userId);
+        UserCacheDto cachedUser = userCacheService.getCachedUserById(userId);
+        UserDetailsImpl userDetails;
+        if (cachedUser != null) {
+            userDetails = userCacheService.createUserDetailsFromCache(cachedUser);
+        } else {
+            userDetails = (UserDetailsImpl) userDetailsService.loadUserById(userId);
+            UserCacheDto newCacheDto = userCacheService.convertToCacheDTO(userDetails);
+            userCacheService.cacheUser(userDetails.getUsername(), newCacheDto);
+        }
+
         if (userDetails == null) {
             throw new NotFoundException("Пользователь не найден");
         }
@@ -197,8 +209,6 @@ public class AuthServiceImpl implements AuthService {
 
         storedToken.setRevoked(true);
         refreshTokenRepository.save(storedToken);
-
-        userCacheService.evictTokenCache(refreshToken);
 
         userCacheService.evictUserCache(user.getUsername());
 

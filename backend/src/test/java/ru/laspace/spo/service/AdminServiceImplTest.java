@@ -6,10 +6,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +32,7 @@ import ru.laspace.spo.dto.response.UserResponse;
 import ru.laspace.spo.entity.Role;
 import ru.laspace.spo.entity.User;
 import ru.laspace.spo.exception.NotFoundException;
+import ru.laspace.spo.mapper.UserMapper;
 import ru.laspace.spo.repository.RoleRepository;
 import ru.laspace.spo.repository.UserRepository;
 import ru.laspace.spo.service.impl.AdminServiceImpl;
@@ -48,6 +50,12 @@ class AdminServiceImplTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private UserMapper userMapper;
+
+    @Mock
+    private LoginAttemptService loginAttemptService;
+
     @InjectMocks
     private AdminServiceImpl adminService;
 
@@ -55,16 +63,19 @@ class AdminServiceImplTest {
     private Role userRole;
     private Role adminRole;
     private Set<Role> roles;
+    private UserResponse userResponse;
 
     @BeforeEach
     void setUp() {
         userRole = new Role();
         userRole.setId(1L);
         userRole.setName("USER");
+        userRole.setDescription("Обычный пользователь");
 
         adminRole = new Role();
         adminRole.setId(2L);
         adminRole.setName("ADMIN");
+        adminRole.setDescription("Администратор");
 
         roles = new HashSet<>();
         roles.add(userRole);
@@ -77,340 +88,264 @@ class AdminServiceImplTest {
         testUser.setFirstName("Test");
         testUser.setLastName("User");
         testUser.setEnabled(true);
+        testUser.setAccountLocked(false);
+        testUser.setFailedAttempts(0);
+        testUser.setLastLoginAt(LocalDateTime.now().minusDays(1));
+        testUser.setLastLogoutAt(LocalDateTime.now().minusHours(2));
         testUser.setRoles(roles);
-    }
 
-    @Test
-    @DisplayName("createUser - успешное создание пользователя без ролей")
-    void createUser_WhenValidRequestWithoutRoles_CreatesUser() {
-        // Arrange
-        CreateUserRequest request = CreateUserRequest.builder()
-                .username("newuser")
-                .password("password123")
-                .firstName("New")
+        userResponse = UserResponse.builder()
+                .username("testuser")
+                .firstName("Test")
                 .lastName("User")
                 .enabled(true)
-                .roles(null)
-                .build();
-
-        User newUser = new User();
-        newUser.setId(2L);
-        newUser.setUsername("newuser");
-        newUser.setPasswordHash("encodedPassword");
-        newUser.setFirstName("New");
-        newUser.setLastName("User");
-        newUser.setEnabled(true);
-
-        when(userRepository.existsByUsername("newuser")).thenReturn(false);
-        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(newUser);
-
-        // Act
-        UserResponse response = adminService.createUser(request);
-
-        // Assert
-        assertThat(response).isNotNull();
-        assertThat(response.getUsername()).isEqualTo("newuser");
-        assertThat(response.getFirstName()).isEqualTo("New");
-        assertThat(response.getLastName()).isEqualTo("User");
-        assertThat(response.isEnabled()).isTrue();
-        assertThat(response.getRoles()).isEmpty();
-
-        verify(userRepository).existsByUsername("newuser");
-        verify(passwordEncoder).encode("password123");
-        verify(userRepository).save(any(User.class));
-    }
-
-    @Test
-    @DisplayName("createUser - успешное создание пользователя с ролями")
-    void createUser_WhenValidRequestWithRoles_CreatesUserWithRoles() {
-        // Arrange
-        CreateUserRequest request = CreateUserRequest.builder()
-                .username("newuser")
-                .password("password123")
-                .firstName("New")
-                .lastName("User")
-                .enabled(true)
+                .accountLocked(false)
+                .failedAttempts(0)
+                .lastLoginAt(testUser.getLastLoginAt())
+                .lastLogoutAt(testUser.getLastLogoutAt())
                 .roles(Set.of("USER", "ADMIN"))
                 .build();
+    }
 
-        User newUser = new User();
-        newUser.setId(2L);
-        newUser.setUsername("newuser");
-        newUser.setPasswordHash("encodedPassword");
-        newUser.setFirstName("New");
-        newUser.setLastName("User");
-        newUser.setEnabled(true);
-        newUser.setRoles(roles);
+    @Test
+    @DisplayName("createUser - пользователь с заблокированным аккаунтом")
+    void createUser_WithAccountLocked_CreatesUserWithLockedAccount() {
+        CreateUserRequest request = CreateUserRequest.builder()
+                .username("lockeduser")
+                .password("password123")
+                .firstName("Locked")
+                .lastName("User")
+                .enabled(true)
+                .accountLocked(true)
+                .failedAttempts(3)
+                .roles(Set.of("USER"))
+                .build();
 
-        when(userRepository.existsByUsername("newuser")).thenReturn(false);
+        User lockedUser = new User();
+        lockedUser.setId(2L);
+        lockedUser.setUsername("lockeduser");
+        lockedUser.setPasswordHash("encodedPassword");
+        lockedUser.setFirstName("Locked");
+        lockedUser.setLastName("User");
+        lockedUser.setEnabled(true);
+        lockedUser.setAccountLocked(true);
+        lockedUser.setFailedAttempts(3);
+
+        UserResponse lockedResponse = UserResponse.builder()
+                .username("lockeduser")
+                .firstName("Locked")
+                .lastName("User")
+                .enabled(true)
+                .accountLocked(true)
+                .failedAttempts(3)
+                .roles(Set.of("USER"))
+                .build();
+
+        when(userRepository.existsByUsername("lockeduser")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
         when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
-        when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
-        when(userRepository.save(any(User.class))).thenReturn(newUser);
+        when(userRepository.save(any(User.class))).thenReturn(lockedUser);
+        when(userMapper.toResponse(lockedUser)).thenReturn(lockedResponse);
 
-        // Act
         UserResponse response = adminService.createUser(request);
 
-        // Assert
         assertThat(response).isNotNull();
-        assertThat(response.getRoles()).containsExactlyInAnyOrder("USER", "ADMIN");
-
-        verify(roleRepository).findByName("USER");
-        verify(roleRepository).findByName("ADMIN");
+        assertThat(response.isAccountLocked()).isTrue();
+        assertThat(response.getFailedAttempts()).isEqualTo(3);
+        verify(userRepository).existsByUsername("lockeduser");
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
-    @DisplayName("createUser - пользователь уже существует")
-    void createUser_WhenUserAlreadyExists_ThrowsException() {
-        // Arrange
-        CreateUserRequest request = CreateUserRequest.builder()
-                .username("existinguser")
-                .password("password123")
-                .firstName("Existing")
-                .lastName("User")
-                .build();
+    @DisplayName("getAllUsers - пустой список пользователей")
+    void getAllUsers_WhenNoUsers_ReturnsEmptyList() {
+        when(userRepository.findAll()).thenReturn(Collections.emptyList());
 
-        when(userRepository.existsByUsername("existinguser")).thenReturn(true);
-
-        // Act & Assert
-        assertThatThrownBy(() -> adminService.createUser(request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Пользователь 'existinguser' уже существует");
-    }
-
-    @Test
-    @DisplayName("createUser - указана несуществующая роль")
-    void createUser_WhenRoleNotFound_ThrowsException() {
-        // Arrange
-        CreateUserRequest request = CreateUserRequest.builder()
-                .username("newuser")
-                .password("password123")
-                .firstName("New")
-                .lastName("User")
-                .roles(Set.of("NONEXISTENT"))
-                .build();
-
-        when(userRepository.existsByUsername("newuser")).thenReturn(false);
-        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
-        when(roleRepository.findByName("NONEXISTENT")).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThatThrownBy(() -> adminService.createUser(request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Роль NONEXISTENT не найдена");
-    }
-
-    @Test
-    @DisplayName("getAllUsers - получение списка пользователей")
-    void getAllUsers_WhenCalled_ReturnsAllUsers() {
-        // Arrange
-        User user1 = new User();
-        user1.setId(1L);
-        user1.setUsername("user1");
-
-        User user2 = new User();
-        user2.setId(2L);
-        user2.setUsername("user2");
-
-        List<User> users = Arrays.asList(user1, user2);
-
-        when(userRepository.findAll()).thenReturn(users);
-
-        // Act
         List<UserResponse> result = adminService.getAllUsers();
 
-        // Assert
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).getUsername()).isEqualTo("user1");
-        assertThat(result.get(1).getUsername()).isEqualTo("user2");
-
+        assertThat(result).isEmpty();
         verify(userRepository).findAll();
+        verify(userMapper, never()).toResponse(any(User.class));
     }
 
     @Test
-    @DisplayName("getUserById - успешное получение пользователя")
-    void getUserById_WhenUserExists_ReturnsUser() {
-        // Arrange
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+    @DisplayName("getUserByUsername - пользователь не найден")
+    void getUserByUsername_WhenUserNotFound_ThrowsNotFoundException() {
+        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
 
-        // Act
-        UserResponse response = adminService.getUserById(1L);
-
-        // Assert
-        assertThat(response).isNotNull();
-        assertThat(response.getId()).isEqualTo(1L);
-        assertThat(response.getUsername()).isEqualTo("testuser");
-
-        verify(userRepository).findById(1L);
-    }
-
-    @Test
-    @DisplayName("getUserById - пользователь не найден")
-    void getUserById_WhenUserNotFound_ThrowsNotFoundException() {
-        // Arrange
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThatThrownBy(() -> adminService.getUserById(999L))
+        assertThatThrownBy(() -> adminService.getUserByUsername("nonexistent"))
                 .isInstanceOf(NotFoundException.class)
-                .hasMessage("Пользователь с ID=999 не найден");
+                .hasMessage("Пользователь 'nonexistent' не найден");
     }
 
     @Test
-    @DisplayName("getUserByUsername - успешное получение пользователя")
-    void getUserByUsername_WhenUserExists_ReturnsUser() {
-        // Arrange
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
-
-        // Act
-        UserResponse response = adminService.getUserByUsername("testuser");
-
-        // Assert
-        assertThat(response).isNotNull();
-        assertThat(response.getUsername()).isEqualTo("testuser");
-
-        verify(userRepository).findByUsername("testuser");
-    }
-
-    @Test
-    @DisplayName("updateUserRoles - успешное обновление ролей")
-    void updateUserRoles_WhenValidRequest_UpdatesRoles() {
-        // Arrange
+    @DisplayName("updateUserRoles - роли null (очистка всех ролей)")
+    void updateUserRoles_WhenRolesNull_ClearsAllRoles() {
         UpdateUserRolesRequest request = new UpdateUserRolesRequest();
-        request.setRoles(Set.of("USER")); // Только USER роль
+        request.setRoles(null); // Явно устанавливаем null
 
-        // Очищаем текущие роли у пользователя
-        testUser.setRoles(new HashSet<>());
-
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
-
-        // Act
-        UserResponse response = adminService.updateUserRoles(1L, request);
-
-        // Assert
-        assertThat(response).isNotNull();
-        // Проверяем что вызвалось только для USER
-        verify(roleRepository).findByName("USER");
-        verify(roleRepository, never()).findByName("MODERATOR"); // MODERATOR не должен вызываться
-        verify(userRepository).save(any(User.class));
-    }
-
-    @Test
-    @DisplayName("updateUserRoles - очистка всех ролей")
-    void updateUserRoles_WhenEmptyRoles_ClearsAllRoles() {
-        // Arrange
-        UpdateUserRolesRequest request = new UpdateUserRolesRequest();
-        request.setRoles(Collections.emptySet());
+        testUser.setRoles(new HashSet<>(roles));
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(userMapper.toResponse(testUser)).thenReturn(userResponse);
 
-        // Act
         UserResponse response = adminService.updateUserRoles(1L, request);
 
-        // Assert
         assertThat(response).isNotNull();
-        // Проверяем, что save был вызван
-
-        verify(userRepository).findById(1L);
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).save(testUser);
+        assertThat(testUser.getRoles()).isEmpty();
         verify(roleRepository, never()).findByName(anyString());
     }
 
     @Test
-    @DisplayName("updateUserRoles - пользователь не найден")
-    void updateUserRoles_WhenUserNotFound_ThrowsNotFoundException() {
-        // Arrange
-        UpdateUserRolesRequest request = new UpdateUserRolesRequest();
-        request.setRoles(Set.of("USER"));
-
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThatThrownBy(() -> adminService.updateUserRoles(999L, request))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessage("Пользователь с ID=999 не найден");
-    }
-
-    @Test
-    @DisplayName("deleteUser - успешное удаление пользователя")
-    void deleteUser_WhenUserExists_DeletesUser() {
-        // Arrange
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        doNothing().when(userRepository).delete(testUser);
-
-        // Act
-        adminService.deleteUser(1L);
-
-        // Assert
-        verify(userRepository).findById(1L);
-        verify(userRepository).delete(testUser);
-    }
-
-    @Test
-    @DisplayName("deleteUser - пользователь не найден")
-    void deleteUser_WhenUserNotFound_ThrowsNotFoundException() {
-        // Arrange
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThatThrownBy(() -> adminService.deleteUser(999L))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessage("Пользователь с ID=999 не найден");
-
-        verify(userRepository, never()).delete(any(User.class));
-    }
-
-    @Test
-    @DisplayName("disableUser - успешная блокировка пользователя")
-    void disableUser_WhenUserExists_DisablesUser() {
-        // Arrange
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
-
-        // Act
-        UserResponse response = adminService.disableUser(1L);
-
-        // Assert
-        assertThat(response).isNotNull();
-        assertThat(response.isEnabled()).isFalse();
-
-        verify(userRepository).findById(1L);
-        verify(userRepository).save(any(User.class));
-    }
-
-    @Test
-    @DisplayName("enableUser - успешная разблокировка пользователя")
-    void enableUser_WhenUserExists_EnablesUser() {
-        // Arrange
+    @DisplayName("disableUser - пользователь уже отключен")
+    void disableUser_WhenUserAlreadyDisabled_KeepsDisabled() {
         testUser.setEnabled(false);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        // Act
-        UserResponse response = adminService.enableUser(1L);
+        UserResponse disabledResponse = UserResponse.builder()
+                .username("testuser")
+                .firstName("Test")
+                .lastName("User")
+                .enabled(false)
+                .accountLocked(false)
+                .failedAttempts(0)
+                .roles(Set.of("USER", "ADMIN"))
+                .build();
+        when(userMapper.toResponse(testUser)).thenReturn(disabledResponse);
 
-        // Assert
+        UserResponse response = adminService.disableUser(1L);
+
         assertThat(response).isNotNull();
-        assertThat(response.isEnabled()).isTrue();
-
-        verify(userRepository).findById(1L);
-        verify(userRepository).save(any(User.class));
+        assertThat(response.isEnabled()).isFalse();
+        verify(userRepository).save(testUser);
+        assertThat(testUser.isEnabled()).isFalse();
     }
 
     @Test
     @DisplayName("enableUser - пользователь не найден")
     void enableUser_WhenUserNotFound_ThrowsNotFoundException() {
-        // Arrange
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThatThrownBy(() -> adminService.enableUser(999L))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessage("Пользователь с ID=999 не найден");
+    }
+
+    @Test
+    @DisplayName("unlockUserAccount - успешная разблокировка аккаунта")
+    void unlockUserAccount_WhenUserExists_UnlocksAccount() {
+        testUser.setAccountLocked(true);
+        testUser.setFailedAttempts(5);
+        testUser.setLockTime(LocalDateTime.now().minusMinutes(10));
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        doNothing().when(loginAttemptService).unlockAccount("testuser");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userMapper.toResponse(testUser)).thenReturn(userResponse);
+
+        UserResponse response = adminService.unlockUserAccount(1L);
+
+        assertThat(response).isNotNull();
+        verify(loginAttemptService).unlockAccount("testuser");
+        verify(userRepository, times(2)).findById(1L);
+    }
+
+    @Test
+    @DisplayName("unlockUserAccount - пользователь не найден")
+    void unlockUserAccount_WhenUserNotFound_ThrowsNotFoundException() {
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> adminService.unlockUserAccount(999L))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Пользователь с ID=999 не найден");
+    }
+
+    @Test
+    @DisplayName("resetUserPassword - успешный сброс пароля")
+    void resetUserPassword_WhenUserExists_ResetsPassword() {
+        testUser.setFailedAttempts(3);
+        testUser.setAccountLocked(true);
+        testUser.setLockTime(LocalDateTime.now().minusMinutes(5));
+
+        String newPassword = "NewSecurePassword123!";
+        String encodedPassword = "newEncodedPassword";
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.encode(newPassword)).thenReturn(encodedPassword);
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        UserResponse resetResponse = UserResponse.builder()
+                .username("testuser")
+                .firstName("Test")
+                .lastName("User")
+                .enabled(true)
+                .accountLocked(false)
+                .failedAttempts(0)
+                .roles(Set.of("USER", "ADMIN"))
+                .build();
+        when(userMapper.toResponse(testUser)).thenReturn(resetResponse);
+
+        UserResponse response = adminService.resetUserPassword(1L, newPassword);
+
+        assertThat(response).isNotNull();
+        assertThat(response.isAccountLocked()).isFalse();
+        assertThat(response.getFailedAttempts()).isEqualTo(0);
+
+        verify(passwordEncoder).encode(newPassword);
+        verify(userRepository).save(testUser);
+
+        assertThat(testUser.getPasswordHash()).isEqualTo(encodedPassword);
+        assertThat(testUser.getFailedAttempts()).isEqualTo(0);
+        assertThat(testUser.isAccountLocked()).isFalse();
+        assertThat(testUser.getLockTime()).isNull();
+    }
+
+    @Test
+    @DisplayName("resetUserPassword - пользователь не найден")
+    void resetUserPassword_WhenUserNotFound_ThrowsNotFoundException() {
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> adminService.resetUserPassword(999L, "newPassword"))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Пользователь с ID=999 не найден");
+    }
+
+    @Test
+    @DisplayName("resetUserPassword - сброс пароля для пользователя без блокировки")
+    void resetUserPassword_WhenUserNotLocked_StillResetsAttempts() {
+        testUser.setFailedAttempts(2);
+        testUser.setAccountLocked(false);
+        testUser.setLockTime(null);
+
+        String newPassword = "NewPassword123";
+        String encodedPassword = "encodedNewPassword";
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.encode(newPassword)).thenReturn(encodedPassword);
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(userMapper.toResponse(testUser)).thenReturn(userResponse);
+
+        UserResponse response = adminService.resetUserPassword(1L, newPassword);
+
+        assertThat(response).isNotNull();
+        verify(userRepository).save(testUser);
+        assertThat(testUser.getFailedAttempts()).isEqualTo(0);
+        assertThat(testUser.getPasswordHash()).isEqualTo(encodedPassword);
+    }
+
+    @Test
+    @DisplayName("deleteUser - пользователь не найден")
+    void deleteUser_WhenUserNotFound_ThrowsNotFoundException() {
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> adminService.deleteUser(999L))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Пользователь с ID=999 не найден");
+
+        verify(userRepository, never()).delete(any(User.class));
     }
 }

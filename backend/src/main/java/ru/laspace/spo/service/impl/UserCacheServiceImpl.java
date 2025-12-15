@@ -1,5 +1,7 @@
 package ru.laspace.spo.service.impl;
 
+import java.util.stream.Collectors;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -9,6 +11,10 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ru.laspace.spo.config.SecurityProperties;
+import ru.laspace.spo.dto.cache.UserCacheDto;
+import ru.laspace.spo.entity.User;
+import ru.laspace.spo.security.UserDetailsImpl;
 import ru.laspace.spo.security.UserDetailsServiceImpl;
 import ru.laspace.spo.service.UserCacheService;
 
@@ -18,14 +24,17 @@ import ru.laspace.spo.service.UserCacheService;
 public class UserCacheServiceImpl implements UserCacheService {
 
     private final UserDetailsServiceImpl userDetailsService;
+    private final SecurityProperties securityProperties;
 
     @Cacheable(value = "users", key = "#username", unless = "#result == null")
     @Override
-    public UserDetails getUserByUsername(String username) {
-        log.debug("Загрузка пользователя из БД для кэширования: {}", username);
+    public UserCacheDto getCachedUserByUsername(String username) {
+        log.debug("Загрузка пользователя из БД для кэширования (DTO): {}", username);
         try {
-            return userDetailsService.loadUserByUsername(username);
-        } catch (Exception e) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            UserDetailsImpl userDetailsImpl = (UserDetailsImpl) userDetails;
+            return convertToCacheDTO(userDetailsImpl);
+        } catch (UsernameNotFoundException e) {
             log.warn("Не удалось загрузить пользователя для кэширования: {}", username, e);
             return null;
         }
@@ -33,10 +42,12 @@ public class UserCacheServiceImpl implements UserCacheService {
 
     @Cacheable(value = "userDetailsById", key = "#userId", unless = "#result == null")
     @Override
-    public UserDetails getUserById(Long userId) {
-        log.debug("Загрузка пользователя по ID для кэширования: {}", userId);
+    public UserCacheDto getCachedUserById(Long userId) {
+        log.debug("Загрузка пользователя по ID для кэширования (DTO): {}", userId);
         try {
-            return userDetailsService.loadUserById(userId);
+            UserDetails userDetails = userDetailsService.loadUserById(userId);
+            UserDetailsImpl userDetailsImpl = (UserDetailsImpl) userDetails;
+            return convertToCacheDTO(userDetailsImpl);
         } catch (UsernameNotFoundException e) {
             log.warn("Не удалось загрузить пользователя по ID для кэширования: {}", userId, e);
             return null;
@@ -45,9 +56,9 @@ public class UserCacheServiceImpl implements UserCacheService {
 
     @CachePut(value = "users", key = "#username")
     @Override
-    public UserDetails updateUserCache(String username, UserDetails userDetails) {
+    public UserCacheDto cacheUser(String username, UserCacheDto userCacheDTO) {
         log.debug("Обновление кэша пользователя: {}", username);
-        return userDetails;
+        return userCacheDTO;
     }
 
     @CacheEvict(value = { "users", "userDetailsById" }, allEntries = false, key = "#username")
@@ -62,23 +73,55 @@ public class UserCacheServiceImpl implements UserCacheService {
         log.debug("Очистка всего кэша пользователей");
     }
 
-    // Кэширование по токену
-    @Cacheable(value = "jwtUsers", key = "#token", unless = "#result == null")
     @Override
-    public UserDetails getUserFromToken(String token, UserDetails userDetails) {
-        log.debug("Кэширование пользователя по токену");
-        return userDetails;
+    public UserDetailsImpl createUserDetailsFromCache(UserCacheDto dto) {
+        if (dto == null) {
+            return null;
+        }
+
+        User user = new User();
+        user.setId(dto.getId());
+        user.setUsername(dto.getUsername());
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
+        user.setLastLoginAt(dto.getLastLoginAt());
+        user.setLastLogoutAt(dto.getLastLogoutAt());
+        user.setEnabled(dto.isEnabled());
+        user.setFailedAttempts(dto.getFailedAttempts());
+        user.setAccountLocked(dto.isAccountLocked());
+        user.setLockTime(dto.getLockTime());
+        user.setLastFailedLogin(dto.getLastFailedLogin());
+
+        return new UserDetailsImpl(user, securityProperties);
     }
 
-    @Cacheable(value = "jwtUsers", key = "#token", unless = "#result == null")
-    public UserDetails getUserFromToken(String token) {
-        log.debug("Получение пользователя из кэша по токену: {}", token);
-        return null; // Для прямого получения по токену
-    }
-
-    @CacheEvict(value = "jwtUsers", key = "#token")
     @Override
-    public void evictTokenCache(String token) {
-        log.debug("Очистка кэша токена: {}", token);
+    public UserCacheDto convertToCacheDTO(UserDetailsImpl userDetails) {
+        if (userDetails == null) {
+            return null;
+        }
+
+        User user = userDetails.getUser();
+        UserCacheDto dto = new UserCacheDto();
+
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setLastLoginAt(user.getLastLoginAt());
+        dto.setLastLogoutAt(user.getLastLogoutAt());
+        dto.setEnabled(user.isEnabled());
+        dto.setFailedAttempts(user.getFailedAttempts());
+        dto.setAccountLocked(user.isAccountLocked());
+        dto.setLockTime(user.getLockTime());
+        dto.setLastFailedLogin(user.getLastFailedLogin());
+
+        if (user.getRoles() != null) {
+            dto.setRoles(user.getRoles().stream()
+                    .map(role -> role.getName())
+                    .collect(Collectors.toSet()));
+        }
+
+        return dto;
     }
 }

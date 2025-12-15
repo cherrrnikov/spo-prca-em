@@ -1,19 +1,20 @@
 package ru.laspace.spo.service;
 
-import org.springframework.security.core.userdetails.UserDetails;
+import ru.laspace.spo.dto.cache.UserCacheDto;
+import ru.laspace.spo.security.UserDetailsImpl;
 
 public interface UserCacheService {
-    UserDetails getUserByUsername(String username);
+    UserCacheDto getCachedUserByUsername(String username);
 
-    UserDetails getUserById(Long userId);
+    UserCacheDto getCachedUserById(Long userId);
 
-    UserDetails updateUserCache(String username, UserDetails userDetails);
+    UserCacheDto cacheUser(String username, UserCacheDto userCacheDTO);
 
     void evictUserCache(String username);
 
     void evictAllUserCache();
 
-    UserDetails getUserFromToken(String token, UserDetails userDetails);
+    UserDetailsImpl createUserDetailsFromCache(UserCacheDto dto);
 
-    void evictTokenCache(String token);
+    UserCacheDto convertToCacheDTO(UserDetailsImpl userDetails);
 }

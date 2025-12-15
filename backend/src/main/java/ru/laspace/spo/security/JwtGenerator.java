@@ -9,6 +9,7 @@ import javax.crypto.SecretKey;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
@@ -89,7 +90,7 @@ public class JwtGenerator {
                     .parseSignedClaims(token)
                     .getPayload()
                     .getExpiration();
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             log.warn("Не удалось получить expiration из токена: {}", e.getMessage());
             return null;
         }

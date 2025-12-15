@@ -1,34 +1,35 @@
 package ru.laspace.spo.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+import ru.laspace.spo.config.SecurityProperties;
+import ru.laspace.spo.dto.cache.UserCacheDto;
 import ru.laspace.spo.dto.request.LoginRequest;
 import ru.laspace.spo.dto.request.RefreshTokenRequest;
 import ru.laspace.spo.dto.response.JwtResponse;
@@ -38,10 +39,15 @@ import ru.laspace.spo.entity.User;
 import ru.laspace.spo.exception.AuthException;
 import ru.laspace.spo.exception.NotFoundException;
 import ru.laspace.spo.exception.TokenRefreshException;
+import ru.laspace.spo.mapper.UserMapper;
 import ru.laspace.spo.repository.RefreshTokenRepository;
 import ru.laspace.spo.repository.UserRepository;
-import ru.laspace.spo.security.JwtProvider;
+import ru.laspace.spo.security.JwtAuthenticationProvider;
+import ru.laspace.spo.security.JwtGenerator;
+import ru.laspace.spo.security.JwtParser;
+import ru.laspace.spo.security.JwtValidator;
 import ru.laspace.spo.security.UserDetailsImpl;
+import ru.laspace.spo.security.UserDetailsServiceImpl;
 import ru.laspace.spo.service.impl.AuthServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,16 +58,40 @@ class AuthServiceImplTest {
         private UserRepository userRepository;
 
         @Mock
-        private PasswordEncoder passwordEncoder;
-
-        @Mock
         private RefreshTokenRepository refreshTokenRepository;
 
         @Mock
         private AuthenticationManager authenticationManager;
 
         @Mock
-        private JwtProvider jwtProvider;
+        private JwtGenerator jwtGenerator;
+
+        @Mock
+        private JwtValidator jwtValidator;
+
+        @Mock
+        private JwtParser jwtParser;
+
+        @Mock
+        private JwtAuthenticationProvider jwtAuthenticationProvider;
+
+        @Mock
+        private UserMapper userMapper;
+
+        @Mock
+        private RefreshTokenService refreshTokenService;
+
+        @Mock
+        private LoginAttemptService loginAttemptService;
+
+        @Mock
+        private SecurityProperties securityProperties;
+
+        @Mock
+        private UserCacheService userCacheService;
+
+        @Mock
+        private UserDetailsServiceImpl userDetailsService;
 
         @InjectMocks
         private AuthServiceImpl authService;
@@ -70,12 +100,15 @@ class AuthServiceImplTest {
         private Role userRole;
         private Role adminRole;
         private Set<Role> roles;
-        private Authentication authentication;
         private UserDetailsImpl userDetails;
+        private Authentication authentication;
         private RefreshToken refreshToken;
+        private UserCacheDto userCacheDto;
 
         @BeforeEach
         void setUp() {
+                SecurityContextHolder.clearContext();
+
                 userRole = new Role();
                 userRole.setId(1L);
                 userRole.setName("USER");
@@ -95,10 +128,14 @@ class AuthServiceImplTest {
                 testUser.setFirstName("Test");
                 testUser.setLastName("User");
                 testUser.setEnabled(true);
+                testUser.setAccountLocked(false);
+                testUser.setFailedAttempts(0);
                 testUser.setRoles(roles);
 
-                userDetails = new UserDetailsImpl(testUser);
-                authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
+                userDetails = new UserDetailsImpl(testUser, securityProperties);
+                authentication = new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                "credentials",
                                 userDetails.getAuthorities());
 
                 refreshToken = new RefreshToken();
@@ -107,232 +144,420 @@ class AuthServiceImplTest {
                 refreshToken.setUser(testUser);
                 refreshToken.setExpiryDate(LocalDateTime.now().plusDays(7));
                 refreshToken.setRevoked(false);
+                refreshToken.setCreatedAt(LocalDateTime.now());
+
+                userCacheDto = new UserCacheDto();
+                userCacheDto.setId(1L);
+                userCacheDto.setUsername("testuser");
+                userCacheDto.setFirstName("Test");
+                userCacheDto.setLastName("User");
+                userCacheDto.setEnabled(true);
+                userCacheDto.setAccountLocked(false);
+                userCacheDto.setFailedAttempts(0);
+                userCacheDto.setRoles(Set.of("USER", "ADMIN"));
         }
 
         @Test
-        @DisplayName("login - успешный вход")
-        void login_WhenValidCredentials_ReturnsJwtResponse() {
-                // Arrange
+        @DisplayName("login - успешный вход с существующим refresh token")
+        void login_WhenValidCredentialsAndExistingToken_ReturnsJwtResponseWithExistingToken() {
                 LoginRequest request = new LoginRequest("testuser", "password123");
 
+                when(securityProperties.isEnableBruteForceProtection()).thenReturn(true);
+                when(loginAttemptService.isAccountLocked("testuser")).thenReturn(false);
                 when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                                 .thenReturn(authentication);
-                when(jwtProvider.generateAccessToken(any(Authentication.class), anyLong(), anySet()))
-                                .thenReturn("accessToken123");
-                when(jwtProvider.generateRefreshToken(anyString(), anyLong()))
-                                .thenReturn("refreshToken123");
-                when(userRepository.save(any(User.class))).thenReturn(testUser);
-                when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(refreshToken);
+                when(jwtGenerator.generateAccessToken(authentication)).thenReturn("accessToken123");
 
-                // Act
+                RefreshToken existingToken = new RefreshToken();
+                existingToken.setToken("existingRefreshToken");
+                existingToken.setExpiryDate(LocalDateTime.now().plusDays(1));
+
+                when(refreshTokenRepository.findAllValidTokensByUser(1L))
+                                .thenReturn(List.of(existingToken));
+
+                when(userRepository.save(any(User.class))).thenReturn(testUser);
+                when(userCacheService.convertToCacheDTO(userDetails)).thenReturn(userCacheDto);
+                when(userCacheService.cacheUser("testuser", userCacheDto)).thenReturn(userCacheDto);
+
+                JwtResponse expectedResponse = JwtResponse.builder()
+                                .accessToken("accessToken123")
+                                .refreshToken("existingRefreshToken")
+                                .username("testuser")
+                                .firstName("Test")
+                                .lastName("User")
+                                .roles(Set.of("USER", "ADMIN"))
+                                .lastLoginAt(testUser.getLastLoginAt())
+                                .build();
+
+                when(userMapper.toJwtResponse("accessToken123", "existingRefreshToken", testUser))
+                                .thenReturn(expectedResponse);
+
                 JwtResponse response = authService.login(request);
 
-                // Assert
                 assertThat(response).isNotNull();
                 assertThat(response.getAccessToken()).isEqualTo("accessToken123");
-                assertThat(response.getRefreshToken()).isEqualTo("refreshToken123");
-                assertThat(response.getUsername()).isEqualTo("testuser");
-                assertThat(response.getRoles()).containsExactlyInAnyOrder("USER", "ADMIN");
+                assertThat(response.getRefreshToken()).isEqualTo("existingRefreshToken");
 
-                verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-                verify(jwtProvider).generateAccessToken(any(Authentication.class), eq(1L), anySet());
-                verify(jwtProvider).generateRefreshToken("testuser", 1L);
-                verify(userRepository).save(any(User.class));
-                verify(refreshTokenRepository).save(any(RefreshToken.class));
+                verify(loginAttemptService).loginSucceeded("testuser");
+                verify(loginAttemptService, never()).loginFailed(anyString());
+                verify(refreshTokenRepository, never()).save(any(RefreshToken.class)); // Не сохраняем новый
+                verify(userRepository).save(testUser);
+                verify(userCacheService).cacheUser("testuser", userCacheDto);
         }
 
         @Test
-        @DisplayName("login - неверные учетные данные")
-        void login_WhenInvalidCredentials_ThrowsAuthException() {
-                // Arrange
-                LoginRequest request = new LoginRequest("testuser", "wrongpassword");
+        @DisplayName("login - успешный вход с созданием нового refresh token")
+        void login_WhenValidCredentialsAndNoExistingToken_ReturnsJwtResponseWithNewToken() {
+                LoginRequest request = new LoginRequest("testuser", "password123");
 
+                when(securityProperties.isEnableBruteForceProtection()).thenReturn(true);
+                when(loginAttemptService.isAccountLocked("testuser")).thenReturn(false);
                 when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                                .thenThrow(new BadCredentialsException("Bad credentials"));
+                                .thenReturn(authentication);
+                when(jwtGenerator.generateAccessToken(authentication)).thenReturn("accessToken123");
+                when(jwtGenerator.generateRefreshToken("testuser", 1L)).thenReturn("newRefreshToken123");
 
-                // Act & Assert
-                assertThatThrownBy(() -> authService.login(request))
-                                .isInstanceOf(AuthException.class)
-                                .hasMessage("Неверный логин или пароль");
-        }
-
-        @Test
-        @DisplayName("refreshToken - успешное обновление")
-        void refreshToken_WhenValidToken_ReturnsNewTokens() {
-                // Arrange
-                RefreshTokenRequest request = new RefreshTokenRequest("refreshToken123");
-                LocalDateTime futureDate = LocalDateTime.now().plusDays(1);
-
-                refreshToken.setExpiryDate(futureDate);
-
-                when(jwtProvider.validateToken("refreshToken123")).thenReturn(true);
-                when(jwtProvider.getUsernameFromToken("refreshToken123")).thenReturn("testuser");
-                when(jwtProvider.getUserIdFromToken("refreshToken123")).thenReturn(1L);
-                when(refreshTokenRepository.findByToken("refreshToken123")).thenReturn(Optional.of(refreshToken));
-                when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-                when(jwtProvider.generateAccessToken(any(Authentication.class), anyLong(), anySet()))
-                                .thenReturn("newAccessToken123");
-                when(jwtProvider.generateRefreshToken(anyString(), anyLong()))
-                                .thenReturn("newRefreshToken123");
+                when(refreshTokenService.createRefreshToken(testUser, "newRefreshToken123"))
+                                .thenReturn(refreshToken);
+                when(refreshTokenRepository.save(refreshToken)).thenReturn(refreshToken);
                 when(userRepository.save(any(User.class))).thenReturn(testUser);
-                when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(refreshToken);
+                when(userCacheService.convertToCacheDTO(userDetails)).thenReturn(userCacheDto);
+                when(userCacheService.cacheUser("testuser", userCacheDto)).thenReturn(userCacheDto);
 
-                // Act
-                JwtResponse response = authService.refreshToken(request);
+                JwtResponse expectedResponse = JwtResponse.builder()
+                                .accessToken("accessToken123")
+                                .refreshToken("newRefreshToken123")
+                                .username("testuser")
+                                .firstName("Test")
+                                .lastName("User")
+                                .roles(Set.of("USER", "ADMIN"))
+                                .build();
+                when(userMapper.toJwtResponse("accessToken123", "newRefreshToken123", testUser))
+                                .thenReturn(expectedResponse);
 
-                // Assert
+                JwtResponse response = authService.login(request);
+
                 assertThat(response).isNotNull();
-                assertThat(response.getAccessToken()).isEqualTo("newAccessToken123");
+                assertThat(response.getAccessToken()).isEqualTo("accessToken123");
                 assertThat(response.getRefreshToken()).isEqualTo("newRefreshToken123");
 
-                verify(jwtProvider).validateToken("refreshToken123");
-                verify(refreshTokenRepository, times(2)).save(any(RefreshToken.class));
-                verify(userRepository).save(any(User.class));
+                verify(refreshTokenService).createRefreshToken(testUser, "newRefreshToken123");
+                verify(refreshTokenRepository).save(refreshToken);
+                verify(userRepository).save(testUser);
+                assertThat(testUser.getLastLoginAt()).isNotNull();
         }
 
         @Test
-        @DisplayName("refreshToken - невалидный токен")
+        @DisplayName("login - аккаунт заблокирован (brute force protection включена)")
+        void login_WhenAccountLockedAndBruteForceEnabled_ThrowsAuthException() {
+                LoginRequest request = new LoginRequest("testuser", "password123");
+
+                when(securityProperties.isEnableBruteForceProtection()).thenReturn(true);
+                when(loginAttemptService.isAccountLocked("testuser")).thenReturn(true);
+                when(loginAttemptService.getRemainingAttempts("testuser")).thenReturn(0);
+
+                assertThatThrownBy(() -> authService.login(request))
+                                .isInstanceOf(AuthException.class)
+                                .hasMessageContaining("Аккаунт заблокирован");
+
+                verify(authenticationManager, never()).authenticate(any());
+                verify(loginAttemptService, never()).loginSucceeded(anyString());
+                verify(loginAttemptService, never()).loginFailed(anyString());
+        }
+
+        @Test
+        @DisplayName("login - неверные учетные данные (BadCredentialsException)")
+        void login_WhenInvalidCredentials_ThrowsAuthExceptionWithRemainingAttempts() {
+                LoginRequest request = new LoginRequest("testuser", "wrongpassword");
+
+                when(securityProperties.isEnableBruteForceProtection()).thenReturn(true);
+                when(loginAttemptService.isAccountLocked("testuser")).thenReturn(false);
+                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                                .thenThrow(new BadCredentialsException("Bad credentials"));
+                when(loginAttemptService.getRemainingAttempts("testuser")).thenReturn(4);
+
+                assertThatThrownBy(() -> authService.login(request))
+                                .isInstanceOf(AuthException.class)
+                                .hasMessageContaining("Неверный логин или пароль")
+                                .hasMessageContaining("Осталось попыток: 4");
+
+                verify(loginAttemptService).loginFailed("testuser");
+                verify(loginAttemptService, never()).loginSucceeded(anyString());
+        }
+
+        @Test
+        @DisplayName("login - другие AuthenticationException (например, LockedException)")
+        void login_WhenOtherAuthenticationException_ThrowsAuthException() {
+                LoginRequest request = new LoginRequest("testuser", "password123");
+
+                when(securityProperties.isEnableBruteForceProtection()).thenReturn(true);
+                when(loginAttemptService.isAccountLocked("testuser")).thenReturn(false);
+                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                                .thenThrow(new LockedException("Account is locked"));
+
+                assertThatThrownBy(() -> authService.login(request))
+                                .isInstanceOf(AuthException.class)
+                                .hasMessageContaining("Аутентификация провалена");
+
+                verify(loginAttemptService).loginFailed("testuser");
+        }
+
+        @Test
+        @DisplayName("login - brute force protection отключена")
+        void login_WhenBruteForceProtectionDisabled_DoesNotCheckLock() {
+                LoginRequest request = new LoginRequest("testuser", "password123");
+
+                when(securityProperties.isEnableBruteForceProtection()).thenReturn(false);
+                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                                .thenReturn(authentication);
+                when(jwtGenerator.generateAccessToken(authentication)).thenReturn("accessToken123");
+                when(jwtGenerator.generateRefreshToken("testuser", 1L)).thenReturn("newRefreshToken123");
+                when(refreshTokenService.createRefreshToken(testUser, "newRefreshToken123"))
+                                .thenReturn(refreshToken);
+                when(refreshTokenRepository.save(refreshToken)).thenReturn(refreshToken);
+                when(userRepository.save(any(User.class))).thenReturn(testUser);
+                when(userCacheService.convertToCacheDTO(userDetails)).thenReturn(userCacheDto);
+                when(userCacheService.cacheUser("testuser", userCacheDto)).thenReturn(userCacheDto);
+
+                JwtResponse expectedResponse = JwtResponse.builder()
+                                .accessToken("accessToken123")
+                                .refreshToken("newRefreshToken123")
+                                .username("testuser")
+                                .build();
+                when(userMapper.toJwtResponse("accessToken123", "newRefreshToken123", testUser))
+                                .thenReturn(expectedResponse);
+
+                JwtResponse response = authService.login(request);
+
+                assertThat(response).isNotNull();
+                verify(loginAttemptService, never()).isAccountLocked(anyString());
+                verify(loginAttemptService).loginSucceeded("testuser");
+        }
+
+        @Test
+        @DisplayName("refreshToken - успешное обновление с кэшированным пользователем")
+        void refreshToken_WhenValidTokenAndCachedUser_ReturnsNewTokens() {
+                RefreshTokenRequest request = new RefreshTokenRequest("refreshToken123");
+
+                when(jwtValidator.validateToken("refreshToken123")).thenReturn(true);
+                when(jwtParser.getUserId("refreshToken123")).thenReturn(1L);
+                when(refreshTokenService.verifyRefreshToken("refreshToken123")).thenReturn(refreshToken);
+                when(userCacheService.getCachedUserById(1L)).thenReturn(userCacheDto);
+                when(userCacheService.createUserDetailsFromCache(userCacheDto)).thenReturn(userDetails);
+                when(jwtAuthenticationProvider.getAuthenticationFromUserDetails(userDetails, "refreshToken123"))
+                                .thenReturn(authentication);
+                when(jwtGenerator.generateAccessTokenFromUserDetails(userDetails)).thenReturn("newAccessToken123");
+                when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+                JwtResponse expectedResponse = JwtResponse.builder()
+                                .accessToken("newAccessToken123")
+                                .refreshToken("refreshToken123")
+                                .username("testuser")
+                                .build();
+                when(userMapper.toJwtResponse("newAccessToken123", "refreshToken123", testUser))
+                                .thenReturn(expectedResponse);
+
+                JwtResponse response = authService.refreshToken(request);
+
+                assertThat(response).isNotNull();
+                assertThat(response.getAccessToken()).isEqualTo("newAccessToken123");
+                assertThat(response.getRefreshToken()).isEqualTo("refreshToken123");
+
+                verify(userCacheService, never()).cacheUser(anyString(), any());
+                verify(userRepository).save(testUser);
+                assertThat(testUser.getLastLoginAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("refreshToken - успешное обновление без кэшированного пользователя")
+        void refreshToken_WhenValidTokenAndNoCachedUser_LoadsFromDbAndCaches() {
+                RefreshTokenRequest request = new RefreshTokenRequest("refreshToken123");
+
+                when(jwtValidator.validateToken("refreshToken123")).thenReturn(true);
+                when(jwtParser.getUserId("refreshToken123")).thenReturn(1L);
+                when(refreshTokenService.verifyRefreshToken("refreshToken123")).thenReturn(refreshToken);
+
+                when(userCacheService.getCachedUserById(1L)).thenReturn(null);
+                when(userDetailsService.loadUserById(1L)).thenReturn(userDetails);
+                when(userCacheService.convertToCacheDTO(userDetails)).thenReturn(userCacheDto);
+
+                when(jwtAuthenticationProvider.getAuthenticationFromUserDetails(userDetails, "refreshToken123"))
+                                .thenReturn(authentication);
+                when(jwtGenerator.generateAccessTokenFromUserDetails(userDetails)).thenReturn("newAccessToken123");
+                when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+                JwtResponse expectedResponse = JwtResponse.builder()
+                                .accessToken("newAccessToken123")
+                                .refreshToken("refreshToken123")
+                                .username("testuser")
+                                .build();
+                when(userMapper.toJwtResponse("newAccessToken123", "refreshToken123", testUser))
+                                .thenReturn(expectedResponse);
+
+                JwtResponse response = authService.refreshToken(request);
+
+                assertThat(response).isNotNull();
+                verify(userCacheService).cacheUser("testuser", userCacheDto);
+                verify(userDetailsService).loadUserById(1L);
+        }
+
+        @Test
+        @DisplayName("refreshToken - невалидный refresh token")
         void refreshToken_WhenInvalidToken_ThrowsTokenRefreshException() {
-                // Arrange
                 RefreshTokenRequest request = new RefreshTokenRequest("invalidToken");
 
-                when(jwtProvider.validateToken("invalidToken")).thenReturn(false);
+                when(jwtValidator.validateToken("invalidToken")).thenReturn(false);
 
-                // Act & Assert
                 assertThatThrownBy(() -> authService.refreshToken(request))
                                 .isInstanceOf(TokenRefreshException.class)
                                 .hasMessage("Неверный refreshToken");
         }
 
         @Test
-        @DisplayName("refreshToken - токен не найден в БД")
-        void refreshToken_WhenTokenNotFoundInDb_ThrowsTokenRefreshException() {
-                // Arrange
-                RefreshTokenRequest request = new RefreshTokenRequest("refreshToken123");
-
-                when(jwtProvider.validateToken("refreshToken123")).thenReturn(true);
-                when(jwtProvider.getUsernameFromToken("refreshToken123")).thenReturn("testuser");
-                when(jwtProvider.getUserIdFromToken("refreshToken123")).thenReturn(1L);
-                when(refreshTokenRepository.findByToken("refreshToken123")).thenReturn(Optional.empty());
-
-                // Act & Assert
-                assertThatThrownBy(() -> authService.refreshToken(request))
-                                .isInstanceOf(TokenRefreshException.class)
-                                .hasMessage("RefreshToken не найден");
-        }
-
-        @Test
-        @DisplayName("refreshToken - истекший токен")
-        void refreshToken_WhenTokenExpired_ThrowsTokenRefreshException() {
-                // Arrange
-                RefreshTokenRequest request = new RefreshTokenRequest("expiredToken");
-                LocalDateTime pastDate = LocalDateTime.now().minusDays(1);
-
-                refreshToken.setExpiryDate(pastDate);
-
-                when(jwtProvider.validateToken("expiredToken")).thenReturn(true);
-                when(jwtProvider.getUsernameFromToken("expiredToken")).thenReturn("testuser");
-                when(jwtProvider.getUserIdFromToken("expiredToken")).thenReturn(1L);
-                when(refreshTokenRepository.findByToken("expiredToken")).thenReturn(Optional.of(refreshToken));
-
-                // Act & Assert
-                assertThatThrownBy(() -> authService.refreshToken(request))
-                                .isInstanceOf(TokenRefreshException.class)
-                                .hasMessage("RefreshToken истёк");
-        }
-
-        @Test
-        @DisplayName("refreshToken - отозванный токен")
-        void refreshToken_WhenTokenRevoked_ThrowsTokenRefreshException() {
-                // Arrange
-                RefreshTokenRequest request = new RefreshTokenRequest("revokedToken");
-
-                refreshToken.setRevoked(true);
-
-                when(jwtProvider.validateToken("revokedToken")).thenReturn(true);
-                when(jwtProvider.getUsernameFromToken("revokedToken")).thenReturn("testuser");
-                when(jwtProvider.getUserIdFromToken("revokedToken")).thenReturn(1L);
-                when(refreshTokenRepository.findByToken("revokedToken")).thenReturn(Optional.of(refreshToken));
-
-                // Act & Assert
-                assertThatThrownBy(() -> authService.refreshToken(request))
-                                .isInstanceOf(TokenRefreshException.class)
-                                .hasMessage("RefreshToken аннулирован");
-        }
-
-        @Test
         @DisplayName("refreshToken - отключенный аккаунт")
         void refreshToken_WhenUserDisabled_ThrowsTokenRefreshException() {
-                // Arrange
                 RefreshTokenRequest request = new RefreshTokenRequest("refreshToken123");
                 testUser.setEnabled(false);
 
-                when(jwtProvider.validateToken("refreshToken123")).thenReturn(true);
-                when(jwtProvider.getUsernameFromToken("refreshToken123")).thenReturn("testuser");
-                when(jwtProvider.getUserIdFromToken("refreshToken123")).thenReturn(1L);
-                when(refreshTokenRepository.findByToken("refreshToken123")).thenReturn(Optional.of(refreshToken));
-                when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+                when(jwtValidator.validateToken("refreshToken123")).thenReturn(true);
+                when(jwtParser.getUserId("refreshToken123")).thenReturn(1L);
+                when(refreshTokenService.verifyRefreshToken("refreshToken123")).thenReturn(refreshToken);
+                when(userCacheService.getCachedUserById(1L)).thenReturn(userCacheDto);
+                when(userCacheService.createUserDetailsFromCache(userCacheDto)).thenReturn(userDetails);
 
-                // Act & Assert
                 assertThatThrownBy(() -> authService.refreshToken(request))
                                 .isInstanceOf(TokenRefreshException.class)
                                 .hasMessage("Аккаунт отключен");
 
-                // Cleanup
                 testUser.setEnabled(true);
         }
 
         @Test
-        @DisplayName("logout - успешный выход")
-        void logout_WhenValidToken_UpdatesUserAndRevokesToken() {
-                // Arrange
-                when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-                when(refreshTokenRepository.findByToken("refreshToken123")).thenReturn(Optional.of(refreshToken));
-                when(userRepository.save(any(User.class))).thenReturn(testUser);
-                when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(refreshToken);
+        @DisplayName("refreshToken - заблокированный аккаунт")
+        void refreshToken_WhenUserLocked_ThrowsTokenRefreshException() {
+                RefreshTokenRequest request = new RefreshTokenRequest("refreshToken123");
+                testUser.setAccountLocked(true);
+                testUser.setLockTime(LocalDateTime.now().minusMinutes(5));
 
-                // Act
-                authService.logout("refreshToken123");
+                when(jwtValidator.validateToken("refreshToken123")).thenReturn(true);
+                when(jwtParser.getUserId("refreshToken123")).thenReturn(1L);
+                when(refreshTokenService.verifyRefreshToken("refreshToken123")).thenReturn(refreshToken);
+                when(userCacheService.getCachedUserById(1L)).thenReturn(userCacheDto);
+                when(userCacheService.createUserDetailsFromCache(userCacheDto)).thenReturn(userDetails);
 
-                // Assert
-                verify(userRepository).save(any(User.class));
-                verify(refreshTokenRepository).save(refreshToken);
-                assertThat(refreshToken.isRevoked()).isTrue();
+                assertThatThrownBy(() -> authService.refreshToken(request))
+                                .isInstanceOf(TokenRefreshException.class)
+                                .hasMessage("Аккаунт заблокирован");
+
+                testUser.setAccountLocked(false);
+                testUser.setLockTime(null);
         }
 
         @Test
-        @DisplayName("logout - пользователь не найден")
-        void logout_WhenUserNotFound_ThrowsNotFoundException() {
-                // Arrange
-                when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        @DisplayName("refreshToken - пользователь не найден")
+        void refreshToken_WhenUserNotFound_ThrowsNotFoundException() {
+                RefreshTokenRequest request = new RefreshTokenRequest("refreshToken123");
+                when(jwtValidator.validateToken("refreshToken123")).thenReturn(true);
+                when(jwtParser.getUserId("refreshToken123")).thenReturn(1L);
+                when(refreshTokenService.verifyRefreshToken("refreshToken123")).thenReturn(refreshToken);
+                when(userCacheService.getCachedUserById(1L)).thenReturn(null);
+                when(userDetailsService.loadUserById(1L)).thenThrow(new NotFoundException("Пользователь не найден"));
 
-                // Act & Assert
-                assertThatThrownBy(() -> authService.logout("refreshToken123"))
+                assertThatThrownBy(() -> authService.refreshToken(request))
                                 .isInstanceOf(NotFoundException.class)
                                 .hasMessage("Пользователь не найден");
         }
 
         @Test
-        @DisplayName("logout - токен другого пользователя")
-        void logout_WhenTokenBelongsToAnotherUser_LogsWarning() {
-                // Arrange
-                User anotherUser = new User();
-                anotherUser.setId(2L);
-                anotherUser.setUsername("another");
+        @DisplayName("logout - успешный выход из системы")
+        void logout_WhenValidToken_RevokesTokenAndUpdatesUser() {
+                String token = "refreshToken123";
 
-                // Устанавливаем другого пользователя для токена
-                refreshToken.setUser(anotherUser); // ID=2, а не 1!
-
-                when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-                when(refreshTokenRepository.findByToken("refreshToken123")).thenReturn(Optional.of(refreshToken));
+                when(jwtValidator.validateToken(token)).thenReturn(true);
+                when(refreshTokenRepository.findByToken(token)).thenReturn(Optional.of(refreshToken));
                 when(userRepository.save(any(User.class))).thenReturn(testUser);
+                when(refreshTokenRepository.save(refreshToken)).thenReturn(refreshToken);
 
-                // Act
-                authService.logout("refreshToken123");
+                authService.logout(token);
 
-                // Assert
-                // Проверяем, что токен НЕ сохраняется (userId=1, token.userId=2)
-                verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
-                verify(userRepository).save(any(User.class));
+                verify(userRepository).save(testUser);
+                verify(refreshTokenRepository).save(refreshToken);
+                verify(userCacheService).evictUserCache("testuser");
+
+                assertThat(refreshToken.isRevoked()).isTrue();
+                assertThat(testUser.getLastLogoutAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("logout - невалидный refresh token")
+        void logout_WhenInvalidToken_ThrowsTokenRefreshException() {
+                String token = "invalidToken";
+
+                when(jwtValidator.validateToken(token)).thenReturn(false);
+
+                assertThatThrownBy(() -> authService.logout(token))
+                                .isInstanceOf(TokenRefreshException.class)
+                                .hasMessage("Неверный refresh token");
+        }
+
+        @Test
+        @DisplayName("logout - refresh token не найден")
+        void logout_WhenTokenNotFound_ThrowsTokenRefreshException() {
+                String token = "nonexistentToken";
+
+                when(jwtValidator.validateToken(token)).thenReturn(true);
+                when(refreshTokenRepository.findByToken(token)).thenReturn(Optional.empty());
+
+                assertThatThrownBy(() -> authService.logout(token))
+                                .isInstanceOf(TokenRefreshException.class)
+                                .hasMessage("Refresh token не найден");
+        }
+
+        @Test
+        @DisplayName("logout - refresh token уже отозван")
+        void logout_WhenTokenAlreadyRevoked_ThrowsTokenRefreshException() {
+                String token = "revokedToken";
+                refreshToken.setRevoked(true);
+
+                when(jwtValidator.validateToken(token)).thenReturn(true);
+                when(refreshTokenRepository.findByToken(token)).thenReturn(Optional.of(refreshToken));
+
+                assertThatThrownBy(() -> authService.logout(token))
+                                .isInstanceOf(TokenRefreshException.class)
+                                .hasMessage("Refresh token уже отозван");
+
+                refreshToken.setRevoked(false);
+        }
+
+        @Test
+        @DisplayName("logout - истекший refresh token")
+        void logout_WhenTokenExpired_ThrowsTokenRefreshException() {
+                String token = "expiredToken";
+                refreshToken.setExpiryDate(LocalDateTime.now().minusDays(1));
+
+                when(jwtValidator.validateToken(token)).thenReturn(true);
+                when(refreshTokenRepository.findByToken(token)).thenReturn(Optional.of(refreshToken));
+
+                assertThatThrownBy(() -> authService.logout(token))
+                                .isInstanceOf(TokenRefreshException.class)
+                                .hasMessage("Refresh token истек");
+
+                refreshToken.setExpiryDate(LocalDateTime.now().plusDays(7));
+        }
+
+        @Test
+        @DisplayName("logout - исключение при сохранении в БД")
+        void logout_WhenSaveFails_ThrowsRuntimeException() {
+                String token = "refreshToken123";
+
+                when(jwtValidator.validateToken(token)).thenReturn(true);
+                when(refreshTokenRepository.findByToken(token)).thenReturn(Optional.of(refreshToken));
+                when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("DB error"));
+
+                assertThatThrownBy(() -> authService.logout(token))
+                                .isInstanceOf(RuntimeException.class)
+                                .hasMessage("DB error");
+
+                assertThat(refreshToken.isRevoked()).isFalse();
         }
 }

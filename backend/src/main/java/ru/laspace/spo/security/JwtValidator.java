@@ -41,7 +41,6 @@ public class JwtValidator {
                 return false;
             }
 
-            // Проверяем issuer
             if (jwtProperties.getIssuer() != null && !jwtProperties.getIssuer().isEmpty()) {
                 String issuer = claims.getIssuer();
                 if (issuer == null || !issuer.equals(jwtProperties.getIssuer())) {
