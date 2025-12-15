@@ -4,6 +4,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import ru.laspace.spo.entity.Role;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import ru.laspace.spo.dto.request.CreateUserRequest;
 import ru.laspace.spo.dto.request.UpdateUserRolesRequest;
 import ru.laspace.spo.dto.response.UserResponse;
-import ru.laspace.spo.entity.Role;
 import ru.laspace.spo.entity.User;
 import ru.laspace.spo.exception.NotFoundException;
 import ru.laspace.spo.mapper.UserMapper;
@@ -34,6 +37,7 @@ public class AdminServiceImpl implements AdminService {
     private final LoginAttemptService loginAttemptService;
 
     @Override
+    @CacheEvict(value = { "userResponses", "userList" }, allEntries = true)
     public UserResponse createUser(CreateUserRequest request) {
         log.info("Создание пользователя: {} с ролями: {}",
                 request.getUsername(), request.getRoles());
@@ -64,6 +68,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "userList", key = "'allUsers'")
     public List<UserResponse> getAllUsers() {
         log.info("Получение списка всех пользователей");
         return userRepository.findAll().stream()
@@ -73,6 +78,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "userResponses", key = "#id")
     public UserResponse getUserById(Long id) {
         log.info("Получение пользователя по ID: {}", id);
         @SuppressWarnings("null")
@@ -84,6 +90,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "userResponses", key = "#username")
     public UserResponse getUserByUsername(String username) {
         log.info("Получение пользователя по username: {}", username);
         User user = userRepository.findByUsername(username)
@@ -94,6 +101,7 @@ public class AdminServiceImpl implements AdminService {
 
     @SuppressWarnings("null")
     @Override
+    @CacheEvict(value = { "userResponses", "userList" }, allEntries = true)
     public UserResponse updateUserRoles(Long userId, UpdateUserRolesRequest request) {
         log.info("Обновление ролей пользователя ID={}, новые роли: {}",
                 userId, request.getRoles());
@@ -117,6 +125,7 @@ public class AdminServiceImpl implements AdminService {
 
     @SuppressWarnings("null")
     @Override
+    @CacheEvict(value = { "userResponses", "userList" }, allEntries = true)
     public void deleteUser(Long userId) {
         log.info("Удаление пользователя ID={}", userId);
 
@@ -129,6 +138,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @CacheEvict(value = { "userResponses", "userList" }, key = "#userId")
     public UserResponse disableUser(Long userId) {
         log.info("Блокировка пользователя ID={}", userId);
 
@@ -144,6 +154,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @CacheEvict(value = { "userResponses", "userList" }, key = "#userId")
     public UserResponse enableUser(Long userId) {
         log.info("Разблокировка пользователя ID={}", userId);
 
@@ -159,6 +170,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @CacheEvict(value = { "userResponses", "userList" }, key = "#userId")
     public UserResponse unlockUserAccount(Long userId) {
         log.info("Разблокировка аккаунта пользователя ID={}", userId);
 
@@ -174,6 +186,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @CacheEvict(value = { "userResponses", "userList" }, key = "#userId")
     public UserResponse resetUserPassword(Long userId, String newPassword) {
         log.info("Сброс пароля пользователя ID={}", userId);
 
