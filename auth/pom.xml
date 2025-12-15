@@ -8,11 +8,11 @@
 		<version>3.5.8</version>
 		<relativePath/> 
 	</parent>
-	<groupId>ru.laspace.spo</groupId>
-	<artifactId>spo</artifactId>
+	<groupId>ru.laspace</groupId>
+	<artifactId>auth</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>spo</name>
-	<description>The layout of cross-platform special software for automated operation planning of the GGKS "Electro-M" target equipment from the "Electro-M" spacecraft</description>
+	<name>auth</name>
+	<description>Authentication and Authorization Service for the layout of cross-platform special software for automated operation planning of the GGKS "Electro-M" target equipment from the "Electro-M" spacecraft</description>
 	<url/>
 	<licenses>
 		<license/>
