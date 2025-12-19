@@ -1,160 +1,184 @@
 <script lang="ts">
-    import { goto } from '$app/navigation';
+	import { enhance } from "$app/forms";
 
-  let username = '';
-  let password = '';
-  let error = '';
-  let isLoading = false;
-  
-  const API_URL = 'http://localhost:8080/api/auth/login';
-  
-  async function handleLogin(event: Event) {
 
-    event.preventDefault();
-    
-    if (!username || !password) {
-      error = 'Заполните все поля';
-      return;
-    }
-    
-    isLoading = true;
-    error = '';
-    
-    try {
-      console.log('Отправляем данные на бэкенд...');
-      
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          username: username,
-          password: password
-        })
-      });
-      
-      console.log('Статус ответа:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Ошибка ${response.status}: ${errorText}`);
-      }
-      
-      const data = await response.json();
-      console.log('Успешный ответ:', data);
-      
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-      localStorage.setItem('user', JSON.stringify({
-        username: data.username,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        roles: data.roles
-      }));
-      
-      alert(`Добро пожаловать, ${data.firstName} ${data.lastName}!`);
-      
-      username = '';
-      password = '';
-      
-      goto("/dashboard");
-      
-    } catch (err) {
-      console.error('Ошибка входа:', err);
-      error = err.message.includes('401') 
-        ? 'Неверный логин или пароль' 
-        : 'Ошибка соединения с сервером';
-    } finally {
-      isLoading = false;
-    }
-  }
+    let username = $state('');
+    let password = $state('');
+
+    let { 
+        form = {
+        success: undefined,
+        error: undefined,
+        message: undefined,
+        user: undefined
+        }
+    } = $props<{
+        form?: {
+        success?: boolean;
+        error?: string;
+        message?: string;
+        user?: {
+            username: string;
+            firstName: string;
+            lastName: string;
+            roles: string[];
+        };
+        };
+    }>();
 </script>
 
-<div>
-  <h1>Вход в систему</h1>
-  
-  {#if error}
-    <div style="color: red; padding: 10px; background: #fee; border: 1px solid red;">
-      ⚠️ {error}
+<main>
+    <h1 class="main-header">Макет кроссплатформенного программного комплекса оперативного планирования работы
+        целевой аппаратуры ГГКС "Электро-М" с КА "Электро-М" (входящий в состав СПО автоматизированного
+        планирования работы целевой аппаратуры)"
+    </h1>
+    <div class="login-container">
+        <h2>Авторизация в системе</h2>
+        <form method="POST" action="?/login" use:enhance>
+            <div class="form-group">
+                <label for="username">Имя пользователя</label>
+                <input 
+                    type="text"
+                    id="username"
+                    name="username"
+                    bind:value={username}
+                    required
+                    autocomplete="username"
+                    placeholder="Введите логин"
+                    class={form?.error ? 'error' : ''}
+                >
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input 
+                    type="password"
+                    id="password"
+                    name="password"
+                    bind:value={password}
+                    required
+                    autocomplete="current-password"
+                    placeholder="Введите пароль"
+                    class={form?.error ? 'error' : ''}
+                >
+            </div>
+            <button type="submit" class="submit-btn">Войти</button>
+        </form>
+
+        {#if form?.error}
+            <div class="alert error">
+                <strong>Ошибка: </strong>
+                {form?.error}
+            </div>
+        {/if}
+
     </div>
-  {/if}
-  
-  <form on:submit={handleLogin}>
-    <div>
-      <label>Логин:</label>
-      <input
-        type="text"
-        bind:value={username}
-        placeholder="Введите логин"
-        disabled={isLoading}
-      />
-    </div>
-    
-    <div>
-      <label>Пароль:</label>
-      <input
-        type="password"
-        bind:value={password}
-        placeholder="Введите пароль"
-        disabled={isLoading}
-      />
-    </div>
-    
-    <button type="submit" disabled={isLoading}>
-      {#if isLoading}
-        Вход...
-      {:else}
-        Войти
-      {/if}
-    </button>
-  </form>
-  
-  <div>
-    <p>Для теста используй:</p>
-    <p><strong>Логин:</strong> admin</p>
-    <p><strong>Пароль:</strong> admin123</p>
-  </div>
-</div>
+</main>
 
 <style>
-  div {
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-  }
+    main {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        /* background: linear-gradient(135deg, #233481 0%, #667eea 100%); */
+        background: #667eea;
+        padding: 1rem;
+        min-height: 100vh;
+    }
+
+    .login-container {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        min-width: 400px;
+        max-width: 400px;
+    }
+
+    h1 {
+        margin: 0 0 2rem 0;
+        text-align: center;
+        font-size: 1.5rem;
+        width: 80%;
+    }
+
+    h2 {
+        margin: 0 0 1rem 0;
+        color: #333;
+        text-align: center;
+        font-size: 1.3rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
   
-  h1 {
-    text-align: center;
-  }
-  
-  label {
-    display: block;
-    margin: 10px 0 5px;
-  }
-  
-  input {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 15px;
-    box-sizing: border-box;
-  }
-  
-  button {
-    width: 100%;
-    padding: 10px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-  }
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #555;
+        font-weight: 500;
+    }
+    
+    input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+    }
+    
+    input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    input.error {
+        border-color: #dc3545;
+    }
+    
+    .submit-btn {
+        width: 100%;
+        padding: 0.875rem;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-top: 0.5rem;
+    }
+    
+    .submit-btn:hover {
+        background: #5a67d8;
+    }
+    
+    .submit-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .alert {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+    
+    .alert.error {
+        background: #fee;
+        border: 1px solid #fcc;
+        color: #c00;
+    }
+    
+    .alert.success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
 </style>
