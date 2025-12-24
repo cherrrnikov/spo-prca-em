@@ -94,14 +94,14 @@ export const actions = {
                 maxAge: 900
             });
 
-            console.log('Куки установлены, делаю редирект на /profile');
-            throw new RedirectError('redirect:/profile');
+            console.log('Куки установлены, делаю редирект на /schedule');
+            throw new RedirectError('redirect:/schedule');
             
         } catch (error) {
             console.error('Поймано исключение в login action:', error);
             
             if (error instanceof RedirectError) {
-                throw redirect(303, '/profile');
+                throw redirect(303, '/schedule');
             }
             
             if (error instanceof Error && 
@@ -160,7 +160,7 @@ export async function load({ cookies }) {
     const accessToken = cookies.get('access_token');
 
     if (accessToken) {
-        throw redirect(303, '/profile');
+        throw redirect(303, '/schedule');
     }
 
     return {};
