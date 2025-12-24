@@ -7,10 +7,46 @@
     }>();
 
     const HOURS = Array.from({length: 24}, (_, i) => i);
-    const CELL_WIDTH = 70;
+    const MIN_CELL_WIDTH = 40;
+    const MAX_CELL_WIDTH = 70;
     const ROW_HEIGHT = 50;
     const TIME_HEIGHT = 40;
     
+    let containerWidth = $state(0);
+    let cellWidth = $derived(0);
+    let gridContainer = $state<HTMLDivElement>();
+    
+    function updateContainerWidth() {
+        if (gridContainer) {
+            containerWidth = gridContainer.offsetWidth;
+        }
+    }
+    
+    $effect(() => {
+        if (gridContainer) {
+            updateContainerWidth();
+            
+            const resizeObserver = new ResizeObserver(() => {
+                updateContainerWidth();
+            });
+            
+            resizeObserver.observe(gridContainer);
+            
+            return () => {
+                resizeObserver.disconnect();
+            };
+        }
+    });
+    
+    $effect(() => {
+        if (containerWidth > 0) {
+            const availableWidth = containerWidth;
+            const calculatedWidth = availableWidth / 24;
+            
+            cellWidth = Math.max(MIN_CELL_WIDTH, Math.min(calculatedWidth, MAX_CELL_WIDTH));
+        }
+    });
+
     let selectedModes = $state(new Set<string>(workModes.map((m: { id: any; }) => m.id)));
     
     const filteredIntervals = $derived(
@@ -23,7 +59,7 @@
     }
 
     function minutesToPixels(minutes: number): number {
-        return (minutes / 60) * CELL_WIDTH;
+        return (minutes / 60) * cellWidth;
     }
 
     function getIntervalPosition(interval: TimeInterval, modeIndex: number) {
@@ -31,12 +67,12 @@
         const endMinutes = timeToMinutes(interval.endTime);
         const durationMinutes = endMinutes - startMinutes;
 
-        return `
-            left: ${minutesToPixels(startMinutes)}px;
-            width: ${minutesToPixels(durationMinutes)}px;
-            top: ${TIME_HEIGHT + modeIndex * ROW_HEIGHT - 10}px;
-            height: ${ROW_HEIGHT - 10}px;
-        `;
+        return {
+            left: `${minutesToPixels(startMinutes)}px`,
+            width: `${minutesToPixels(durationMinutes)}px`,
+            top: `${TIME_HEIGHT + modeIndex * ROW_HEIGHT - 10}px`,
+            height: `${ROW_HEIGHT - 10}px`
+        };
     }
 
     function getPositionedIntervals() {
@@ -77,11 +113,16 @@
         {/each}
     </div>
     
-    <div class="schedule-grid_container">
-        <!-- Верхняя шкала времени -->
+    <div 
+        class="schedule-grid_container"
+        bind:this={gridContainer}
+    >
         <div class="time-scale top-scale">
             {#each HOURS as hour}
-                <div class="hour-marker" style="left: {hour * CELL_WIDTH}px">
+                <div 
+                    class="hour-marker" 
+                    style="left: {(hour * cellWidth)}px; width: {cellWidth}px"
+                >
                     <div class="hour-label">
                         {hour.toString().padStart(2, '0')}:00
                     </div>
@@ -91,7 +132,10 @@
         
         <div class="time-scale bottom-scale">
             {#each HOURS as hour}
-                <div class="hour-marker" style="left: {hour * CELL_WIDTH}px">
+                <div 
+                    class="hour-marker" 
+                    style="left: {(hour * cellWidth)}px; width: {cellWidth}px"
+                >
                     <div class="hour-label">
                         {hour.toString().padStart(2, '0')}:00
                     </div>
@@ -99,11 +143,18 @@
             {/each}
         </div>
         
-        <div class="grid-area">
+        <div 
+            class="grid-area"
+            style="
+                grid-template-columns: repeat(24, {cellWidth}px); 
+                width: {cellWidth * 24 + 5}px;
+                --cell-width: {cellWidth}px;
+            "
+        >
             {#each getPositionedIntervals() as item}
                 <div 
                     class="interval" 
-                    style={item.position}
+                    style="left: {item.position.left}; width: {item.position.width}; top: {item.position.top}; height: {item.position.height}"
                     title="{item.title || ''} {item.startTime}-{item.endTime}"
                 >
                     <div class="interval-content" style="background: {item.color}; border-color: {item.color}">
@@ -125,43 +176,48 @@
         min-height: 635px;
         background: white;
         padding-right: 40px;
+        overflow-x: auto; 
     }
     
     .time-scale {
         position: absolute;
         height: 40px;
-        width: 100%;
+        width: calc(100% - 1px);
         background: #f8fafc;
         z-index: 20;
+        white-space: nowrap;
     }
     
     .top-scale {
         top: 0;
-        /* border-bottom: 2px solid #4a5568; */
     }
     
     .bottom-scale {
         bottom: 0;
-        /* border-top: 2px solid #4a5568; */
     }
     
     .hour-marker {
         position: absolute;
+        text-align: center;
     }
     
     .hour-label {
-        position: absolute;
-        top: 0px;
-        left: -20px;
-        width: 40px;
+        position: relative;
+        width: 100%;
         text-align: center;
-        font-size: 0.8rem;
+        font-size: clamp(0.7rem, 1vw, 0.85rem); 
         color: #4a5568;
         font-weight: 500;
+        transform: translateX(-50%);
+        pointer-events: none;
     }
     
     .top-scale .hour-label {
         top: 15px;
+    }
+    
+    .bottom-scale .hour-label {
+        bottom: 0;
     }
     
     .modes-container {
@@ -174,27 +230,25 @@
         position: relative;
         width: 91%;
         min-height: 340px;
+        overflow-x: visible;
     }
     
     .grid-area {
         position: absolute;
-        width: 98.4%;
         top: 40px;
         left: 0;
-        right: 0;
         border: 2px solid #4a5568;
         
         display: grid;
-        grid-template-columns: repeat(24, 70px);
         grid-template-rows: repeat(11, 50px);
         
         background-image: 
             repeating-linear-gradient(
                 to right,
                 transparent 0,
-                transparent 69px,
-                #d1d9e6 69px,
-                #d1d9e6 70px
+                transparent calc(var(--cell-width) - 1px),
+                #d1d9e6 calc(var(--cell-width) - 1px),
+                #d1d9e6 var(--cell-width)
             ),
             repeating-linear-gradient(
                 to bottom,
@@ -204,9 +258,9 @@
                 #e2e8f0 50px
             );
         
-        background-size: calc(100% - 20px) calc(100% - 50px);
         background-position: 0 0;
         pointer-events: none;
+        background-size: calc(var(--cell-width) * 24) auto;
     }
     
     .interval {
@@ -217,10 +271,12 @@
         transition: transform 0.2s, box-shadow 0.2s;
         overflow: hidden;
         pointer-events: auto;
+        margin: 0;
+        
+        font-size: clamp(0.65rem, 0.8vw, 0.8rem);
     }
     
     .interval:hover {
-        transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 20;
     }
@@ -230,19 +286,22 @@
         width: 100%;
         border-radius: 4px;
         border: 2px solid;
-        padding: 0.5rem;
+        padding: 0.25rem 0.5rem;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 0.85rem;
         font-weight: 600;
         box-sizing: border-box;
+        overflow: hidden;
     }
     
     .interval-time {
         white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
         text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        max-width: 100%;
     }
     
     .mode-label-container {
@@ -272,8 +331,18 @@
     }
     
     .mode-text {
-        font-size: 0.9rem;
         color: #2d3748;
         font-weight: 600;
+        font-size: clamp(0.65rem, 0.8vw, 0.8rem);
+    }
+    
+    @media (max-width: 768px) {
+        .interval-content {
+            padding: 0.1rem 0.3rem;
+        }
+        
+        .interval-time {
+            font-size: 0.7rem;
+        }
     }
 </style>

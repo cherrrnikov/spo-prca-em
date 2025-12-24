@@ -83,6 +83,7 @@
             const userDataCookie = document.cookie
                 .split('; ')
                 .find(row => row.startsWith('user_data='));
+
             
             if (userDataCookie) {
                 const userDataStr = userDataCookie.split('=')[1];
