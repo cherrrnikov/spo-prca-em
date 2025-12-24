@@ -9,9 +9,9 @@
     const HOURS = Array.from({length: 24}, (_, i) => i);
     const CELL_WIDTH = 70;
     const ROW_HEIGHT = 50;
-    const TIME_HEIGHT = 50;
+    const TIME_HEIGHT = 40;
     
-    let selectedModes = $state(new Set<string>(workModes.map(m => m.id)));
+    let selectedModes = $state(new Set<string>(workModes.map((m: { id: any; }) => m.id)));
     
     const filteredIntervals = $derived(
         intervals.filter((interval: { mode: string; }) => selectedModes.has(interval.mode))
@@ -26,7 +26,7 @@
         return (minutes / 60) * CELL_WIDTH;
     }
 
-    function getIntervalStyle(interval: TimeInterval, modeIndex: number) {
+    function getIntervalPosition(interval: TimeInterval, modeIndex: number) {
         const startMinutes = timeToMinutes(interval.startTime);
         const endMinutes = timeToMinutes(interval.endTime);
         const durationMinutes = endMinutes - startMinutes;
@@ -34,7 +34,7 @@
         return `
             left: ${minutesToPixels(startMinutes)}px;
             width: ${minutesToPixels(durationMinutes)}px;
-            top: ${TIME_HEIGHT + modeIndex * ROW_HEIGHT + 10}px;
+            top: ${TIME_HEIGHT + modeIndex * ROW_HEIGHT - 10}px;
             height: ${ROW_HEIGHT - 10}px;
         `;
     }
@@ -65,7 +65,7 @@
 <div class="schedule-grid">
     <div class="modes-container">
         {#each workModes as mode, i}
-            <div class="mode-label-container" style="top: {TIME_HEIGHT + i * ROW_HEIGHT}px">
+            <div class="mode-label-container" style="top: {1.6 * TIME_HEIGHT + i * ROW_HEIGHT}px">
                 <label class="mode-checkbox">
                     <input 
                         type="checkbox" 
@@ -76,19 +76,20 @@
                 </label>
             </div>
         {/each}
-        
     </div>
-    <div class="schedule-grid_container">
-        <div class="time-scale top-scale">
-        {#each HOURS as hour}
-            <div class="hour-marker" style="left: {hour * CELL_WIDTH}px">
-                <div class="hour-label">
-                    {hour.toString().padStart(2, '0')}:00
-                </div>
-            </div>
-        {/each}
-        </div>
     
+    <div class="schedule-grid_container">
+        <!-- Верхняя шкала времени -->
+        <div class="time-scale top-scale">
+            {#each HOURS as hour}
+                <div class="hour-marker" style="left: {hour * CELL_WIDTH}px">
+                    <div class="hour-label">
+                        {hour.toString().padStart(2, '0')}:00
+                    </div>
+                </div>
+            {/each}
+        </div>
+        
         <div class="time-scale bottom-scale">
             {#each HOURS as hour}
                 <div class="hour-marker" style="left: {hour * CELL_WIDTH}px">
@@ -99,30 +100,21 @@
             {/each}
         </div>
         
-        <div class="vertical-dashed-lines">
-            {#each HOURS.slice(1, 24) as hour}
+        <div class="grid-area">
+            {#each getPositionedIntervals() as item}
                 <div 
-                    class="dashed-line" 
-                    style="left: {hour * CELL_WIDTH}px"
-                ></div>
-            {/each}
-        </div>
-        {#each workModes as mode, i}
-            <div class="mode-line" style="top: {TIME_HEIGHT + i * ROW_HEIGHT + 30}px"></div>
-        {/each}
-        {#each getPositionedIntervals() as item}
-            <div 
-                class="interval" 
-                style={item.position}
-                title="{item.title || ''} {item.startTime}-{item.endTime}"
-            >
-                <div class="interval-content" style="background: {item.color}; border-color: {item.color}">
-                    <div class="interval-time">
-                        {item.startTime} - {item.endTime}
+                    class="interval" 
+                    style={item.position}
+                    title="{item.title || ''} {item.startTime}-{item.endTime}"
+                >
+                    <div class="interval-content" style="background: {item.color}; border-color: {item.color}">
+                        <div class="interval-time">
+                            {item.startTime} - {item.endTime}
+                        </div>
                     </div>
                 </div>
-            </div>
-        {/each}
+            {/each}
+        </div>
     </div>
 </div>
 
@@ -130,8 +122,8 @@
     .schedule-grid {
         display: flex;
         position: relative;
-        width: 100%; /* 120 + 24*72 = 120 + 1728 = 1848 */
-        min-height: 620px; /* 40 + 4*60 = 280px (для 4 режимов) */
+        width: 100%;
+        min-height: 635px;
         background: white;
         padding-right: 40px;
     }
@@ -141,16 +133,17 @@
         height: 40px;
         width: 100%;
         background: #f8fafc;
+        z-index: 20;
     }
     
     .top-scale {
         top: 0;
-        border-bottom: 2px solid #4a5568;
+        /* border-bottom: 2px solid #4a5568; */
     }
     
     .bottom-scale {
         bottom: 0;
-        border-top: 2px solid #4a5568;
+        /* border-top: 2px solid #4a5568; */
     }
     
     .hour-marker {
@@ -172,21 +165,6 @@
         top: 15px;
     }
     
-    .vertical-dashed-lines {
-        position: absolute;
-        top: 40px;
-        bottom: 40px;
-        pointer-events: none;
-    }
-    
-    .dashed-line {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 1px;
-        border-left: 1px dashed #d1d9e6;
-    }
-    
     .modes-container {
         position: relative;
         width: 9%;
@@ -197,6 +175,79 @@
         position: relative;
         width: 91%;
         min-height: 340px;
+    }
+    
+    .grid-area {
+        position: absolute;
+        width: 98.4%;
+        top: 40px;
+        left: 0;
+        right: 0;
+        border: 2px solid #4a5568;
+        
+        display: grid;
+        grid-template-columns: repeat(24, 70px);
+        grid-template-rows: repeat(11, 50px);
+        
+        /* Вертикальные линии через column-gap с псевдоэлементами */
+        background-image: 
+            /* Вертикальные пунктирные линии */
+            repeating-linear-gradient(
+                to right,
+                transparent 0,
+                transparent 69px,
+                #d1d9e6 69px,
+                #d1d9e6 70px
+            ),
+            /* Горизонтальные сплошные линии */
+            repeating-linear-gradient(
+                to bottom,
+                transparent 0,
+                transparent 49px,
+                #e2e8f0 49px,
+                #e2e8f0 50px
+            );
+        
+        /* Убираем фон у последней строки и столбца */
+        background-size: calc(100% - 20px) calc(100% - 50px);
+        background-position: 0 0;
+        pointer-events: none;
+    }
+    
+    .interval {
+        position: absolute;
+        border-radius: 4px;
+        cursor: pointer;
+        z-index: 10;
+        transition: transform 0.2s, box-shadow 0.2s;
+        overflow: hidden;
+        pointer-events: auto;
+    }
+    
+    .interval:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 20;
+    }
+    
+    .interval-content {
+        height: 100%;
+        width: 100%;
+        border-radius: 4px;
+        border: 2px solid;
+        padding: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 600;
+        box-sizing: border-box;
+    }
+    
+    .interval-time {
+        white-space: nowrap;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
     
     .mode-label-container {
@@ -229,61 +280,5 @@
         font-size: 0.9rem;
         color: #2d3748;
         font-weight: 600;
-    }
-    
-    .mode-line {
-        position: absolute;
-        height: 1px;
-        left: 0;
-        width: 100%;
-        background: #e2e8f0;
-        z-index: 1;
-    }
-    
-    .interval {
-        position: absolute;
-        border-radius: 4px;
-        cursor: pointer;
-        z-index: 10;
-        transition: transform 0.2s, box-shadow 0.2s;
-        overflow: hidden;
-    }
-    
-    .interval:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 20;
-    }
-    
-    .interval-content {
-        height: 100%;
-        width: 100%;
-        border-radius: 4px;
-        border: 2px solid;
-        padding: 0.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 0.85rem;
-        font-weight: 600;
-        box-sizing: border-box;
-    }
-    
-    .interval-time {
-        white-space: nowrap;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-    }
-    
-    .solid-line {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 1px;
-        background: #f1f5f9;
-    }
-    
-    .solid-line:nth-child(4n) {
-        background: #e2e8f0;
     }
 </style>
