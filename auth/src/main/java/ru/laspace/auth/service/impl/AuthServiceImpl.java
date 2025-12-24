@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.laspace.auth.config.SecurityProperties;
@@ -56,6 +57,7 @@ public class AuthServiceImpl implements AuthService {
     private final SecurityProperties securityProperties;
     private final UserCacheService userCacheService;
     private final UserDetailsServiceImpl userDetailsService;
+    private final EntityManager entityManager;
 
     @SuppressWarnings("null")
     @Override
@@ -92,6 +94,7 @@ public class AuthServiceImpl implements AuthService {
                     .findAllValidTokensByUser(user.getId())
                     .stream()
                     .filter(token -> token.getExpiryDate().isAfter(LocalDateTime.now()))
+                    .filter(token -> !token.isRevoked())
                     .findFirst();
 
             if (existingToken.isPresent()) {
@@ -175,7 +178,12 @@ public class AuthServiceImpl implements AuthService {
         String sameRefreshToken = storedToken.getToken();
 
         user.setLastLoginAt(LocalDateTime.now());
-        userRepository.save(user);
+
+        entityManager.createQuery(
+                "UPDATE User u SET u.lastLoginAt = :lastLoginAt WHERE u.id = :userId")
+                .setParameter("lastLoginAt", LocalDateTime.now())
+                .setParameter("userId", user.getId())
+                .executeUpdate();
 
         log.debug("Refresh token успешно использован для пользователя ID={}. Выдан новый accessToken", userId);
 

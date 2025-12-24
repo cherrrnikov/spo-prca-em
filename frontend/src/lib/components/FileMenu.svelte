@@ -1,9 +1,14 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
+  import type { UserResponse } from '$lib/types/auth';
 //   import { scheduleIntervals } from '$lib/stores/scheduleStore';
   
   let isOpen = $state(false);
+
+  let {userData} = $props<{
+    userData: UserResponse | null
+  }>();
 
   function handleCreateSchedule() {
     alert('Создание нового ПРЦА');
@@ -28,30 +33,59 @@
       goto('/');
     }
   }
+
+  function handleAdmin() {
+    goto('/admin');
+  }
 </script>
 
 <div class="file-menu">
-  <button class="menu-button" on:click={() => isOpen = !isOpen}>
-    Файл
+  <button class="menu-button" onclick={() => isOpen = !isOpen}>
+    Действия
   </button>
 
   {#if isOpen}
-    <div class="dropdown" on:click|self={() => isOpen = false}>
+    <div class="dropdown">
       <div class="dropdown-content">
-        <button on:click={handleCreateSchedule} class="menu-item">
+        <button onclick={handleCreateSchedule} class="menu-item">
           Создать ПРЦА
         </button>
-        <button on:click={handleSave} class="menu-item">
+        <button onclick={handleSave} class="menu-item">
           Сохранить ПРЦА
         </button>
         <hr />
-        <button on:click={handleExport} class="menu-item">
+        <button onclick={handleExport} class="menu-item">
           Отчет
         </button>
-        <button on:click={handleArchive} class="menu-item">
+        <button onclick={handleArchive} class="menu-item">
           Просмотр архива
         </button>
         <hr />
+                
+        <div class="user-info">
+            {#if userData}
+                <div class="user-details">
+                    <div class="user-name">
+                        {userData.firstName} {userData.lastName}
+                    </div>
+                    <div class="user-meta">
+                        <span class="username">@{userData.username}</span>
+                        {#if userData.roles && userData.roles.length > 0}
+                            <span class="user-role">• {userData.roles[0]}</span>
+                        {/if}
+                    </div>
+                </div>
+            {:else}
+                <div class="user-details">
+                    <div class="user-name">
+                        Не авторизован
+                    </div>
+                </div>
+            {/if}
+        </div>
+        {#if userData?.roles?.includes('ADMIN')}
+            <button onclick={handleAdmin} type="submit" class="menu-item">Панель админа</button>
+        {/if}
         <form method="POST" action="/?/logout" use:enhance>
             <button type="submit" class="menu-item logout">
             Выход
@@ -127,8 +161,43 @@
   }
 
   hr {
-    margin: 0.25rem 0;
+    margin: 0;
     border: none;
     border-top: 1px solid #e2e8f0;
+  }
+  
+  .user-info {
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      gap: 12px;
+  }
+  
+  .user-details {
+      text-align: left;
+  }
+  
+  .user-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #2d3748;
+      line-height: 1.2;
+  }
+  
+  .user-meta {
+      font-size: 0.85rem;
+      color: #718096;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1.2;
+  }
+  
+  .username {
+      font-weight: 500;
+  }
+  
+  .user-role {
+      font-style: italic;
   }
 </style>

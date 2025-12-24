@@ -2,9 +2,11 @@
     import CityLegend from "$lib/components/CityLegend.svelte";
     import FileMenu from "$lib/components/FileMenu.svelte";
     import ScheduleGrid from "$lib/components/ScheduleGrid.svelte";
+    import type { UserResponse } from "$lib/types/auth";
     import { onMount } from "svelte";
 
     let isLoading = $state(true);
+    let userData = $state<UserResponse | null>(null);
 
     const workModes = [
         {id: 'mode_1', label: 'Астрокоррекции', order: 0},
@@ -77,6 +79,34 @@
     ];
 
     onMount(() => {
+        try {
+            const userDataCookie = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('user_data='));
+            
+            if (userDataCookie) {
+                const userDataStr = userDataCookie.split('=')[1];
+                const parsedData = JSON.parse(decodeURIComponent(userDataStr));
+                
+                userData = {
+                    username: parsedData.username,
+                    firstName: parsedData.firstName,
+                    lastName: parsedData.lastName,
+                    enabled: parsedData.enabled !== undefined ? parsedData.enabled : true,
+                    accountLocked: parsedData.accountLocked !== undefined ? parsedData.accountLocked : false,
+                    failedAttempts: parsedData.failedAttempts || 0,
+                    lastLoginAt: parsedData.lastLoginAt,
+                    lastLogoutAt: parsedData.lastLogoutAt || '',
+                    roles: parsedData.roles || []
+                };
+                
+                console.log('User data loaded:', userData);
+            }
+        } catch (error) {
+            console.error('Error parsing user data:', error);
+            userData = null;
+        }
+
         setTimeout(() => {
             isLoading = false;
         }, 300);
@@ -85,8 +115,8 @@
 
 <main class="schedule-page">
     <header class="schedule-header">
-        <FileMenu />
-        <h1>Заголовок</h1>
+        <FileMenu {userData}/>
+        
     </header>
     
     <div class="grid-container">
@@ -103,6 +133,7 @@
     </div>
 
     <footer class="schedule-footer">
+
         <CityLegend {cities}/>
     </footer>
 </main>
@@ -119,7 +150,7 @@
     .schedule-header {
         display: flex;
         align-items: center;
-        padding: 1rem 2rem;
+        padding: 0.5rem 1rem;
         background: white;
         border-bottom: 1px solid #e1e5e9;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -128,7 +159,7 @@
     .schedule-header h1 {
         margin: 0;
         margin-left: 2rem;
-        font-size: 1.5rem;
+        font-size: 1rem;
         color: #2d3748;
     }
     
@@ -156,6 +187,8 @@
         justify-content: end;
         background: white;
         border-top: 1px solid #e1e5e9;
-        padding: 1rem 2rem;
+        padding: 0.5rem 2rem;
     }
+
+
 </style>

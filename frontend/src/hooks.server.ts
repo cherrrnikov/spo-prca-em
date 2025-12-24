@@ -2,7 +2,9 @@ import { isTokenExpiringSoon } from '$lib/utils/jwt';
 import type { Handle } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 
+
 export const handle: Handle = async ({ event, resolve }) => {
+
   const publicRoutes = ['/', '/api/auth/login', '/api/auth/refresh'];
   if (publicRoutes.includes(event.url.pathname)) {
     return await resolve(event);
@@ -10,13 +12,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   const accessToken = event.cookies.get('access_token');
   const refreshToken = event.cookies.get('refresh_token');
+  console.log(`Токены в куках: accessToken=${!!accessToken}, refreshToken=${!!refreshToken}`);
 
-  if (!accessToken && event.url.pathname.startsWith('/profile')) {
+  if (!accessToken && event.url.pathname.startsWith('/schedule')) {
     throw redirect(303, '/');
   }
 
   if (accessToken && refreshToken) {
-    const isExpiringOrExpired = isTokenExpiringSoon(accessToken, 0); 
+    const isExpiringOrExpired = isTokenExpiringSoon(accessToken, 1); 
     
     if (isExpiringOrExpired) {
       try {
@@ -25,8 +28,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         const refreshResponse = await fetch('http://localhost:8080/api/auth/refresh', {
           method: 'POST',
           headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({ refreshToken })
         });
@@ -42,13 +44,13 @@ export const handle: Handle = async ({ event, resolve }) => {
             maxAge: 900
           });
           
-          event.cookies.set('refresh_token', newTokens.refreshToken, {
-            path: '/',
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 604800
-          });
+          // event.cookies.set('refresh_token', newTokens.refreshToken, {
+          //   path: '/',
+          //   httpOnly: true,
+          //   secure: process.env.NODE_ENV === 'production',
+          //   sameSite: 'strict',
+          //   maxAge: 604800
+          // });
 
           const userData = {
             username: newTokens.username,
@@ -80,7 +82,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
   }
 
-  if (accessToken && !refreshToken && event.url.pathname.startsWith('/profile')) {
+  if (accessToken && !refreshToken && event.url.pathname.startsWith('/schedule')) {
 
     console.log('Есть access token, но нет refresh token');
   }

@@ -68,8 +68,7 @@
             <div class="mode-label-container" style="top: {1.6 * TIME_HEIGHT + i * ROW_HEIGHT}px">
                 <label class="mode-checkbox">
                     <input 
-                        type="checkbox" 
-                        checked={selectedModes.has(mode.id)}
+                        type="radio" 
                         on:change={() => toggleMode(mode.id)}
                     />
                     <span class="mode-text">{mode.label}</span>
@@ -189,9 +188,7 @@
         grid-template-columns: repeat(24, 70px);
         grid-template-rows: repeat(11, 50px);
         
-        /* Вертикальные линии через column-gap с псевдоэлементами */
         background-image: 
-            /* Вертикальные пунктирные линии */
             repeating-linear-gradient(
                 to right,
                 transparent 0,
@@ -199,7 +196,6 @@
                 #d1d9e6 69px,
                 #d1d9e6 70px
             ),
-            /* Горизонтальные сплошные линии */
             repeating-linear-gradient(
                 to bottom,
                 transparent 0,
@@ -208,7 +204,6 @@
                 #e2e8f0 50px
             );
         
-        /* Убираем фон у последней строки и столбца */
         background-size: calc(100% - 20px) calc(100% - 50px);
         background-position: 0 0;
         pointer-events: none;
