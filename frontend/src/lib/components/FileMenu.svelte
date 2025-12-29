@@ -2,16 +2,51 @@
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
   import type { UserResponse } from '$lib/types/auth';
+  import { onMount } from 'svelte';
 //   import { scheduleIntervals } from '$lib/stores/scheduleStore';
   
   let isOpen = $state(false);
+  let isSubMenuOpen = $state(false);
+  let menuRef = $state<HTMLDivElement | null>(null);
 
   let {userData} = $props<{
     userData: UserResponse | null
   }>();
 
+  function handleClickOutside(event: MouseEvent) {
+    if (menuRef && !menuRef.contains(event.target as Node)) {
+      isOpen = false;
+      isSubMenuOpen = false;
+    }
+  }
+
+  onMount(() => {
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  });
+
   function handleCreateSchedule() {
-    alert('Создание нового ПРЦА');
+    isSubMenuOpen = true;
+  }
+
+  function handleCreateByAssignment() {
+    alert("Создание ПРЦА по заданию на планирование");
+    isSubMenuOpen = false;
+    isOpen = false;
+  }
+
+  function handleCreateByOperator() {
+    alert("Создание ПРЦА по данным оператора");
+    isSubMenuOpen = false;
+    isOpen = false;
+  }
+
+  function handleCreateByReference() {
+    alert("Создание ПРЦА по опорной ПРЦА");
+    isSubMenuOpen = false;
+    isOpen = false;
   }
 
   function handleSave() {
@@ -37,19 +72,40 @@
   function handleAdmin() {
     goto('/admin');
   }
+
+  function toggleMenu(event: MouseEvent) {
+    event.stopPropagation();
+    isOpen = !isOpen;
+    if (!isOpen) {
+      isSubMenuOpen = false;
+    }
+  }
 </script>
 
-<div class="file-menu">
-  <button class="menu-button" onclick={() => isOpen = !isOpen}>
+<div class="file-menu" bind:this={menuRef}>
+  <button class="menu-button" onclick={toggleMenu}>
     Действия
   </button>
 
   {#if isOpen}
     <div class="dropdown">
       <div class="dropdown-content">
-        <button onclick={handleCreateSchedule} class="menu-item">
+        <div onclick={handleCreateSchedule} class="menu-item with-submenu">
           Создать ПРЦА
-        </button>
+          {#if isSubMenuOpen}
+            <div class="submenu">
+              <button onclick="{handleCreateByAssignment}" class="submenu-item">
+                По заданию на планирование
+              </button>
+              <button onclick="{handleCreateByOperator}" class="submenu-item">
+                По данным оператора
+              </button>
+              <button onclick="{handleCreateByReference}" class="submenu-item">
+                По опорной ПРЦА
+              </button>
+            </div>
+          {/if}
+        </div>
         <button onclick={handleSave} class="menu-item">
           Сохранить ПРЦА
         </button>
@@ -126,6 +182,7 @@
     top: 100%;
     left: 0;
     margin-top: 0.5rem;
+    z-index: 1001;
   }
 
   .dropdown-content {
@@ -133,13 +190,15 @@
     border-radius: 8px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     min-width: 220px;
-    overflow: hidden;
+    overflow: visible;
     border: 1px solid #e2e8f0;
+    position: relative;
   }
 
   .menu-item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 0.75rem;
     width: 100%;
     padding: 0.875rem 1rem;
@@ -150,6 +209,11 @@
     font-size: 0.9rem;
     color: #2d3748;
     transition: background 0.2s;
+    position: relative;
+  }
+
+  .menu-item.with-submenu {
+    position: relative;
   }
 
   .menu-item:hover {
@@ -164,6 +228,47 @@
     margin: 0;
     border: none;
     border-top: 1px solid #e2e8f0;
+  }
+  
+  .arrow-icon {
+    opacity: 0.6;
+    transition: transform 0.2s;
+  }
+  
+  .menu-item.with-submenu:hover .arrow-icon {
+    opacity: 1;
+  }
+  
+  .submenu {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    margin-left: 2px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    min-width: 220px;
+    border: 1px solid #e2e8f0;
+    z-index: 1002;
+  }
+  
+  .submenu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #2d3748;
+    transition: background 0.2s;
+  }
+  
+  .submenu-item:hover {
+    background: #f7fafc;
   }
   
   .user-info {

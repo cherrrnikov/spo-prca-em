@@ -8,8 +8,8 @@
 
     const HOURS = Array.from({length: 24}, (_, i) => i);
     const MIN_CELL_WIDTH = 40;
-    const MAX_CELL_WIDTH = 70;
-    const ROW_HEIGHT = 50;
+    const MAX_CELL_WIDTH = 69;
+    const ROW_HEIGHT = 40;
     const TIME_HEIGHT = 40;
     
     let containerWidth = $state(0);
@@ -70,7 +70,7 @@
         return {
             left: `${minutesToPixels(startMinutes)}px`,
             width: `${minutesToPixels(durationMinutes)}px`,
-            top: `${TIME_HEIGHT + modeIndex * ROW_HEIGHT - 10}px`,
+            top: `${TIME_HEIGHT + modeIndex * ROW_HEIGHT - 15}px`,
             height: `${ROW_HEIGHT - 10}px`
         };
     }
@@ -101,7 +101,7 @@
 <div class="schedule-grid">
     <div class="modes-container">
         {#each workModes as mode, i}
-            <div class="mode-label-container" style="top: {1.6 * TIME_HEIGHT + i * ROW_HEIGHT}px">
+            <div class="mode-label-container" style="top: {1.4 * TIME_HEIGHT + i * ROW_HEIGHT}px">
                 <label class="mode-checkbox">
                     <input 
                         type="radio" 
@@ -171,11 +171,12 @@
 <style>
     .schedule-grid {
         display: flex;
+        justify-content: space-between;
         position: relative;
         width: 100%;
-        min-height: 635px;
+        min-height: 525px;
         background: white;
-        padding-right: 40px;
+        padding-right: 20px;
         overflow-x: auto; 
     }
     
@@ -204,11 +205,11 @@
     .hour-label {
         position: relative;
         width: 100%;
-        text-align: center;
+        text-align: start;
         font-size: clamp(0.7rem, 1vw, 0.85rem); 
         color: #4a5568;
         font-weight: 500;
-        transform: translateX(-50%);
+        /* transform: translateX(-50%); */
         pointer-events: none;
     }
     
@@ -222,13 +223,13 @@
     
     .modes-container {
         position: relative;
-        width: 9%;
+        width: 11%;
         min-height: 340px;
     }
 
     .schedule-grid_container {
         position: relative;
-        width: 91%;
+        width: 89%;
         min-height: 340px;
         overflow-x: visible;
     }
@@ -240,7 +241,7 @@
         border: 2px solid #4a5568;
         
         display: grid;
-        grid-template-rows: repeat(11, 50px);
+        grid-template-rows: repeat(11, 40px);
         
         background-image: 
             repeating-linear-gradient(
@@ -253,9 +254,9 @@
             repeating-linear-gradient(
                 to bottom,
                 transparent 0,
-                transparent 49px,
-                #e2e8f0 49px,
-                #e2e8f0 50px
+                transparent 39px,
+                #e2e8f0 39px,
+                #e2e8f0 40px
             );
         
         background-position: 0 0;
@@ -311,7 +312,7 @@
         height: 50px;
         display: flex;
         align-items: center;
-        padding: 0 1rem;
+        padding: 0 0 0 1rem;
         background: white;
         font-weight: 600;
         color: #2d3748;
@@ -334,15 +335,5 @@
         color: #2d3748;
         font-weight: 600;
         font-size: clamp(0.65rem, 0.8vw, 0.8rem);
-    }
-    
-    @media (max-width: 768px) {
-        .interval-content {
-            padding: 0.1rem 0.3rem;
-        }
-        
-        .interval-time {
-            font-size: 0.7rem;
-        }
     }
 </style>
