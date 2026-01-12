@@ -16,6 +16,8 @@
     let cellWidth = $derived(0);
     let gridContainer = $state<HTMLDivElement>();
     
+    let selectedMode = $state<string | null>(null);
+
     function updateContainerWidth() {
         if (gridContainer) {
             containerWidth = gridContainer.offsetWidth;
@@ -47,10 +49,10 @@
         }
     });
 
-    let selectedModes = $state(new Set<string>(workModes.map((m: { id: any; }) => m.id)));
-    
     const filteredIntervals = $derived(
-        intervals.filter((interval: { mode: string; }) => selectedModes.has(interval.mode))
+        selectedMode 
+            ? intervals.filter((interval: {mode: string;}) => interval.mode === selectedMode)
+            : []
     );
 
     function timeToMinutes(time: string): number {
@@ -76,9 +78,12 @@
     }
 
     function getPositionedIntervals() {
+        if (!selectedMode) return [];
+
+        const modeIndex = workModes.findIndex(m => m.id === selectedMode);
+
         return filteredIntervals
-            .map((interval: { mode: string; }) => {
-                const modeIndex = workModes.findIndex(m => m.id === interval.mode);
+            .map((interval: TimeInterval) => {
                 return {
                     ...interval,
                     modeIndex,
@@ -88,12 +93,8 @@
             .filter((item: { modeIndex: number; }) => item.modeIndex !== -1);
     }
     
-    function toggleMode(modeId: string) {
-        if (selectedModes.has(modeId)) {
-            selectedModes.delete(modeId);
-        } else {
-            selectedModes.add(modeId);
-        }
+    function selectMode(modeId: string) {
+        selectedMode = selectedMode === modeId ? null : modeId;
     }
 
 </script>
@@ -105,7 +106,10 @@
                 <label class="mode-checkbox">
                     <input 
                         type="radio" 
-                        on:change={() => toggleMode(mode.id)}
+                        name="workMode"
+                        value={mode.id}
+                        checked={selectedMode === mode.id}
+                        on:change={() => selectMode(mode.id)}
                     />
                     <span class="mode-text">{mode.label}</span>
                 </label>
