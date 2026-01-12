@@ -9,8 +9,16 @@
   let isSubMenuOpen = $state(false);
   let menuRef = $state<HTMLDivElement | null>(null);
 
-  let {userData} = $props<{
-    userData: UserResponse | null
+  let {
+    userData,
+    onOperatorCreate,
+    onAssignmentCreate,
+    onReferenceCreate
+  } = $props<{
+    userData: UserResponse | null;
+    onOperatorCreate?: () => void;
+    onAssignmentCreate?: () => void;
+    onReferenceCreate?: () => void;
   }>();
 
   function handleClickOutside(event: MouseEvent) {
@@ -32,19 +40,28 @@
   }
 
   function handleCreateByAssignment() {
-    alert("Создание ПРЦА по заданию на планирование");
+    if (onAssignmentCreate) {
+      onAssignmentCreate();
+    }
+
     isSubMenuOpen = false;
     isOpen = false;
   }
 
   function handleCreateByOperator() {
-    alert("Создание ПРЦА по данным оператора");
+    if (onOperatorCreate) {
+      onOperatorCreate();
+    }
+
     isSubMenuOpen = false;
     isOpen = false;
   }
 
   function handleCreateByReference() {
-    alert("Создание ПРЦА по опорной ПРЦА");
+    if (onReferenceCreate) {
+      onReferenceCreate();
+    }
+
     isSubMenuOpen = false;
     isOpen = false;
   }
@@ -143,7 +160,7 @@
             <button onclick={handleAdmin} type="submit" class="menu-item">Панель админа</button>
         {/if}
         <form method="POST" action="/?/logout" use:enhance>
-            <button type="submit" class="menu-item logout">
+            <button onclick={handleLogout} type="submit" class="menu-item logout">
             Выход
             </button>
         </form>

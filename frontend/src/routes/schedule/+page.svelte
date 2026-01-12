@@ -7,18 +7,24 @@
 
     let isLoading = $state(true);
     let userData = $state<UserResponse | null>(null);
+    let creationMode = $state<'operator' | 'assignment' | 'reference' | null>(null);
+
+    let scheduleStatus = $state<'main' | 'corrective'>('main');
+    let selectedDate = $state('');
+    let selectedTime = $state('');
+    let shootingMode = $state<'default' | 'regular'>('default');
+    let msuGsType = $state<'msu_gs_1' | 'msu_gs_2'>('msu_gs_1');
 
     const workModes = [
-        {id: 'mode_1', label: 'Астрокоррекции', order: 0},
+        {id: 'mode_1', label: 'Астрокорр.', order: 0},
         {id: 'mode_2', label: 'Штатные съемки', order: 1},
         {id: 'mode_3', label: 'Учащенные съемки', order: 2},
         {id: 'mode_4', label: 'Распростра. ОМИ', order: 3},
-        {id: 'mode_5', label: 'Ретрансляции МЦИ', order: 4},
-        {id: 'mode_6', label: 'Режимы ТНП', order: 5},
-        {id: 'mode_7', label: 'Калибровки ВД', order: 6},
-        {id: 'mode_8', label: 'Техн. съемки', order: 7},
-        {id: 'mode_9', label: 'Юстировки МСУ ГС', order: 8},
-        {id: 'mode_10', label: 'Юстировки ОНА', order: 9}
+        {id: 'mode_5', label: 'Режимы ТНП', order: 4},
+        {id: 'mode_6', label: 'Калибровки ВД', order: 5},
+        {id: 'mode_7', label: 'Техн. съемки', order: 6},
+        {id: 'mode_8', label: 'Юстировки МСУ ГС', order: 7},
+        {id: 'mode_9', label: 'Юстировки ОНА', order: 8}
     ];
 
     const cities = [
@@ -108,15 +114,211 @@
             userData = null;
         }
 
+        const now = new Date();
+        selectedDate = now.toISOString().split('T')[0];
+        selectedTime = now.toTimeString().substring(0,5);
+
         setTimeout(() => {
             isLoading = false;
         }, 300);
     });
+
+    function startOperatorCreation() {
+        creationMode = 'operator';
+        console.log('Начинаем создание ПРЦА по данным оператора')
+        // будет загрузка данных из ИД06
+    }
+
+    function startAssignmentCreation() {
+        creationMode = 'assignment';
+        console.log('Начинаем создание ПРЦА по заданию на планирование');
+        // Здесь в будущем будет загрузка задания
+    }
+
+    function startReferenceCreation() {
+        creationMode = 'reference';
+        console.log('Начинаем создание ПРЦА по опорной ПРЦА');
+        // Здесь в будущем будет загрузка опорной ПРЦА
+    }
+
+    function cancelCreation() {
+        creationMode = null;
+        // Сброс формы к значениям по умолчанию
+        scheduleStatus = 'main';
+        shootingMode = 'default';
+        msuGsType = 'msu_gs_1';
+    }
+
+
+    function createSchedule() {
+        console.log('Создание ПРЦА с параметрами:', {
+            mode: creationMode,
+            status: scheduleStatus,
+            date: selectedDate,
+            time: selectedTime,
+            shootingMode,
+            msuGsType
+        });
+
+        // Здесь в будущем будет:
+        // 1. Запрос к API для получения данных из ИД06
+        // 2. Обновление intervals новыми данными
+        // 3. Отображение на сетке ScheduleGrid
+        
+        alert(`ПРЦА создана в режиме: ${creationMode}`);
+        creationMode = null;
+        
+        // Пример будущего запроса:
+        /*
+        fetch('/api/schedule/create', {
+            method: 'POST',
+            body: JSON.stringify({
+                creationMode,
+                scheduleStatus,
+                date: selectedDate,
+                time: selectedTime,
+                shootingMode,
+                msuGsType
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Обновляем intervals с данными из БД
+            intervals = data.intervals;
+            creationMode = null;
+        });
+        */
+    }
+
+    function getFormTitle() {
+        switch (creationMode) {
+            case 'operator':
+                return 'Создание ПРЦА по данным оператора';
+            case 'assignment':
+                return 'Создание ПРЦА по заданию на планирование';
+            case 'reference':
+                return 'Создание ПРЦА по опорной ПРЦА';
+            default:
+                return '';
+        }
+    }
 </script>
 
 <main class="schedule-page">
     <header class="schedule-header">
-        <FileMenu {userData}/>
+         {#if creationMode === 'operator'}
+            <div class="creation-form-container">
+                <div class="creation-form-header">
+                    <div class="creation-title">{getFormTitle()}</div>
+                </div>
+                
+                <div class="creation-form">
+                    <div class="form-group">
+                        <label class="form-label">Статус ПРЦА:</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input 
+                                    type="radio" 
+                                    value="main"
+                                    bind:group={scheduleStatus}
+                                />
+                                <span>Основная</span>
+                            </label>
+                            <label class="radio-label">
+                                <input 
+                                    type="radio" 
+                                    value="corrective"
+                                    bind:group={scheduleStatus}
+                                />
+                                <span>Корректирующая</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Дата планирования:</label>
+                        <div class="datetime-inputs">
+                            <input 
+                                type="date" 
+                                bind:value={selectedDate}
+                                class="date-input"
+                            />
+                            <input 
+                                type="time" 
+                                bind:value={selectedTime}
+                                class="time-input"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Штатные съемки:</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input 
+                                    type="radio" 
+                                    value="default"
+                                    bind:group={shootingMode}
+                                />
+                                <span>По умолчанию</span>
+                            </label>
+                            <label class="radio-label">
+                                <input 
+                                    type="radio" 
+                                    value="no_shooting"
+                                    bind:group={shootingMode}
+                                />
+                                <span>Без съемок</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Признак МСУ ГС:</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input 
+                                    type="radio" 
+                                    value="msu_gs_1"
+                                    bind:group={msuGsType}
+                                />
+                                <span>Комплект МСУ ГС 1</span>
+                            </label>
+                            <label class="radio-label">
+                                <input 
+                                    type="radio" 
+                                    value="msu_gs_2"
+                                    bind:group={msuGsType}
+                                />
+                                <span>Комплект МСУ ГС 2</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button 
+                            on:click={createSchedule}
+                            class="create-button"
+                        >
+                            Создать
+                        </button>
+                        <button 
+                            on:click={cancelCreation}
+                            class="cancel-button"
+                        >
+                            Отмена
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {:else}
+            <FileMenu 
+                {userData}
+                onOperatorCreate={startOperatorCreation}
+                onAssignmentCreate={startAssignmentCreation}
+                onReferenceCreate={startReferenceCreation}
+            />
+        {/if}
         
     </header>
     
@@ -186,10 +388,135 @@
     .schedule-footer {
         display: flex;
         justify-content: end;
-        background: white;
-        border-top: 1px solid #e1e5e9;
+        /* background: white;
+        border-top: 1px solid #e1e5e9; */
         padding: 0.5rem 2rem;
     }
 
+    .creation-form-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.75rem;
+    }
 
+    .creation-form-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .creation-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .creation-form {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+        /* background: #f8fafc; */
+        /* padding: 0.75rem 1rem; */
+        border-radius: 6px;
+        /* border: 1px solid #e2e8f0; */
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+        min-width: 180px;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #4a5568;
+        white-space: nowrap;
+    }
+
+    .radio-group {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .radio-label {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: #2d3748;
+    }
+
+    .radio-label input[type="radio"] {
+        margin: 0;
+    }
+
+    .datetime-inputs {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .date-input,
+    .time-input {
+        padding: 0.375rem 0.5rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        background: white;
+    }
+
+    .date-input:hover,
+    .time-input:hover {
+        border-color: #a0aec0;
+    }
+
+    .date-input:focus,
+    .time-input:focus {
+        outline: none;
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-left: auto;
+        align-items: center;
+    }
+
+    .create-button {
+        background: #4299e1;
+        color: white;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: background 0.2s;
+    }
+
+    .create-button:hover {
+        background: #3182ce;
+    }
+
+    .cancel-button {
+        background: #e2e8f0;
+        color: #4a5568;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: background 0.2s;
+    }
+
+    .cancel-button:hover {
+        background: #cbd5e0;
+    }
 </style>

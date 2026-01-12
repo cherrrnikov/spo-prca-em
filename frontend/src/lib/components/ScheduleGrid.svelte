@@ -78,19 +78,19 @@
     }
 
     function getPositionedIntervals() {
-        if (!selectedMode) return [];
-
-        const modeIndex = workModes.findIndex(m => m.id === selectedMode);
-
-        return filteredIntervals
-            .map((interval: TimeInterval) => {
+        return intervals
+            .map((interval: {mode: string}) => {
+                const modeIndex = workModes.findIndex(m => m.id === interval.mode);
+                
+                if (modeIndex === -1) return null;
+                
                 return {
                     ...interval,
                     modeIndex,
                     position: getIntervalPosition(interval, modeIndex)
                 };
             })
-            .filter((item: { modeIndex: number; }) => item.modeIndex !== -1);
+            .filter(item => item !== null);
     }
     
     function selectMode(modeId: string) {
@@ -178,7 +178,7 @@
         justify-content: space-between;
         position: relative;
         width: 100%;
-        min-height: 525px;
+        min-height: 485px;
         background: white;
         padding-right: 20px;
         overflow-x: auto; 
@@ -245,7 +245,7 @@
         border: 2px solid #4a5568;
         
         display: grid;
-        grid-template-rows: repeat(11, 40px);
+        grid-template-rows: repeat(10, 40px);
         
         background-image: 
             repeating-linear-gradient(
