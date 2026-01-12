@@ -1,5 +1,6 @@
 package ru.laspace.auth.service.impl;
 
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheEvict;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.laspace.auth.config.SecurityProperties;
 import ru.laspace.auth.dto.cache.UserCacheDto;
+import ru.laspace.auth.entity.Role;
 import ru.laspace.auth.entity.User;
 import ru.laspace.auth.security.UserDetailsImpl;
 import ru.laspace.auth.security.UserDetailsServiceImpl;
@@ -47,6 +49,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         try {
             UserDetails userDetails = userDetailsService.loadUserById(userId);
             UserDetailsImpl userDetailsImpl = (UserDetailsImpl) userDetails;
+
             return convertToCacheDTO(userDetailsImpl);
         } catch (UsernameNotFoundException e) {
             log.warn("Не удалось загрузить пользователя по ID для кэширования: {}", userId, e);
@@ -91,6 +94,17 @@ public class UserCacheServiceImpl implements UserCacheService {
         user.setAccountLocked(dto.isAccountLocked());
         user.setLockTime(dto.getLockTime());
         user.setLastFailedLogin(dto.getLastFailedLogin());
+
+        if (dto.getRoles() != null && !dto.getRoles().isEmpty()) {
+            Set<Role> roles = dto.getRoles().stream()
+                    .map(roleName -> {
+                        Role role = new Role();
+                        role.setName(roleName);
+                        return role;
+                    })
+                    .collect(Collectors.toSet());
+            user.setRoles(roles);
+        }
 
         return new UserDetailsImpl(user, securityProperties);
     }

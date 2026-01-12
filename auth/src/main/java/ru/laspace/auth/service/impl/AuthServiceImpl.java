@@ -2,12 +2,14 @@ package ru.laspace.auth.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +25,6 @@ import ru.laspace.auth.dto.response.JwtResponse;
 import ru.laspace.auth.entity.RefreshToken;
 import ru.laspace.auth.entity.User;
 import ru.laspace.auth.exception.AuthException;
-import ru.laspace.auth.exception.NotFoundException;
 import ru.laspace.auth.exception.TokenRefreshException;
 import ru.laspace.auth.mapper.UserMapper;
 import ru.laspace.auth.repository.RefreshTokenRepository;
@@ -146,18 +147,44 @@ public class AuthServiceImpl implements AuthService {
 
         RefreshToken storedToken = refreshTokenService.verifyRefreshToken(refreshTokenValue);
 
+        if (storedToken.isRevoked()) {
+            throw new TokenRefreshException("RefreshToken отозван");
+        }
+
+        if (storedToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            throw new TokenRefreshException("RefreshToken истек");
+        }
+
         UserCacheDto cachedUser = userCacheService.getCachedUserById(userId);
         UserDetailsImpl userDetails;
+
         if (cachedUser != null) {
+            log.debug("Использую кэшированного пользователя для refresh");
             userDetails = userCacheService.createUserDetailsFromCache(cachedUser);
+
+            if (userDetails != null) {
+                User userFromCache = userDetails.getUser();
+                log.debug("Кэшированный пользователь: {}", userFromCache.getUsername());
+                log.debug("Кэшированные роли: {}",
+                        userDetails.getAuthorities().stream()
+                                .map(GrantedAuthority::getAuthority)
+                                .collect(Collectors.toList()));
+            }
         } else {
-            userDetails = (UserDetailsImpl) userDetailsService.loadUserById(userId);
+            log.debug("Кэш не найден, загружаю из БД");
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new TokenRefreshException("Пользователь не найден"));
+
+            user.getRoles().size();
+
+            userDetails = new UserDetailsImpl(user, securityProperties);
+
             UserCacheDto newCacheDto = userCacheService.convertToCacheDTO(userDetails);
-            userCacheService.cacheUser(userDetails.getUsername(), newCacheDto);
+            userCacheService.cacheUser(user.getUsername(), newCacheDto);
         }
 
         if (userDetails == null) {
-            throw new NotFoundException("Пользователь не найден");
+            throw new TokenRefreshException("Не удалось загрузить пользователя");
         }
 
         User user = userDetails.getUser();
@@ -170,24 +197,18 @@ public class AuthServiceImpl implements AuthService {
             throw new TokenRefreshException("Аккаунт заблокирован");
         }
 
-        Authentication authentication = jwtAuthenticationProvider.getAuthenticationFromUserDetails(
-                userDetails,
-                refreshTokenValue);
-
         String newAccessToken = jwtGenerator.generateAccessTokenFromUserDetails(userDetails);
-        String sameRefreshToken = storedToken.getToken();
 
         user.setLastLoginAt(LocalDateTime.now());
-
         entityManager.createQuery(
                 "UPDATE User u SET u.lastLoginAt = :lastLoginAt WHERE u.id = :userId")
                 .setParameter("lastLoginAt", LocalDateTime.now())
-                .setParameter("userId", user.getId())
+                .setParameter("userId", userId)
                 .executeUpdate();
 
         log.debug("Refresh token успешно использован для пользователя ID={}. Выдан новый accessToken", userId);
 
-        return userMapper.toJwtResponse(newAccessToken, sameRefreshToken, user);
+        return userMapper.toJwtResponse(newAccessToken, refreshTokenValue, user);
     }
 
     @SuppressWarnings("null")

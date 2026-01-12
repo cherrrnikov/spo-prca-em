@@ -12,11 +12,12 @@ export const handle: Handle = async ({ event, resolve }) => {
   const accessToken = event.cookies.get('access_token');
   const refreshToken = event.cookies.get('refresh_token');
 
-  if (!accessToken && event.url.pathname.startsWith('/schedule')) {
+  if (!refreshToken && event.url.pathname.startsWith('/schedule')) {
+    await cleanupCookies(event.cookies);
     throw redirect(303, '/');
   }
 
-  if (accessToken && refreshToken && isTokenExpiringSoon(accessToken, 1)) {
+  if (accessToken && refreshToken && isTokenExpiringSoon(accessToken, 14)) {
     try {
       console.log('Хук: токен истекает, обновляю автоматически...');
       
