@@ -3,38 +3,24 @@
     import FileMenu from "$lib/components/FileMenu.svelte";
     import ScheduleGrid from "$lib/components/ScheduleGrid.svelte";
     import type { UserResponse } from "$lib/types/auth";
+    import type { TimeInterval, WorkMode } from "$lib/types/schedule";
     import { onMount } from "svelte";
 
+    // Состояние приложения
     let isLoading = $state(true);
     let userData = $state<UserResponse | null>(null);
     let creationMode = $state<'operator' | 'assignment' | 'reference' | null>(null);
-
+    
+    // Параметры формы
     let scheduleStatus = $state<'main' | 'corrective'>('main');
     let selectedDate = $state('');
     let selectedTime = $state('');
     let shootingMode = $state<'default' | 'regular'>('default');
     let msuGsType = $state<'msu_gs_1' | 'msu_gs_2'>('msu_gs_1');
-
-    const workModes = [
-        {id: 'mode_1', label: 'Астрокорр.', order: 0},
-        {id: 'mode_2', label: 'Съемки', order: 1},
-        {id: 'mode_4', label: 'Распр. ОМИ', order: 3},
-        {id: 'mode_5', label: 'Режимы ТНП', order: 4},
-        {id: 'mode_6', label: 'Калибр. ВД', order: 5},
-        {id: 'mode_7', label: 'Техн. съемки', order: 6},
-        {id: 'mode_9', label: 'Юстировки ОНА', order: 8}
-    ];
-
-    const cities = [
-        {id: 'moscow', name: 'Москва', color: '#4299e1'},
-        {id: 'novosibirsk', name: 'Новосибирск', color: '#48bb78'},
-        {id: 'vladivostok', name: 'Владивосток', color: '#ed8936'},
-        {id: 'moscow2', name: 'Москва2', color: '#4399e1'},
-        {id: 'novosibirsk2', name: 'Новосибирск2', color: '#44bb78'},
-        {id: 'vladivostok2', name: 'Владивосток2', color: '#ed8636'}
-    ];
-
-    const intervals = [
+    
+    // Данные с сервера (храним здесь временно)
+    let serverData = $state<any>(null);
+    let intervals = $state<TimeInterval[]>([
         {
             id: '1',
             mode: 'mode_1',
@@ -78,8 +64,27 @@
             endTime: '23:59',
             city: 'novosibirsk',
             color: 'red',
-            title: 'Интервал 4'
+            title: 'Интервал 5'
         }
+    ]);
+
+    const workModes: WorkMode[] = [
+        {id: 'mode_1', label: 'Астрокорр.', order: '0'},
+        {id: 'mode_2', label: 'Съемки', order: '1'},
+        {id: 'mode_4', label: 'Распр. ОМИ', order: '3'},
+        {id: 'mode_5', label: 'Режимы ТНП', order: '4'},
+        {id: 'mode_6', label: 'Калибр. ВД', order: '5'},
+        {id: 'mode_7', label: 'Техн. съемки', order: '6'},
+        {id: 'mode_9', label: 'Юстировки ОНА', order: '8'}
+    ];
+
+    const cities = [
+        {id: 'moscow', name: 'Москва', color: '#4299e1'},
+        {id: 'novosibirsk', name: 'Новосибирск', color: '#48bb78'},
+        {id: 'vladivostok', name: 'Владивосток', color: '#ed8936'},
+        {id: 'moscow2', name: 'Москва2', color: '#4399e1'},
+        {id: 'novosibirsk2', name: 'Новосибирск2', color: '#44bb78'},
+        {id: 'vladivostok2', name: 'Владивосток2', color: '#ed8636'}
     ];
 
     onMount(() => {
@@ -124,32 +129,59 @@
     function startOperatorCreation() {
         creationMode = 'operator';
         console.log('Начинаем создание ПРЦА по данным оператора')
-        // будет загрузка данных из ИД06
     }
 
     function startAssignmentCreation() {
         creationMode = 'assignment';
         console.log('Начинаем создание ПРЦА по заданию на планирование');
-        // Здесь в будущем будет загрузка задания
     }
 
     function startReferenceCreation() {
         creationMode = 'reference';
         console.log('Начинаем создание ПРЦА по опорной ПРЦА');
-        // Здесь в будущем будет загрузка опорной ПРЦА
     }
 
     function cancelCreation() {
         creationMode = null;
-        // Сброс формы к значениям по умолчанию
         scheduleStatus = 'main';
         shootingMode = 'default';
         msuGsType = 'msu_gs_1';
+        serverData = null; 
     }
 
+    async function loadOperatorData() {
+        if (!selectedDate) {
+            alert('Пожалуйста, выберите дату');
+            return;
+        }
 
-    function createSchedule() {
-        console.log('Создание ПРЦА с параметрами:', {
+        console.log('Начинаем загрузку данных...');
+
+        try {
+            const response = await fetch(`/api/schedule/proxy?date=${selectedDate}`);
+            
+            if (!response.ok) {
+                if (response.status === 404) {
+                    alert('Нет данных для выбранной даты');
+                    return;
+                }
+                throw new Error(`Ошибка сервера: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            serverData = data;
+            
+            console.log('Данные успешно получены:', data);
+            alert(`Данные успешно загружены!`);
+            
+        } catch (error) {
+            console.error('Ошибка при загрузке данных:', error);
+            alert('Ошибка при загрузке данных');
+        }
+    }
+
+    async function createSchedule() {
+        console.log('Начинаем создание ПРЦА с параметрами:', {
             mode: creationMode,
             status: scheduleStatus,
             date: selectedDate,
@@ -158,34 +190,22 @@
             msuGsType
         });
 
-        // Здесь в будущем будет:
-        // 1. Запрос к API для получения данных из ИД06
-        // 2. Обновление intervals новыми данными
-        // 3. Отображение на сетке ScheduleGrid
-        
-        alert(`ПРЦА создана в режиме: ${creationMode}`);
-        creationMode = null;
-        
-        // Пример будущего запроса:
-        /*
-        fetch('/api/schedule/create', {
-            method: 'POST',
-            body: JSON.stringify({
-                creationMode,
-                scheduleStatus,
-                date: selectedDate,
-                time: selectedTime,
-                shootingMode,
-                msuGsType
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Обновляем intervals с данными из БД
-            intervals = data.intervals;
-            creationMode = null;
-        });
-        */
+        switch (creationMode) {
+            case 'operator':
+                await loadOperatorData();
+                break;
+                
+            case 'assignment':
+                alert('Создание по заданию на планирование (в разработке)');
+                break;
+                
+            case 'reference':
+                alert('Создание по опорной ПРЦА (в разработке)');
+                break;
+                
+            default:
+                alert('Выберите режим создания ПРЦА');
+        }
     }
 
     function getFormTitle() {
@@ -297,8 +317,9 @@
                         <button 
                             on:click={createSchedule}
                             class="create-button"
+                            disabled={isLoading}
                         >
-                            Создать
+                            {isLoading ? 'Загрузка...' : 'Загрузить данные'}
                         </button>
                         <button 
                             on:click={cancelCreation}
@@ -317,7 +338,6 @@
                 onReferenceCreate={startReferenceCreation}
             />
         {/if}
-        
     </header>
     
     <div class="grid-container">
@@ -334,7 +354,6 @@
     </div>
 
     <footer class="schedule-footer">
-
         <CityLegend {cities}/>
     </footer>
 </main>
@@ -386,8 +405,6 @@
     .schedule-footer {
         display: flex;
         justify-content: end;
-        /* background: white;
-        border-top: 1px solid #e1e5e9; */
         padding: 0.5rem 2rem;
     }
 
@@ -415,10 +432,6 @@
         align-items: center;
         gap: 2rem;
         flex-wrap: wrap;
-        /* background: #f8fafc; */
-        /* padding: 0.75rem 1rem; */
-        border-radius: 6px;
-        /* border: 1px solid #e2e8f0; */
     }
 
     .form-group {
@@ -498,8 +511,13 @@
         transition: background 0.2s;
     }
 
-    .create-button:hover {
+    .create-button:hover:not(:disabled) {
         background: #3182ce;
+    }
+
+    .create-button:disabled {
+        background: #a0aec0;
+        cursor: not-allowed;
     }
 
     .cancel-button {
@@ -516,5 +534,34 @@
 
     .cancel-button:hover {
         background: #cbd5e0;
+    }
+
+    /* Стили для блока с данными */
+    .data-summary {
+        display: flex;
+        gap: 1.5rem;
+        margin-left: auto;
+        padding: 0.5rem 1rem;
+        background: #f7fafc;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .summary-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .summary-item .label {
+        font-size: 0.75rem;
+        color: #718096;
+        font-weight: 500;
+    }
+
+    .summary-item .value {
+        font-size: 0.875rem;
+        color: #2d3748;
+        font-weight: 600;
     }
 </style>
