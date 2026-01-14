@@ -47,4 +47,7 @@ public class ProgramsMode {
 
     @Column(name = "dlit")
     private Integer dlit;
+
+    @Column(name = "zakazchik")
+    private String zakazchik;
 }

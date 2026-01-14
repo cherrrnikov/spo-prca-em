@@ -17,13 +17,11 @@
 
     const workModes = [
         {id: 'mode_1', label: 'Астрокорр.', order: 0},
-        {id: 'mode_2', label: 'Штатные съемки', order: 1},
-        {id: 'mode_3', label: 'Учащенные съемки', order: 2},
-        {id: 'mode_4', label: 'Распростра. ОМИ', order: 3},
+        {id: 'mode_2', label: 'Съемки', order: 1},
+        {id: 'mode_4', label: 'Распр. ОМИ', order: 3},
         {id: 'mode_5', label: 'Режимы ТНП', order: 4},
-        {id: 'mode_6', label: 'Калибровки ВД', order: 5},
+        {id: 'mode_6', label: 'Калибр. ВД', order: 5},
         {id: 'mode_7', label: 'Техн. съемки', order: 6},
-        {id: 'mode_8', label: 'Юстировки МСУ ГС', order: 7},
         {id: 'mode_9', label: 'Юстировки ОНА', order: 8}
     ];
 

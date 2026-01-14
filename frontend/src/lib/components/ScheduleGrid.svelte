@@ -188,7 +188,7 @@
         position: absolute;
         height: 40px;
         width: calc(100% - 1px);
-        background: #f8fafc;
+        /* background: #f8fafc; */
         z-index: 20;
         white-space: nowrap;
     }
