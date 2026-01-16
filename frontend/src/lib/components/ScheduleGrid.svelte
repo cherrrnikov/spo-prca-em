@@ -146,7 +146,7 @@
                 </div>
             {/each}
         </div>
-        
+
         <div 
             class="grid-area"
             style="
@@ -178,7 +178,7 @@
         justify-content: space-between;
         position: relative;
         width: 100%;
-        min-height: 485px;
+        min-height: 410px;
         background: white;
         padding-right: 20px;
         overflow-x: auto; 
@@ -245,7 +245,7 @@
         border: 2px solid #4a5568;
         
         display: grid;
-        grid-template-rows: repeat(10, 40px);
+        grid-template-rows: repeat(8, 40px);
         
         background-image: 
             repeating-linear-gradient(

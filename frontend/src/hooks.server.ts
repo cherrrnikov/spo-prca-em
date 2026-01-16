@@ -17,7 +17,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     throw redirect(303, '/');
   }
 
-  if (accessToken && refreshToken && isTokenExpiringSoon(accessToken, 1)) {
+  if (accessToken && refreshToken && isTokenExpiringSoon(accessToken, 2)) {
     try {
       console.log('Хук: токен истекает, обновляю автоматически...');
       

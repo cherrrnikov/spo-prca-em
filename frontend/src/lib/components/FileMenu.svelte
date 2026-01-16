@@ -12,12 +12,10 @@
   let {
     userData,
     onOperatorCreate,
-    onAssignmentCreate,
     onReferenceCreate
   } = $props<{
     userData: UserResponse | null;
     onOperatorCreate?: () => void;
-    onAssignmentCreate?: () => void;
     onReferenceCreate?: () => void;
   }>();
 
@@ -37,15 +35,6 @@
 
   function handleCreateSchedule() {
     isSubMenuOpen = true;
-  }
-
-  function handleCreateByAssignment() {
-    if (onAssignmentCreate) {
-      onAssignmentCreate();
-    }
-
-    isSubMenuOpen = false;
-    isOpen = false;
   }
 
   function handleCreateByOperator() {
@@ -111,9 +100,6 @@
           Создать ПРЦА
           {#if isSubMenuOpen}
             <div class="submenu">
-              <button onclick="{handleCreateByAssignment}" class="submenu-item">
-                По заданию на планирование
-              </button>
               <button onclick="{handleCreateByOperator}" class="submenu-item">
                 По данным оператора
               </button>
