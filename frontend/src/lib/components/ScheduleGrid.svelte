@@ -1,9 +1,9 @@
 <script lang="ts">
     import type { TimeInterval, WorkMode } from '$lib/types/schedule';
 
-    let { intervals, workModes } = $props<{
+    let { intervals, workModes = [] } = $props<{
         intervals: TimeInterval[];
-        workModes: WorkMode[];
+        workModes?: WorkMode[];
     }>();
 
     const HOURS = Array.from({length: 24}, (_, i) => i);
@@ -51,7 +51,7 @@
 
     const filteredIntervals = $derived(
         selectedMode 
-            ? intervals.filter((interval: {mode: string;}) => interval.mode === selectedMode)
+            ? intervals.filter((interval) => interval.mode === selectedMode)
             : []
     );
 
@@ -78,11 +78,19 @@
     }
 
     function getPositionedIntervals() {
+        if (!workModes || workModes.length === 0) {
+            console.warn('workModes пуст или не определен');
+            return [];
+        }
+        
         return intervals
-            .map((interval: {mode: string}) => {
-                const modeIndex = workModes.findIndex(m => m.id === interval.mode);
+            .map((interval: TimeInterval) => {
+                const modeIndex = workModes.findIndex((m) => m.id === interval.mode);
                 
-                if (modeIndex === -1) return null;
+                if (modeIndex === -1) {
+                    console.warn(`Режим с id "${interval.mode}" не найден в workModes`);
+                    return null;
+                }
                 
                 return {
                     ...interval,
@@ -90,32 +98,40 @@
                     position: getIntervalPosition(interval, modeIndex)
                 };
             })
-            .filter(item => item !== null);
+            .filter((item) => item !== null);
     }
     
     function selectMode(modeId: string) {
         selectedMode = selectedMode === modeId ? null : modeId;
     }
 
+    // Отладочная информация
+    $effect(() => {
+        console.log('Интервалы:', intervals);
+        console.log('Режимы работы:', workModes);
+        console.log('Отфильтрованные интервалы:', filteredIntervals);
+    });
 </script>
 
 <div class="schedule-grid">
-    <div class="modes-container">
-        {#each workModes as mode, i}
-            <div class="mode-label-container" style="top: {1.4 * TIME_HEIGHT + i * ROW_HEIGHT}px">
-                <label class="mode-checkbox">
-                    <input 
-                        type="radio" 
-                        name="workMode"
-                        value={mode.id}
-                        checked={selectedMode === mode.id}
-                        on:change={() => selectMode(mode.id)}
-                    />
-                    <span class="mode-text">{mode.label}</span>
-                </label>
-            </div>
-        {/each}
-    </div>
+    {#if workModes && workModes.length > 0}
+        <div class="modes-container">
+            {#each workModes as mode, i}
+                <div class="mode-label-container" style="top: {1.4 * TIME_HEIGHT + i * ROW_HEIGHT}px">
+                    <label class="mode-checkbox">
+                        <input 
+                            type="radio" 
+                            name="workMode"
+                            value={mode.id}
+                            checked={selectedMode === mode.id}
+                            on:change={() => selectMode(mode.id)}
+                        />
+                        <span class="mode-text">{mode.label}</span>
+                    </label>
+                </div>
+            {/each}
+        </div>
+    {/if}
     
     <div 
         class="schedule-grid_container"
@@ -188,7 +204,6 @@
         position: absolute;
         height: 40px;
         width: calc(100% - 1px);
-        /* background: #f8fafc; */
         z-index: 20;
         white-space: nowrap;
     }
@@ -213,7 +228,6 @@
         font-size: clamp(0.7rem, 1vw, 0.85rem); 
         color: #4a5568;
         font-weight: 500;
-        /* transform: translateX(-50%); */
         pointer-events: none;
     }
     

@@ -1,43 +1,33 @@
 <script lang="ts">
-    import type { Id06KvdDto, Id06TnpDto, Id06TsDto, Ppi, PpiSelectionModal } from "$lib/types/schedule";
+    import type {
+    	Id06KvdDto,
+    	Id06TnpDto,
+    	Id06TsDto,
+    	Ppi,
+    	PpiSelectionModal as PpiModalType
+    } from '$lib/types/schedule';
+    import { ScheduleCreationService } from '../../services/scheduleCreation.service';
 
-    export let modalData: PpiSelectionModal;
-    export let ppiList: Ppi[] = [];
-    export let closeModal: () => void;
-    export let applyPpi: (record: Id06KvdDto | Id06TnpDto | Id06TsDto, ppi: Ppi, applyToAll: boolean) => void;
-
-    // function getDuration(): string {
-    //     if (!modalData.currentRecord) return '';
-        
-    //     const start = new Date(modalData.currentRecord.dn);
-    //     const end = new Date(modalData.currentRecord.dk);
-    //     const durationMs = end.getTime() - start.getTime();
-    //     const minutes = Math.floor(durationMs / (1000 * 60));
-        
-    //     if (minutes < 60) {
-    //         return `${minutes} мин`;
-    //     } else {
-    //         const hours = Math.floor(minutes / 60);
-    //         const remainingMinutes = minutes % 60;
-    //         return `${hours} ч ${remainingMinutes} мин`;
-    //     }
-    // }
+    let {
+        modalData,
+        ppiList = [],
+        closeModal,
+        applyPpi
+    } = $props<{
+        modalData: PpiModalType;
+        ppiList?: Ppi[];
+        closeModal: () => void;
+        applyPpi: (
+            record: Id06KvdDto | Id06TnpDto | Id06TsDto, 
+            ppi: Ppi, 
+            applyToAll: boolean
+        ) => void;
+    }>();
 
     function formatDateTime(dateStr: string): string {
-        try {
-            const date = new Date(dateStr);
-            return date.toLocaleString('ru-RU', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch {
-            return dateStr;
-        }
+        return ScheduleCreationService.formatDateTime(dateStr);
     }
-
+    
     function handleApply() {
         if (modalData.selectedPpi && modalData.currentRecord) {
             applyPpi(modalData.currentRecord, modalData.selectedPpi, false);
@@ -74,10 +64,6 @@
                             <span class="info-label">Время окончания:</span>
                             <span class="info-value">{formatDateTime(modalData.currentRecord?.dk || '')}</span>
                         </div>
-                        <!-- <div class="info-row">
-                            <span class="info-label">Длительность:</span>
-                            <span class="info-value">{getDuration()}</span>
-                        </div> -->
                     </div>
                 </div>
 
@@ -95,7 +81,6 @@
                                 />
                                 <div class="ppi-info">
                                     <span class="ppi-name">{ppi.name}</span>
-                                    <!-- <span class="ppi-code">Код: {ppi.code}</span> -->
                                 </div>
                             </label>
                         {/each}
@@ -118,9 +103,6 @@
                     >
                         Применить для всех записей типа "{modalData.recordTitle}"
                     </button>
-                    <!-- <button class="btn-skip" on:click={closeModal}>
-                        Пропустить (выбрать позже)
-                    </button> -->
                 </div>
             </div>
         </div>
@@ -167,7 +149,7 @@
         font-weight: 600;
     }
 
-    .close-button {
+    .close-button {  
         background: rgba(255, 255, 255, 0.2);
         border: none;
         color: white;
@@ -238,7 +220,6 @@
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 0.75rem;
-        /* margin-bottom: 1.5rem; */
     }
 
     .ppi-item {
@@ -281,18 +262,11 @@
         font-size: 0.95rem;
     }
 
-    /* .ppi-code {
-        color: #718096;
-        font-size: 0.85rem;
-    } */
-
     .modal-actions {
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
-        /* border-top: 1px solid #e2e8f0; */
         padding-top: 1.5rem;
-        /* margin-top: 1.5rem; */
     }
 
     .modal-actions button {
@@ -327,17 +301,6 @@
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
     }
-/* 
-    .btn-skip {
-        background: #f7fafc;
-        color: #718096;
-        border: 1px solid #e2e8f0;
-    }
-
-    .btn-skip:hover {
-        background: #edf2f7;
-        color: #4a5568;
-    } */
 
     button:disabled {
         opacity: 0.5;

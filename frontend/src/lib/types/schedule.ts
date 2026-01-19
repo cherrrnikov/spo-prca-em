@@ -21,6 +21,13 @@ export interface City {
     color: string;
 }
 
+export interface Ppi {
+    id: number;
+    name: string;
+    // code: string;
+    numPpi: number;
+}
+
 export interface Id06MainDto {
     id: number;
     nKa: number;
@@ -96,13 +103,6 @@ export interface OperatorData {
     totalIntervals: number;
 }
 
-export interface Ppi {
-    id: number;
-    name: string;
-    // code: string;
-    numPpi: number;
-}
-
 export interface PpiSelectionModal {
     isOpen: boolean;
     currentRecord: Id06KvdDto | Id06TnpDto | Id06TsDto | null;
@@ -137,19 +137,32 @@ export interface ProgramModeData {
     zakazchik?: string;
     
     kvdData?: {
+        id: number;
+        idMain: number;
+        dn: string;
+        dk: string;
         prMsu: number;
         prBssd: number;
         prZg: number;
     };
     
-    tnpData?: {};
+    tnpData?: {
+        id: number;
+        idMain: number;
+        dn: string;
+        dk: string;
+        dlit: number;
+    };
     
     tsData?: {
+        id: number;
+        idMain: number;
+        dn: string;
+        dk: string;
         tip: number;
         reg: number;
-        dlit: number;
         prMsu1: number;
-        prVdMsu1: number;
+        prVdMsu1: number
         prIkMsu1: number;
         prVd1_1: number;
         prVd2_1: number;
