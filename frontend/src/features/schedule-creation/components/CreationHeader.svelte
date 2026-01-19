@@ -19,8 +19,9 @@
         { id: 10, name: '9 - Москва (НИЦ "Планета")', numPpi: 10 }
     ];
 
-    let { onCancel: onCancelProp } = $props<{
+    let { onCancel: onCancelProp, onDataProcessed } = $props<{
 		onCancel: () => void;
+        onDataProcessed?: (operatorData: OperatorData, ppiAssignments: PpiAssignment[]) => void;
 	}>();
 
     let isLoading = $state(false);
@@ -206,6 +207,10 @@
     }
     
     function handleCancelCreation() {
+        if (operatorData && ppiAssignments.length > 0 && onDataProcessed) {
+            onDataProcessed(operatorData, ppiAssignments);
+        }
+
         scheduleStatus = 'main';
         shootingMode = 'default';
         msuGsType = 'msu_gs_1';

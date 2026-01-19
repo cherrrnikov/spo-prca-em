@@ -1,19 +1,14 @@
-<!-- src/routes/schedule/+page.svelte -->
 <script lang="ts">
     import { onMount } from 'svelte';
     
-    // Компоненты интерфейса
     import CityLegend from '$lib/components/CityLegend.svelte';
     import FileMenu from '$lib/components/FileMenu.svelte';
     import ScheduleGrid from '$lib/components/ScheduleGrid.svelte';
-// Компонент создания ПРЦА
-    import CreationHeader from '../../features/schedule-creation/components/CreationHeader.svelte';
-    
-    // Типы
     import type { UserResponse } from '$lib/types/auth';
-    import type { TimeInterval, WorkMode } from '$lib/types/schedule';
+    import type { OperatorData, PpiAssignment, TimeInterval, WorkMode } from '$lib/types/schedule';
+    import CreationHeader from '../../features/schedule-creation/components/CreationHeader.svelte';
+    import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
     
-    // Конфигурации
     const cities = [
         { id: 'moscow', name: 'Москва', color: '#4299e1' },
         { id: 'novosibirsk', name: 'Новосибирск', color: '#48bb78' },
@@ -33,15 +28,14 @@
         { id: 'mode_7', label: 'Юстировки ОНА', order: '6' }
     ];
     
-    // Состояние страницы
     let userData = $state<UserResponse | null>(null);
     let creationMode = $state<'operator' | 'reference' | null>(null);
     let intervals = $state<TimeInterval[]>([]);
+    let operatorData = $state<OperatorData | null>(null);
+    let ppiAssignments = $state<PpiAssignment[]>([]);
     
-    // Загрузка данных пользователя
     onMount(() => {
         loadUserData();
-        initializeDemoData();
     });
     
     function loadUserData() {
@@ -74,58 +68,6 @@
         }
     }
     
-    function initializeDemoData() {
-        // Демо-данные для графика
-        intervals = [
-            {
-                id: '1',
-                mode: 'mode_1',
-                startTime: '14:00',
-                endTime: '15:30',
-                city: 'moscow',
-                color: '#4299e1',
-                title: 'Интервал 1'
-            },
-            {
-                id: '2',
-                mode: 'mode_2',
-                startTime: '09:00',
-                endTime: '11:00',
-                city: 'novosibirsk',
-                color: '#48bb78',
-                title: 'Интервал 2'
-            },
-            {
-                id: '3',
-                mode: 'mode_3',
-                startTime: '16:00',
-                endTime: '18:00',
-                city: 'vladivostok',
-                color: '#ed8936',
-                title: 'Интервал 3'
-            },
-            {
-                id: '4',
-                mode: 'mode_1',
-                startTime: '17:30',
-                endTime: '17:45',
-                city: 'novosibirsk',
-                color: '#48bb78',
-                title: 'Интервал 4'
-            },
-            {
-                id: '5',
-                mode: 'mode_2',
-                startTime: '23:00',
-                endTime: '23:59',
-                city: 'novosibirsk',
-                color: 'red',
-                title: 'Интервал 5'
-            }
-        ];
-    }
-    
-    // Обработчики создания
     function startOperatorCreation() {
         creationMode = 'operator';
     }
@@ -139,6 +81,23 @@
     function handleCreationCancel() {
         creationMode = null;
     }
+    
+    function updateIntervalsFromOperatorData(
+        newOperatorData: OperatorData,
+        newPpiAssignments: PpiAssignment[]
+    ) {
+        operatorData = newOperatorData;
+        ppiAssignments = newPpiAssignments;
+        
+        const newIntervals = ScheduleCreationService.convertToTimeIntervals(
+            newOperatorData,
+            newPpiAssignments,
+            workModes
+        );
+        
+        console.log('Созданы интервалы для сетки:', newIntervals);
+        intervals = newIntervals;
+    }
 </script>
 
 <main class="schedule-page">
@@ -147,6 +106,7 @@
         {#if creationMode === 'operator'}
             <CreationHeader
                 onCancel={handleCreationCancel}
+                onDataProcessed={updateIntervalsFromOperatorData}
             />
         {:else}
             <FileMenu 

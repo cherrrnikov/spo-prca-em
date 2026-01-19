@@ -2,7 +2,9 @@ import type {
     CreateProgramRequest,
     OperatorData,
     PpiAssignment,
-    ProgramModeData
+    ProgramModeData,
+    TimeInterval,
+    WorkMode
 } from '$lib/types/schedule';
 import type { ScheduleStatus } from '../schedule-creation/types';
 
@@ -246,5 +248,119 @@ export class ScheduleCreationService {
         } catch {
             return dateStr;
         }
+    }
+
+    static convertToTimeIntervals(
+        operatorData: OperatorData,
+        ppiAssignments: PpiAssignment[],
+        workModes: WorkMode[]
+    ): TimeInterval[] {
+        const intervals: TimeInterval[] = [];
+        
+        if (operatorData.kvdList && operatorData.kvdList.length > 0) {
+            operatorData.kvdList.forEach(kvd => {
+                const assignment = ppiAssignments.find(a => 
+                    a.recordId === kvd.id && a.recordType === 'kvd'
+                );
+                
+                if (assignment) {
+                    intervals.push({
+                        id: `kvd_${kvd.id}`,
+                        mode: 'mode_5', // Калибр. ВД
+                        startTime: this.formatTimeFromISO(kvd.dn),
+                        endTime: this.formatTimeFromISO(kvd.dk),
+                        city: this.getCityByPpi(assignment.ppiNum),
+                        color: this.getColorByPpi(assignment.ppiNum),
+                        title: `KVD (ППИ ${assignment.ppiNum})`,
+                        description: `Калибровка ВД, ID: ${kvd.id}`
+                    });
+                }
+            });
+        }
+        
+        if (operatorData.tnpList && operatorData.tnpList.length > 0) {
+            operatorData.tnpList.forEach(tnp => {
+                const assignment = ppiAssignments.find(a => 
+                    a.recordId === tnp.id && a.recordType === 'tnp'
+                );
+                
+                if (assignment) {
+                    intervals.push({
+                        id: `tnp_${tnp.id}`,
+                        mode: 'mode_4', // Режимы ТНП
+                        startTime: this.formatTimeFromISO(tnp.dn),
+                        endTime: this.formatTimeFromISO(tnp.dk),
+                        city: this.getCityByPpi(assignment.ppiNum),
+                        color: this.getColorByPpi(assignment.ppiNum),
+                        title: `TNP (ППИ ${assignment.ppiNum})`,
+                        description: `Режим ТНП, длительность: ${tnp.dlit} сек`
+                    });
+                }
+            });
+        }
+        
+        if (operatorData.tsList && operatorData.tsList.length > 0) {
+            operatorData.tsList.forEach(ts => {
+                const assignment = ppiAssignments.find(a => 
+                    a.recordId === ts.id && a.recordType === 'ts'
+                );
+                
+                if (assignment) {
+                    intervals.push({
+                        id: `ts_${ts.id}`,
+                        mode: 'mode_6', // Техн. съемки
+                        startTime: this.formatTimeFromISO(ts.dn),
+                        endTime: this.formatTimeFromISO(ts.dk),
+                        city: this.getCityByPpi(assignment.ppiNum),
+                        color: this.getColorByPpi(assignment.ppiNum),
+                        title: `TS (ППИ ${assignment.ppiNum})`,
+                        description: `Технологическая съемка, тип: ${ts.tip}, режим: ${ts.reg}`
+                    });
+                }
+            });
+        }
+        
+        return intervals;
+    }
+
+    static formatTimeFromISO(isoString: string): string {
+        try {
+            const date = new Date(isoString);
+            return date.toTimeString().substring(0, 5); 
+        } catch {
+            return "00:00";
+        }
+    }
+
+    static getCityByPpi(ppiNum: number): string {
+        const ppiToCity: Record<number, string> = {
+            1: 'moscow',
+            2: 'novosibirsk',
+            3: 'vladivostok',
+            4: 'moscow2',
+            5: 'novosibirsk2',
+            6: 'vladivostok2',
+            7: 'moscow',
+            8: 'novosibirsk',
+            9: 'vladivostok',
+            10: 'moscow2'
+        };
+        return ppiToCity[ppiNum] || 'moscow';
+    }
+
+    static getColorByPpi(ppiNum: number): string {
+        const ppiToColor: Record<number, string> = {
+            1: '#4299e1',
+            2: '#48bb78',
+            3: '#ed8936', 
+            4: '#9f7aea', 
+            5: '#ed64a6',
+            6: '#38b2ac', 
+            7: '#ecc94b', 
+            8: '#667eea',
+            9: '#f56565', 
+            10: '#a0aec0' 
+        };
+        return ppiToColor[ppiNum] || '#4299e1';
     }
 }
