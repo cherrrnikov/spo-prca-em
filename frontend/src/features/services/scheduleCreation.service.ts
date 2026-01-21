@@ -1,4 +1,5 @@
 import type {
+    CreatedProgramData,
     CreateProgramRequest,
     OperatorData,
     PpiAssignment,
@@ -133,7 +134,7 @@ export class ScheduleCreationService {
                             dk: ts.dk,
                             tip: ts.tip,
                             reg: ts.reg,
-                            dlit: this.calculateDuration(ts.dn, ts.dk),
+                            dlit: this.calculateDuration(ts.dn, ts.dk), 
                             prMsu1: ts.prMsu1,
                             prVdMsu1: ts.prVdMsu1,
                             prIkMsu1: ts.prIkMsu1,
@@ -167,6 +168,9 @@ export class ScheduleCreationService {
             }
         }
         
+        console.log("Подготовленная ПРЦА: ", mainData);
+        console.log("Подготовленные записи режимов ПРЦА: ", modes);
+
         return { mainData, modes };
     }
 
@@ -362,5 +366,29 @@ export class ScheduleCreationService {
             10: '#a0aec0' 
         };
         return ppiToColor[ppiNum] || '#4299e1';
+    }
+
+    static prepareFullProgramData(
+        operatorData: OperatorData,
+        ppiAssignments: PpiAssignment[],
+        createdPrograms: CreatedProgramData[],
+        selectedDate: string,
+        selectedTime: string,
+        scheduleStatus: ScheduleStatus
+    ): CreateProgramRequest {
+        const baseRequest = this.prepareProgramData(
+            operatorData,
+            ppiAssignments,
+            selectedDate,
+            selectedTime,
+            scheduleStatus
+        );
+        
+        // Добавляем созданные вручную режимы
+        createdPrograms.forEach(created => {
+            baseRequest.modes.push(created.modeData);
+        });
+        
+        return baseRequest;
     }
 }

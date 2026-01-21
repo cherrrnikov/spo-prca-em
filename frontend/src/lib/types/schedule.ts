@@ -205,3 +205,48 @@ export interface ProgramCreationState {
     processedRecords: number;
     totalRecords: number;
 }
+
+export interface ModeCreationForm {
+    modeType: 'kvd' | 'tnp' | 'ts' | 's' | 'omi' | 'ona' | 'astr' | null;
+    ppiNum: number;
+    duration: number;
+    customerCode: number;
+    startTime: string;
+    // kvd
+    msu1Vd: number[];
+    msu2Vd: number[];
+    // ts
+    msu1Config: TsMsuConfig;
+    msu2Config: TsMsuConfig;
+}
+
+export interface TsMsuConfig {
+    prMsu: number;
+    prVdMsu: number;
+    prIkMsu: number;
+    vd1: number;
+    vd2: number;
+    vd3: number;
+    ik4: number;
+    ik5: number;
+    ik6: number;
+    ik7: number;
+    ik8: number;
+    ik9: number;
+    ik10: number;
+}
+
+export interface CreatedProgramData {
+    tempId: string; // временный id для отображения
+    modeData: ProgramModeData;
+    timeInterval: TimeInterval; 
+}
+
+export interface ScheduleCreationState {
+    step: 'form' | 'ppi_selection' | 'review' | 'saving';
+    currentRecordType: 'kvd' | 'tnp' | 'ts' | null;
+    currentRecordIndex: number;
+    processedRecords: number;
+    totalRecords: number;
+    createdIntervals: CreatedProgramData[];
+}

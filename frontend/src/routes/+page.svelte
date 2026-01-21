@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 
-
     let username = $state('');
     let password = $state('');
 
