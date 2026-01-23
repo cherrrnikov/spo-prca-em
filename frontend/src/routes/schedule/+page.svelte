@@ -50,6 +50,7 @@
     let intervals = $state<TimeInterval[]>([]);
     let operatorData = $state<OperatorData | null>(null);
     let ppiAssignments = $state<PpiAssignment[]>([]);
+    let operatorDataLoaded = $state(false); // новое состояние
 
     let selectedMode = $state<string | null>(null);
     let createdPrograms = $state<CreatedProgramData[]>([]);
@@ -126,6 +127,10 @@
             userData = null;
         }
     }
+
+    $effect(() => {
+        console.log('creationMode изменился:', creationMode);
+    });
     
     function startOperatorCreation() {
         creationMode = 'operator';
@@ -146,7 +151,10 @@
     ) {
         operatorData = newOperatorData;
         ppiAssignments = newPpiAssignments;
-        
+
+        creationMode = 'operator';
+        operatorDataLoaded = true;
+
         const newIntervals = ScheduleCreationService.convertToTimeIntervals(
             newOperatorData,
             newPpiAssignments,
@@ -157,6 +165,15 @@
     }
 
     function handleModeSelect(modeId: string) {
+        if (!operatorDataLoaded) {
+            console.log("Данные оператора не загружены");
+            return;
+        }
+
+        if (creationMode !== 'operator') {
+            return;
+        }
+
         let formModeType: 'kvd' | 'tnp' | 'ts' | 's' | 'omi' | 'ona' | 'astr' | null = null;
         let defaultDuration = 300;
         
@@ -216,6 +233,15 @@
     }
 
     function handleModeFormSubmit(formData: ModeCreationForm) {
+        if (!operatorDataLoaded) {
+            console.log("Данные оператора не загружены");
+            return;
+        }
+
+        if (creationMode !== 'operator') {
+            return;
+        }
+
         const tempId = `created_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
         const modeData = createProgramModeData(formData, tempId);
@@ -234,6 +260,9 @@
     }
     
    function createProgramModeData(formData: ModeCreationForm, tempId: string): ProgramModeData {
+
+    const mainId = operatorData?.main.id || 0;
+
         const baseData = {
             numRp: 0,
             numKa: operatorData?.main.nKa || 1,
@@ -250,7 +279,7 @@
                 ...baseData,
                 kvdData: {
                     id: 0,
-                    idMain: 0,
+                    idMain: mainId,
                     dn: baseData.dateOn,
                     dk: baseData.dateOff,
                     prMsu: formData.msu1Vd.length > 0 ? 1 : 0,
@@ -263,7 +292,7 @@
                 ...baseData,
                 tsData: {
                     id: 0,
-                    idMain: 0,
+                    idMain: mainId,
                     dn: baseData.dateOn,
                     dk: baseData.dateOff,
                     tip: 1,
@@ -302,7 +331,7 @@
                 ...baseData,
                 tnpData: {
                     id: 0,
-                    idMain: 0,
+                    idMain: mainId,
                     dn: baseData.dateOn,
                     dk: baseData.dateOff,
                     dlit: formData.duration
@@ -408,12 +437,13 @@
     
     function handleModeFormCancel() {
         selectedMode = null;
+        operatorDataLoaded = false;
     }
 </script>
 
 <main class="schedule-page">
     <header class="schedule-header">
-        {#if creationMode === 'operator'}
+        {#if creationMode === 'operator' && !operatorDataLoaded}
             <CreationHeader
                 onCancel={handleCreationCancel}
                 onDataProcessed={updateIntervalsFromOperatorData}

@@ -90,7 +90,15 @@
         
         const stats = ScheduleCreationService.getAssignmentStatistics(operatorData, ppiAssignments);
         
-        handleCancelCreation();
+        completePpiSelection();
+    }
+
+    function completePpiSelection() {
+        if (operatorData && ppiAssignments.length > 0 && onDataProcessed) {
+            onDataProcessed(operatorData, ppiAssignments);
+        }
+        
+        resetFormState();
     }
     
     async function processRecordBatch(
@@ -106,7 +114,6 @@
             );
             
             if (existingAssignment) {
-                console.log(`ППИ уже выбран для ${recordType.toUpperCase()} записи ${record.id}`);
                 continue;
             }
             
@@ -195,9 +202,9 @@
     }
     
     function handleCancelCreation() {
-        if (operatorData && ppiAssignments.length > 0 && onDataProcessed) {
-            onDataProcessed(operatorData, ppiAssignments);
-        }
+        // if (operatorData && ppiAssignments.length > 0 && onDataProcessed) {
+        //     onDataProcessed(operatorData, ppiAssignments);
+        // }
 
         scheduleStatus = 'main';
         shootingMode = 'default';
@@ -209,6 +216,16 @@
         
         // Это вызовет onCancel в +page.svelte и вернет FileMenu
         onCancelProp?.();
+    }
+
+    function resetFormState() {
+        // Просто сбрасываем состояние формы, но не вызываем onCancel
+        scheduleStatus = 'main';
+        shootingMode = 'default';
+        msuGsType = 'msu_gs_1';
+        // НЕ сбрасываем operatorData и ppiAssignments - они нужны!
+        ppiModal.isOpen = false;
+        isLoading = false;
     }
 </script>
 
