@@ -19,13 +19,18 @@
     import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
 
     const cities = [
-        { id: 'moscow', name: 'Москва', color: '#4299e1' },
-        { id: 'novosibirsk', name: 'Новосибирск', color: '#48bb78' },
-        { id: 'vladivostok', name: 'Владивосток', color: '#ed8936' },
-        { id: 'moscow2', name: 'Москва2', color: '#4399e1' },
-        { id: 'novosibirsk2', name: 'Новосибирск2', color: '#44bb78' },
-        { id: 'vladivostok2', name: 'Владивосток2', color: '#ed8636' }
+        { id: 'obninsk', name: 'Обнинск', color: '#f4fc0a' },
+        { id: 'dolgoprudniy', name: 'Долгопрудный', color: '#b80afc' },
+        { id: 'novosibirsk', name: 'Новосибирск', color: '#0afcf4' },
+        { id: 'khabarovsk', name: 'Хабаровск', color: '#593315' },
+        { id: 'baykonur', name: 'Байконур', color: '#152359' },
+        { id: 'khanty-mansiysk', name: 'Ханты-Мансийск', color: '#78866b' },
+        { id: 'zheleznogorsk', name: 'Железногорск', color: '#6110b3' },
+        { id: 'ulan-ude', name: 'Улан-Удэ', color: '#6197c9' },
+        { id: 'moscow-omz', name: 'Москва (НЦ ОМЗ)', color: '#1a5216' },
+        { id: 'moscow-planeta', name: 'Москва (ФГБУ НИЦ "Планета")', color: '#24f016' }
     ];
+
     
     const workModes: WorkMode[] = [
         { id: 'mode_1', label: 'Астрокорр.', order: '0' },
@@ -128,9 +133,121 @@
         }
     }
 
-    $effect(() => {
-        console.log('creationMode изменился:', creationMode);
-    });
+    function checkIntervalOverlap(
+        newStartTime: string,
+        newDuration: number,
+        modeId: string
+    ): { overlaps: boolean; conflictingInterval?: TimeInterval } {
+        const newEndTime = calculateEndTime(newStartTime, newDuration);
+        const newStartMinutes = timeToMinutes(newStartTime);
+        const newEndMinutes = timeToMinutes(newEndTime);
+        
+        const allIntervals = [
+            ...intervals,
+            ...(operatorData ? 
+                ScheduleCreationService.convertToTimeIntervals(operatorData, ppiAssignments, workModes) : 
+                [])
+        ];
+        
+        for (const interval of allIntervals) {
+            if (interval.mode !== modeId) {
+                continue;
+            }
+            
+            const existingStartMinutes = timeToMinutes(interval.startTime);
+            const existingEndMinutes = timeToMinutes(interval.endTime);
+            
+            const overlaps = (
+                (newStartMinutes >= existingStartMinutes && newStartMinutes < existingEndMinutes) ||
+                (newEndMinutes > existingStartMinutes && newEndMinutes <= existingEndMinutes) ||
+                (newStartMinutes <= existingStartMinutes && newEndMinutes >= existingEndMinutes)
+            );
+            
+            if (overlaps) {
+                return { 
+                    overlaps: true, 
+                    conflictingInterval: interval 
+                };
+            }
+        }
+        
+        return { overlaps: false };
+    }
+    
+    function timeToMinutes(time: string): number {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+    }
+    
+    function findAvailableTimeSlot(
+        duration: number,
+        modeId: string
+    ): { startTime: string; available: boolean } | null {
+        const dayStart = 0; // 00:00
+        const dayEnd = 24 * 60; // 24:00
+
+        const allIntervals = [
+        ...intervals,
+        ...(operatorData ? 
+            ScheduleCreationService.convertToTimeIntervals(operatorData, ppiAssignments, workModes) : 
+            [])
+    ];
+        
+        const modeIntervals = allIntervals.filter(interval => interval.mode === modeId);
+        
+        if (modeIntervals.length === 0) {
+            // Если нет интервалов, возвращаем начало дня
+            return {
+                startTime: '00:00',
+                available: true
+            };
+        }
+        
+        // Сортируем интервалы по времени начала
+        const sortedIntervals = [...modeIntervals].sort((a, b) => 
+            timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+        );
+        
+        // Проверяем окно от начала дня до первого интервала
+        const firstIntervalStart = timeToMinutes(sortedIntervals[0].startTime);
+        if (firstIntervalStart >= duration) {
+            return {
+                startTime: minutesToTime(0),
+                available: true
+            };
+        }
+        
+        // Проверяем окна между интервалами
+        for (let i = 0; i < sortedIntervals.length - 1; i++) {
+            const currentEnd = timeToMinutes(sortedIntervals[i].endTime);
+            const nextStart = timeToMinutes(sortedIntervals[i + 1].startTime);
+            const gap = nextStart - currentEnd;
+            
+            if (gap >= duration) {
+                return {
+                    startTime: sortedIntervals[i].endTime,
+                    available: true
+                };
+            }
+        }
+        
+        // Проверяем окно после последнего интервала
+        const lastIntervalEnd = timeToMinutes(sortedIntervals[sortedIntervals.length - 1].endTime);
+        if (dayEnd - lastIntervalEnd >= duration) {
+            return {
+                startTime: sortedIntervals[sortedIntervals.length - 1].endTime,
+                available: true
+            };
+        }
+        
+        return null;
+    }
+    
+    function minutesToTime(minutes: number): string {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    }
     
     function startOperatorCreation() {
         creationMode = 'operator';
@@ -239,6 +356,21 @@
         }
 
         if (creationMode !== 'operator') {
+            return;
+        }
+
+        const modeId = getModeIdForInterval(formData.modeType!);
+        const overlapCheck = checkIntervalOverlap(
+            formData.startTime, 
+            formData.duration, 
+            modeId
+        );
+        
+        if (overlapCheck.overlaps) {
+            const conflicting = overlapCheck.conflictingInterval;
+            alert(`Ошибка: интервал пересекается с существующим интервалом\n` +
+                  `Время конфликта: ${conflicting?.startTime} - ${conflicting?.endTime}\n` +
+                  `Попробуйте выбрать другое время или уменьшить длительность.`);
             return;
         }
 
@@ -437,7 +569,7 @@
     
     function handleModeFormCancel() {
         selectedMode = null;
-        operatorDataLoaded = false;
+        // operatorDataLoaded = false;
     }
 </script>
 

@@ -354,16 +354,16 @@ export class ScheduleCreationService {
 
     static getColorByPpi(ppiNum: number): string {
         const ppiToColor: Record<number, string> = {
-            1: '#4299e1',
-            2: '#48bb78',
-            3: '#ed8936', 
-            4: '#9f7aea', 
-            5: '#ed64a6',
-            6: '#38b2ac', 
-            7: '#ecc94b', 
-            8: '#667eea',
-            9: '#f56565', 
-            10: '#a0aec0' 
+            1: '#f4fc0a',
+            2: '#b80afc',
+            3: '#0afcf4', 
+            4: '#593315', 
+            5: '#152359',
+            6: '#78866b', 
+            7: '#6110b3', 
+            8: '#6197c9',
+            9: '#1a5216', 
+            10: '#24f016' 
         };
         return ppiToColor[ppiNum] || '#4299e1';
     }

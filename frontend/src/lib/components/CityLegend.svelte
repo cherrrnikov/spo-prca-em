@@ -24,13 +24,13 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    max-width: 30rem;
+    max-width: 40%;
   }
 
   .cities-list {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 0.5rem;
     flex-wrap: wrap;
   }
 
