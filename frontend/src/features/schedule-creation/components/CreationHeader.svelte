@@ -57,14 +57,6 @@
             return;
         }
 
-        console.log('Начинаем создание ПРЦА с параметрами:', {
-            scheduleStatus,
-            selectedDate,
-            selectedTime,
-            shootingMode,
-            msuGsType
-        });
-
         isLoading = true;
 
         try {
@@ -95,10 +87,8 @@
             await processRecordBatch(operatorData.tsList, 'ts', 'Технологическая съемка');
         }
         
-        console.log('Все ППИ выбраны. Возвращаемся к меню.');
         
         const stats = ScheduleCreationService.getAssignmentStatistics(operatorData, ppiAssignments);
-        console.log('Статистика выбора ППИ:', stats);
         
         handleCancelCreation();
     }
@@ -173,10 +163,8 @@
                 addPpiAssignment(rec.id, ppiModal.recordType!, ppi);
             });
             
-            console.log(`Применен ППИ ${ppi.numPpi} для всех ${records.length} записей типа ${ppiModal.recordType}`);
         } else {
             addPpiAssignment(record.id, ppiModal.recordType!, ppi);
-            console.log(`Применен ППИ ${ppi.numPpi} для записи ${record.id} типа ${ppiModal.recordType}`);
         }
         
         ppiModal.isOpen = false;

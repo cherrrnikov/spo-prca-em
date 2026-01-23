@@ -275,7 +275,7 @@ export class ScheduleCreationService {
                         endTime: this.formatTimeFromISO(kvd.dk),
                         city: this.getCityByPpi(assignment.ppiNum),
                         color: this.getColorByPpi(assignment.ppiNum),
-                        title: `KVD (ППИ ${assignment.ppiNum})`,
+                        title: `Калибровка ВД (ППИ ${assignment.ppiNum})`,
                         description: `Калибровка ВД, ID: ${kvd.id}`
                     });
                 }
@@ -296,7 +296,7 @@ export class ScheduleCreationService {
                         endTime: this.formatTimeFromISO(tnp.dk),
                         city: this.getCityByPpi(assignment.ppiNum),
                         color: this.getColorByPpi(assignment.ppiNum),
-                        title: `TNP (ППИ ${assignment.ppiNum})`,
+                        title: `ТНП (ППИ ${assignment.ppiNum})`,
                         description: `Режим ТНП, длительность: ${tnp.dlit} сек`
                     });
                 }
@@ -317,7 +317,7 @@ export class ScheduleCreationService {
                         endTime: this.formatTimeFromISO(ts.dk),
                         city: this.getCityByPpi(assignment.ppiNum),
                         color: this.getColorByPpi(assignment.ppiNum),
-                        title: `TS (ППИ ${assignment.ppiNum})`,
+                        title: `Техн. съёмка (ППИ ${assignment.ppiNum})`,
                         description: `Технологическая съемка, тип: ${ts.tip}, режим: ${ts.reg}`
                     });
                 }
@@ -384,7 +384,6 @@ export class ScheduleCreationService {
             scheduleStatus
         );
         
-        // Добавляем созданные вручную режимы
         createdPrograms.forEach(created => {
             baseRequest.modes.push(created.modeData);
         });

@@ -1,6 +1,29 @@
 <script lang="ts">
 	import type { ModeCreationForm, TsMsuConfig } from "$lib/types/schedule";
 
+    // Используем объекты с методами для изменения значений
+    let msu1Vd = $state({ 
+        vd1: false, 
+        vd2: false, 
+        vd3: false 
+    });
+    
+    let msu1Ik = $state({
+        ik4: false, ik5: false, ik6: false, ik7: false,
+        ik8: false, ik9: false, ik10: false
+    });
+    
+    let msu2Vd = $state({ 
+        vd1: false, 
+        vd2: false, 
+        vd3: false 
+    });
+    
+    let msu2Ik = $state({
+        ik4: false, ik5: false, ik6: false, ik7: false,
+        ik8: false, ik9: false, ik10: false
+    });
+
     export const customerCodes = [
         { value: 1, label: '01 - Заказчик 1'},
         { value: 2, label: '02 - Заказчик 2'},
@@ -74,21 +97,20 @@
 
     $effect(() => {
         if (selectedMode) {
-            // Преобразуем modeId в formModeType для всех режимов
             let formModeType: 'kvd' | 'tnp' | 'ts' | 's' | 'omi' | 'ona' | 'astr' | null = null;
             
             switch(selectedMode) {
                 case 'mode_1': // Астрокорр.
                     formModeType = 'astr';
-                    formData.duration = 300; // дефолтная длительность
+                    formData.duration = 300; 
                     break;
                 case 'mode_2': // Съемки
                     formModeType = 's';
-                    formData.duration = 420; // дефолтная длительность съемки
+                    formData.duration = 420; 
                     break;
                 case 'mode_3': // Распр. ОМИ
                     formModeType = 'omi';
-                    formData.duration = 60; // дефолтная длительность
+                    formData.duration = 60; 
                     break;
                 case 'mode_4': // Режимы ТНП
                     formModeType = 'tnp';
@@ -104,7 +126,7 @@
                     break;
                 case 'mode_7': // Юстировки ОНА
                     formModeType = 'ona';
-                    formData.duration = 60; // дефолтная длительность
+                    formData.duration = 60; 
                     break;
                 default:
                     console.warn('Unknown mode selected:', selectedMode);
@@ -112,37 +134,133 @@
             }
             
             formData.modeType = formModeType;
+            
+            // СБРАСЫВАЕМ СОСТОЯНИЯ ЧЕКБОКСОВ ПРИ СМЕНЕ РЕЖИМА
+            if (formModeType !== 'kvd' && formModeType !== 'ts') {
+                // Сбрасываем объекты чекбоксов
+                msu1Vd = { vd1: false, vd2: false, vd3: false };
+                msu2Vd = { vd1: false, vd2: false, vd3: false };
+                msu1Ik = {
+                    ik4: false, ik5: false, ik6: false, ik7: false,
+                    ik8: false, ik9: false, ik10: false
+                };
+                msu2Ik = {
+                    ik4: false, ik5: false, ik6: false, ik7: false,
+                    ik8: false, ik9: false, ik10: false
+                };
+                
+                // Сбрасываем данные в formData
+                formData.msu1Vd = [];
+                formData.msu2Vd = [];
+                
+                // Сбрасываем конфигурации
+                formData.msu1Config = {
+                    prMsu: 0,
+                    prVdMsu: 0,
+                    prIkMsu: 0,
+                    vd1: 0,
+                    vd2: 0,
+                    vd3: 0,
+                    ik4: 0,
+                    ik5: 0,
+                    ik6: 0,
+                    ik7: 0,
+                    ik8: 0,
+                    ik9: 0,
+                    ik10: 0
+                };
+                formData.msu2Config = {
+                    prMsu: 0,
+                    prVdMsu: 0,
+                    prIkMsu: 0,
+                    vd1: 0,
+                    vd2: 0,
+                    vd3: 0,
+                    ik4: 0,
+                    ik5: 0,
+                    ik6: 0,
+                    ik7: 0,
+                    ik8: 0,
+                    ik9: 0,
+                    ik10: 0
+                };
+            }
         }
     });
 
     function handleVdCheckbox(msu: 'msu1' | 'msu2', vdNumber: 1 | 2 | 3) {
-        const array = msu === 'msu1' ? formData.msu1Vd : formData.msu2Vd;
-
-        const index = array.indexOf(vdNumber);
-
-        if (index === -1) {
-            if (msu === 'msu1') {
-                formData.msu1Vd = [...array, vdNumber];
-            } else {
-                formData.msu2Vd = [...array, vdNumber];
-            }
+        const vdKey = `vd${vdNumber}` as keyof typeof msu1Vd;
+        
+        if (msu === 'msu1') {
+            msu1Vd[vdKey] = !msu1Vd[vdKey];
+            const newArray: number[] = [];
+            
+            if (msu1Vd.vd1) newArray.push(1);
+            if (msu1Vd.vd2) newArray.push(2);
+            if (msu1Vd.vd3) newArray.push(3);
+            
+            formData.msu1Vd = newArray;
+            
+            formData.msu1Config.prMsu = newArray.length > 0 ? 1 : 0;
         } else {
-            if (msu === 'msu1') {
-                formData.msu1Vd = array.filter(v => v !== vdNumber);
-            } else {
-                formData.msu2Vd = array.filter(v => v !== vdNumber);
-            }
+            msu2Vd[vdKey] = !msu2Vd[vdKey];
+            const newArray: number[] = [];
+            
+            if (msu2Vd.vd1) newArray.push(1);
+            if (msu2Vd.vd2) newArray.push(2);
+            if (msu2Vd.vd3) newArray.push(3);
+            
+            formData.msu2Vd = newArray;
+            
+            formData.msu2Config.prMsu = newArray.length > 0 ? 1 : 0;
         }
     }
 
-    function handleTsCheckbox(config: 'msu1' | 'msu2', field: keyof TsMsuConfig) {
-        const configObj = config === 'msu1' ? formData.msu1Config : formData.msu2Config;
-        (configObj as any)[field] = (configObj as any)[field] === 1 ? 0 : 1;
-        
-        if (config === 'msu1') {
-            formData.msu1Config = { ...configObj };
+    function handleTsCheckbox(type: 'vd' | 'ik', msu: 'msu1' | 'msu2', number: number) {
+        if (type === 'vd') {
+            const vdKey = `vd${number}` as keyof typeof msu1Vd;
+            
+            if (msu === 'msu1') {
+                msu1Vd[vdKey] = !msu1Vd[vdKey];
+                formData.msu1Config[`vd${number}` as keyof TsMsuConfig] = msu1Vd[vdKey] ? 1 : 0;
+
+                const hasAnyVd = msu1Vd.vd1 || msu1Vd.vd2 || msu1Vd.vd3;
+                formData.msu1Config.prVdMsu = hasAnyVd ? 1 : 0;
+                
+                const hasAnyIk = Object.values(msu1Ik).some(v => v);
+                formData.msu1Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
+            } else {
+                msu2Vd[vdKey] = !msu2Vd[vdKey];
+                formData.msu2Config[`vd${number}` as keyof TsMsuConfig] = msu2Vd[vdKey] ? 1 : 0;
+                
+                const hasAnyVd = msu2Vd.vd1 || msu2Vd.vd2 || msu2Vd.vd3;
+                formData.msu2Config.prVdMsu = hasAnyVd ? 1 : 0;
+                
+                const hasAnyIk = Object.values(msu2Ik).some(v => v);
+                formData.msu2Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
+            }
         } else {
-            formData.msu2Config = { ...configObj };
+            const ikKey = `ik${number}` as keyof typeof msu1Ik;
+            
+            if (msu === 'msu1') {
+                msu1Ik[ikKey] = !msu1Ik[ikKey];
+                formData.msu1Config[`ik${number}` as keyof TsMsuConfig] = msu1Ik[ikKey] ? 1 : 0;
+                
+                const hasAnyIk = Object.values(msu1Ik).some(v => v);
+                formData.msu1Config.prIkMsu = hasAnyIk ? 1 : 0;
+                
+                const hasAnyVd = msu1Vd.vd1 || msu1Vd.vd2 || msu1Vd.vd3;
+                formData.msu1Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
+            } else {
+                msu2Ik[ikKey] = !msu2Ik[ikKey];
+                formData.msu2Config[`ik${number}` as keyof TsMsuConfig] = msu2Ik[ikKey] ? 1 : 0;
+                
+                const hasAnyIk = Object.values(msu2Ik).some(v => v);
+                formData.msu2Config.prIkMsu = hasAnyIk ? 1 : 0;
+                
+                const hasAnyVd = msu2Vd.vd1 || msu2Vd.vd2 || msu2Vd.vd3;
+                formData.msu2Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
+            }
         }
     }
 
@@ -151,17 +269,18 @@
             alert('Укажите время начала и длительность');
             return;
         }
+        console.log('Отправляем данные:', formData);
         onSubmit(formData);
     }
 
     function isVdSelected(msu: 'msu1' | 'msu2', vdNumber: 1 | 2 | 3): boolean {
-        const array = msu === 'msu1' ? formData.msu1Vd : formData.msu2Vd;
-        return array.includes(vdNumber);
+        const vdKey = `vd${vdNumber}` as keyof typeof msu1Vd;
+        return msu === 'msu1' ? msu1Vd[vdKey] : msu2Vd[vdKey];
     }
 
-    function isTsSelected(config: 'msu1' | 'msu2', field: keyof TsMsuConfig): boolean {
-        const configObj = config === 'msu1' ? formData.msu1Config : formData.msu2Config;
-        return (configObj as any)[field] === 1;
+    function isIkSelected(msu: 'msu1' | 'msu2', ikNumber: 4 | 5 | 6 | 7 | 8 | 9 | 10): boolean {
+        const ikKey = `ik${ikNumber}` as keyof typeof msu1Ik;
+        return msu === 'msu1' ? msu1Ik[ikKey] : msu2Ik[ikKey];
     }
 </script>
 
@@ -171,7 +290,6 @@
     </div>
 
     <div class="form-content">
-        <!-- 1. ППИ -->
         <div class="form-section">
             <h4>Пункт приёма информации (ППИ)</h4>
             <div class="form-group">
@@ -183,7 +301,6 @@
             </div>
         </div>
 
-        <!-- 2. Комплекты МСУ (если есть) -->
         {#if selectedMode === 'mode_5'}
             <div class="form-section">
                 <h4>Комплект МСУ-ГС 1</h4>
@@ -192,7 +309,7 @@
                         <label class="checkbox-label">
                             <input 
                                 type="checkbox"
-                                checked={isVdSelected('msu1', vd as 1 | 2 | 3)}
+                                checked={msu1Vd[`vd${vd}` as keyof typeof msu1Vd]}
                                 on:change={() => handleVdCheckbox('msu1', vd as 1 | 2 | 3)}
                             />
                             <span>ВД{vd}</span>
@@ -208,7 +325,7 @@
                         <label class="checkbox-label">
                             <input 
                                 type="checkbox"
-                                checked={isVdSelected('msu2', vd as 1 | 2 | 3)}
+                                checked={msu2Vd[`vd${vd}` as keyof typeof msu2Vd]}
                                 on:change={() => handleVdCheckbox('msu2', vd as 1 | 2 | 3)}
                             />
                             <span>ВД{vd}</span>
@@ -225,8 +342,8 @@
                             <label class="checkbox-label">
                                 <input 
                                     type="checkbox"
-                                    checked={isTsSelected('msu1', `vd${vd}` as any)}
-                                    on:change={() => handleTsCheckbox('msu1', `vd${vd}` as any)}
+                                    checked={msu1Vd[`vd${vd}` as keyof typeof msu1Vd]}
+                                    on:change={() => handleTsCheckbox('vd', 'msu1', vd)}
                                 />
                                 <span>ВД{vd}</span>
                             </label>
@@ -238,8 +355,8 @@
                             <label class="checkbox-label">
                                 <input 
                                     type="checkbox"
-                                    checked={isTsSelected('msu1', `ik${ik}` as any)}
-                                    on:change={() => handleTsCheckbox('msu1', `ik${ik}` as any)}
+                                    checked={msu1Ik[`ik${ik}` as keyof typeof msu1Ik]}
+                                    on:change={() => handleTsCheckbox('ik', 'msu1', ik)}
                                 />
                                 <span>ИК{ik}</span>
                             </label>
@@ -256,8 +373,8 @@
                             <label class="checkbox-label">
                                 <input 
                                     type="checkbox"
-                                    checked={isTsSelected('msu2', `vd${vd}` as any)}
-                                    on:change={() => handleTsCheckbox('msu2', `vd${vd}` as any)}
+                                    checked={msu2Vd[`vd${vd}` as keyof typeof msu2Vd]}
+                                    on:change={() => handleTsCheckbox('vd', 'msu2', vd)}
                                 />
                                 <span>ВД{vd}</span>
                             </label>
@@ -269,8 +386,8 @@
                             <label class="checkbox-label">
                                 <input 
                                     type="checkbox"
-                                    checked={isTsSelected('msu2', `ik${ik}` as any)}
-                                    on:change={() => handleTsCheckbox('msu2', `ik${ik}` as any)}
+                                    checked={msu2Ik[`ik${ik}` as keyof typeof msu2Ik]}
+                                    on:change={() => handleTsCheckbox('ik', 'msu2', ik)}
                                 />
                                 <span>ИК{ik}</span>
                             </label>
@@ -280,7 +397,6 @@
             </div>
         {/if}
 
-        <!-- 3. Основные параметры -->
         <div class="form-section">
             <h4>Основные параметры</h4>
             <div class="form-grid">
@@ -312,7 +428,7 @@
                     />
                 </div>
             </div>
-        </div>
+        </div>  
     </div>
 
     <div class="form-actions">

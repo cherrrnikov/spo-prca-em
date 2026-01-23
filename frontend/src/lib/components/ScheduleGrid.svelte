@@ -90,16 +90,9 @@
         
         return intervals
             .map((interval: TimeInterval) => {
-                console.log('🔍 Processing interval:', {
-                    id: interval.id,
-                    mode: interval.mode,
-                    title: interval.title
-                }); // Добавь эту строку для отладки
-                
                 const modeIndex = workModes.findIndex((m) => m.id === interval.mode);
                 
                 if (modeIndex === -1) {
-                    console.warn(`❌ Режим с id "${interval.mode}" не найден в workModes. Available:`, workModes.map(m => ({id: m.id, label: m.label})));
                     return null;
                 }
                 
@@ -113,20 +106,11 @@
     }
     
     function selectMode(modeId: string) {
-        console.log('📝 ScheduleGrid: selectMode called with:', modeId);
-        
         selectedMode = selectedMode === modeId ? null : modeId;
         const modeToSend = selectedMode || modeId;
         
-        console.log('📤 ScheduleGrid: sending to parent:', modeToSend);
         onModeSelect?.(modeToSend);
     }
-
-    $effect(() => {
-        console.log('Интервалы:', intervals);
-        console.log('Режимы работы:', workModes);
-        console.log('Отфильтрованные интервалы:', filteredIntervals);
-    });
 </script>
 
 <div class="schedule-grid">

@@ -133,7 +133,6 @@
     
     function startReferenceCreation() {
         creationMode = 'reference';
-        console.log('Начинаем создание ПРЦА по опорной ПРЦА');
         alert('Создание по опорной ПРЦА (в разработке)');
     }
     
@@ -154,7 +153,6 @@
             workModes
         );
         
-        console.log('Созданы интервалы для сетки:', newIntervals);
         intervals = newIntervals;
     }
 
@@ -176,53 +174,52 @@
         }
         
         selectedMode = modeId;
-        currentFormData = {
-            modeType: formModeType,
-            ppiNum: 1,
-            duration: defaultDuration,
-            customerCode: 5,
-            startTime: '10:00',
-            msu1Vd: [],
-            msu2Vd: [],
-            msu1Config: {
-                prMsu: 0,
-                prVdMsu: 0,
-                prIkMsu: 0,
-                vd1: 0,
-                vd2: 0,
-                vd3: 0,
-                ik4: 0,
-                ik5: 0,
-                ik6: 0,
-                ik7: 0,
-                ik8: 0,
-                ik9: 0,
-                ik10: 0
-            },
-            msu2Config: {
-                prMsu: 0,
-                prVdMsu: 0,
-                prIkMsu: 0,
-                vd1: 0,
-                vd2: 0,
-                vd3: 0,
-                ik4: 0,
-                ik5: 0,
-                ik6: 0,
-                ik7: 0,
-                ik8: 0,
-                ik9: 0,
-                ik10: 0
-            }
-        };
         
+        currentFormData.modeType = formModeType;
+        currentFormData.duration = defaultDuration;
+        currentFormData.ppiNum = 1;
+        currentFormData.customerCode = 5;
+        currentFormData.startTime = '10:00';
+        currentFormData.msu1Vd = [];
+        currentFormData.msu2Vd = [];
+        
+        currentFormData.msu1Config = {
+            prMsu: 0,
+            prVdMsu: 0,
+            prIkMsu: 0,
+            vd1: 0,
+            vd2: 0,
+            vd3: 0,
+            ik4: 0,
+            ik5: 0,
+            ik6: 0,
+            ik7: 0,
+            ik8: 0,
+            ik9: 0,
+            ik10: 0
+        };
+        currentFormData.msu2Config = {
+            prMsu: 0,
+            prVdMsu: 0,
+            prIkMsu: 0,
+            vd1: 0,
+            vd2: 0,
+            vd3: 0,
+            ik4: 0,
+            ik5: 0,
+            ik6: 0,
+            ik7: 0,
+            ik8: 0,
+            ik9: 0,
+            ik10: 0
+        };
     }
 
     function handleModeFormSubmit(formData: ModeCreationForm) {
         const tempId = `created_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
         const modeData = createProgramModeData(formData, tempId);
-        
+        console.log('Создан новый интервал с данными:', modeData);
         const timeInterval = createTimeInterval(formData, tempId);
         
         createdPrograms = [...createdPrograms, {
@@ -234,7 +231,6 @@
         intervals = [...intervals, timeInterval];
         
         selectedMode = null;
-        
     }
     
    function createProgramModeData(formData: ModeCreationForm, tempId: string): ProgramModeData {
