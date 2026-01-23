@@ -135,9 +135,7 @@
             
             formData.modeType = formModeType;
             
-            // СБРАСЫВАЕМ СОСТОЯНИЯ ЧЕКБОКСОВ ПРИ СМЕНЕ РЕЖИМА
             if (formModeType !== 'kvd' && formModeType !== 'ts') {
-                // Сбрасываем объекты чекбоксов
                 msu1Vd = { vd1: false, vd2: false, vd3: false };
                 msu2Vd = { vd1: false, vd2: false, vd3: false };
                 msu1Ik = {
@@ -149,11 +147,9 @@
                     ik8: false, ik9: false, ik10: false
                 };
                 
-                // Сбрасываем данные в formData
                 formData.msu1Vd = [];
                 formData.msu2Vd = [];
                 
-                // Сбрасываем конфигурации
                 formData.msu1Config = {
                     prMsu: 0,
                     prVdMsu: 0,

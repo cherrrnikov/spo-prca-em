@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ru.laspace.backend.dto.schedule.Id06DataResponse;
+import ru.laspace.backend.dto.id06.Id06DataResponse;
 import ru.laspace.backend.service.ScheduleDataService;
 
 @Slf4j
