@@ -1,12 +1,16 @@
 <script lang="ts">
-    import type { TimeInterval, WorkMode } from '$lib/types/schedule';
+    import type { ShadowInterval, TimeInterval, WorkMode, ZasvetkaInterval } from '$lib/types/schedule';
     
     let {
         intervals,
+        shadowIntervals = [],
+        zasvetkaIntervals = [],
         workModes = [],
         onModeSelect
     } = $props<{
         intervals: TimeInterval[];
+        shadowIntervals?: ShadowInterval[];
+        zasvetkaIntervals?: ZasvetkaInterval[];
         workModes?: WorkMode[];
         onModeSelect?: (modeId: number) => void;
     }>();
@@ -56,7 +60,7 @@
 
     const filteredIntervals = $derived(
         selectedMode 
-            ? intervals.filter((interval) => interval.mode === selectedMode)
+            ? intervals.filter((interval: { mode: number | null; }) => interval.mode === selectedMode)
             : []
     );
 
@@ -69,9 +73,13 @@
         return (minutes / 60) * cellWidth;
     }
 
-    function getIntervalPosition(interval: TimeInterval, modeIndex: number) {
-        const startMinutes = timeToMinutes(interval.startTime);
-        const endMinutes = timeToMinutes(interval.endTime);
+    function getPositionForInterval(
+        startTime: string, 
+        endTime: string, 
+        modeIndex: number
+    ) {
+        const startMinutes = timeToMinutes(startTime);
+        const endMinutes = timeToMinutes(endTime);
         const durationMinutes = endMinutes - startMinutes;
 
         return {
@@ -87,22 +95,58 @@
             console.warn('workModes пуст или не определен');
             return [];
         }
+
+        const allPositionedIntervals: any[] = [];
         
-        return intervals
-            .map((interval: TimeInterval) => {
-                const modeIndex = workModes.findIndex((m) => m.id === interval.mode);
-                
-                if (modeIndex === -1) {
-                    return null;
-                }
-                
-                return {
-                    ...interval,
-                    modeIndex,
-                    position: getIntervalPosition(interval, modeIndex)
-                };
-            })
-            .filter((item) => item !== null);
+        intervals.forEach((interval: { mode: any; id: any; startTime: any; endTime: any; }) => {
+            const modeIndex = workModes.findIndex((m: { id: any; }) => m.id === interval.mode);
+            
+            if (modeIndex === -1) {
+                console.warn(`Mode ${interval.mode} not found for interval ${interval.id}`);
+                return;
+            }
+            
+            allPositionedIntervals.push({
+                ...interval,
+                type: 'schedule',
+                modeIndex,
+                position: getPositionForInterval(interval.startTime, interval.endTime, modeIndex)
+            });
+        });
+        
+        if (shadowIntervals.length > 0) {
+            shadowIntervals.forEach((shadow: { startTime: string; endTime: string; }) => {
+                allPositionedIntervals.push({
+                    ...shadow,
+                    type: 'shadow',
+                    modeIndex: -1, // Специальный индекс для полных полос
+                    position: {
+                        left: getPositionForInterval(shadow.startTime, shadow.endTime, 0).left,
+                        width: getPositionForInterval(shadow.startTime, shadow.endTime, 0).width,
+                        top: `0px`, // Начинается сразу после шкалы времени
+                        height: `${ROW_HEIGHT * (workModes.length + 1)}px` // На всю высоту всех режимов
+                    }
+                });
+            });
+        }
+        
+        if (zasvetkaIntervals.length > 0) {
+            zasvetkaIntervals.forEach((zasvetka: { startTime: string; endTime: string; }) => {
+                allPositionedIntervals.push({
+                    ...zasvetka,
+                    type: 'zasvetka',
+                    modeIndex: -1,
+                    position: {
+                        left: getPositionForInterval(zasvetka.startTime, zasvetka.endTime, 0).left,
+                        width: getPositionForInterval(zasvetka.startTime, zasvetka.endTime, 0).width,
+                        top: `0px`,
+                        height: `${ROW_HEIGHT * (workModes.length + 1)}px`
+                    }
+                });
+            });
+        }
+        
+        return allPositionedIntervals;
     }
     
     function selectMode(modeId: number) {
@@ -173,12 +217,22 @@
         >
             {#each getPositionedIntervals() as item}
                 <div 
-                    class="interval" 
-                    style="left: {item.position.left}; width: {item.position.width}; top: {item.position.top}; height: {item.position.height}"
-                    title="{item.title || ''} {item.startTime}-{item.endTime}"
+                    class="interval interval-{item.type}" 
+                    style="
+                        left: {item.position.left}; 
+                        width: {item.position.width}; 
+                        top: {item.position.top}; 
+                        height: {item.position.height};
+                        background: {item.color};
+                        opacity: {item.opacity || 1};
+                        z-index: {item.zIndex || 10};
+                    "
+                    title="{(item.title || '') + ' ' + item.startTime + '-' + item.endTime}"
                 >
-                    <div class="interval-content" style="background: {item.color};">
-                    </div>
+                    {#if item.type === 'schedule'}
+                        <div class="interval-content" style="background: {item.color};">
+                        </div>
+                    {/if}
                 </div>
             {/each}
         </div>
@@ -282,9 +336,6 @@
     .interval {
         position: absolute;
         border-radius: 4px;
-        cursor: pointer;
-        z-index: 10;
-        transition: transform 0.2s, box-shadow 0.2s;
         overflow: hidden;
         pointer-events: auto;
         margin: 0;
@@ -292,9 +343,29 @@
         font-size: clamp(0.65rem, 0.8vw, 0.8rem);
     }
     
-    .interval:hover {
+    .interval-schedule {
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        z-index: 10;
+    }
+    
+    .interval-schedule:hover {
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 20;
+    }
+    
+    .interval-shadow {
+        z-index: 10;
+        border-left: 1px solid black;
+        border-right: 1px solid black;
+        border-radius: 0; 
+    }
+
+    .interval-zasvetka {
+        z-index: 20;
+        border-left: 1px solid black;
+        border-right: 1px solid black;
+        border-radius: 0; 
     }
     
     .interval-content {

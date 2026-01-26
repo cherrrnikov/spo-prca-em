@@ -55,7 +55,7 @@ public class ForecastRepository {
         String sql = """
                 SELECT id, n_rec, d_t_in, d_t_out,
                 EXTRACT (EPOCH FROM duration) as duration_seconds
-                FROM t_zasvetki
+                FROM t_zasvetka
                 WHERE n_rec = ?
                 ORDER BY d_t_in
                 """;

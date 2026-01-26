@@ -7,12 +7,16 @@
     import type { UserResponse } from '$lib/types/auth';
     import type {
     	CreatedProgramData,
+    	ForecastData,
     	ModeCreationForm,
     	OperatorData,
     	PpiAssignment,
     	ProgramModeData,
+    	ShadowInterval,
     	TimeInterval,
-    	WorkMode
+    	WorkMode,
+
+    	ZasvetkaInterval
     } from '$lib/types/schedule';
     import CreationHeader from '../../features/schedule-creation/components/CreationHeader.svelte';
     import ModeCreationFormComponent from '../../features/schedule-creation/components/ModeCreationForm.svelte';
@@ -66,6 +70,12 @@
     let operatorData = $state<OperatorData | null>(null);
     let ppiAssignments = $state<PpiAssignment[]>([]);
     let operatorDataLoaded = $state(false); 
+
+    let forecastData = $state<ForecastData | null>(null);
+    let shadowIntervals = $state<ShadowInterval[]>([]);
+    let zasvetkaIntervals = $state<ZasvetkaInterval[]>([]);
+    let forecastDataLoaded = $state(false);
+    
 
     let selectedMode = $state<number | null>(null);
     let createdPrograms = $state<CreatedProgramData[]>([]);
@@ -286,6 +296,32 @@
         );
         
         intervals = newIntervals;
+
+        if (newOperatorData.main?.dNp) {
+            const date = newOperatorData.main.dNp.split('T')[0];
+            loadForecastData(date);
+        }
+    }
+
+    async function loadForecastData(date: string) {
+        try {
+            const data = await ScheduleCreationService.loadForecastData(date);
+            forecastData = data;
+            forecastDataLoaded = true;
+            
+            const forecastIntervals = ScheduleCreationService.convertForecastToIntervals(data);
+            shadowIntervals = forecastIntervals.shadows;
+            zasvetkaIntervals = forecastIntervals.zasvetki;
+            
+            console.log('Прогнозные данные загружены:', {
+                shadows: shadowIntervals,
+                zasvetki: zasvetkaIntervals
+            });
+        } catch (error) {
+            console.error('Ошибка загрузки прогнозных данных:', error);
+            shadowIntervals = [];
+            zasvetkaIntervals = [];
+        }
     }
 
     function handleModeSelect(modeId: number) {
@@ -297,22 +333,6 @@
         if (creationMode !== 'operator') {
             return;
         }
-
-        // let formModeType: 'kvd' | 'tnp' | 'ts' | 's' | 'omi' | 'ona' | 'astr' | null = null;
-        // let defaultDuration = 300;
-        
-        // switch(modeId) {
-        //     case 'mode_1': formModeType = 'astr'; defaultDuration = 300; break;
-        //     case 'mode_2': formModeType = 's'; defaultDuration = 420; break;
-        //     case 'mode_3': formModeType = 'omi'; defaultDuration = 60; break;
-        //     case 'mode_4': formModeType = 'tnp'; defaultDuration = 516; break;
-        //     case 'mode_5': formModeType = 'kvd'; defaultDuration = 420; break;
-        //     case 'mode_6': formModeType = 'ts'; defaultDuration = 420; break;
-        //     case 'mode_7': formModeType = 'ona'; defaultDuration = 60; break;
-        //     default:
-        //         console.warn('Unknown mode selected:', modeId);
-        //         return;
-        // }
         
         selectedMode = modeId;
         
@@ -563,6 +583,8 @@
     <div class="grid-container">
         <ScheduleGrid 
             {intervals}
+            {shadowIntervals}
+            {zasvetkaIntervals}
             {workModes}
             onModeSelect={handleModeSelect}
         />

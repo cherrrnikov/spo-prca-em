@@ -1,11 +1,14 @@
 import type {
     CreatedProgramData,
     CreateProgramRequest,
+    ForecastData,
     OperatorData,
     PpiAssignment,
     ProgramModeData,
+    ShadowInterval,
     TimeInterval,
-    WorkMode
+    WorkMode,
+    ZasvetkaInterval
 } from '$lib/types/schedule';
 import type { ScheduleStatus } from '../schedule-creation/types';
 
@@ -366,6 +369,56 @@ export class ScheduleCreationService {
             10: '#24f016' 
         };
         return ppiToColor[ppiNum] || '#4299e1';
+    }
+
+    static async loadForecastData(date: string): Promise<ForecastData> {
+        const response = await fetch(`/api/schedule/forecast-proxy?date=${date}`);
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error("Нет прогнозных данных для выбранной даты");
+            }
+            throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        
+        return {
+            main: responseData.forecast,
+            shadows: responseData.shadows,
+            zasvetki: responseData.zasvetki,
+            totalIntervals: responseData.shadows.length + responseData.zasvetki.length
+        };
+    }
+
+    static convertForecastToIntervals(forecastData: ForecastData): {
+        shadows: ShadowInterval[],
+        zasvetki: ZasvetkaInterval[]
+    } {
+        return {
+            shadows: forecastData.shadows.map(shadow => ({
+                id: `shadow_${shadow.id}`,
+                type: 'shadow',
+                startTime: this.formatTimeFromISO(shadow.dTIn),
+                endTime: this.formatTimeFromISO(shadow.dTOut),
+                duration: shadow.duration,
+                title: 'Тень',
+                color: 'rgb(128, 128, 128)',
+                opacity: 1,
+                zIndex: 1
+            })),
+            zasvetki: forecastData.zasvetki.map(zasvetka => ({
+                id: `zasvetka_${zasvetka.id}`,
+                type: 'zasvetka',
+                startTime: this.formatTimeFromISO(zasvetka.dTIn),
+                endTime: this.formatTimeFromISO(zasvetka.dTOut),
+                duration: zasvetka.duration,
+                title: 'Засветка',
+                color: 'rgba(255, 255, 255, 1)',
+                opacity: 1,
+                zIndex: 2
+            }))
+        };
     }
 
     static prepareFullProgramData(

@@ -250,3 +250,64 @@ export interface ScheduleCreationState {
     totalRecords: number;
     createdIntervals: CreatedProgramData[];
 }
+
+export interface ForecastDto {
+    id: number;
+    dn: string;
+    dk: string;
+    nKa: number;
+    nInit: number;
+}
+
+export interface ShadowDto {
+    id: number;
+    nRec: number;
+    dTIn: string;
+    dTOut: string;
+    duration: number;
+}
+
+export interface ZasvetkaDto {
+    id: number;
+    nRec: number;
+    dTIn: string;
+    dTOut: string;
+    duration: number;
+}
+
+export interface ForecastDataResponse {
+    forecast: ForecastDto;
+    shadows: ShadowDto[];
+    zasvetki: ZasvetkaDto[];
+}
+
+export interface ForecastData {
+    main: ForecastDto;
+    shadows: ShadowDto[];
+    zasvetki: ZasvetkaDto[];
+    totalIntervals: number; // shadows.length + zasvetki.length
+}
+
+export interface ShadowInterval {
+    id: string;
+    type: 'shadow';
+    startTime: string;
+    endTime: string;
+    duration: number;
+    title: string;
+    color: string;
+    opacity: number;
+    zIndex: number;
+}
+
+export interface ZasvetkaInterval {
+    id: string;
+    type: 'zasvetka';
+    startTime: string;
+    endTime: string;
+    duration: number;
+    title: string;
+    color: string;
+    opacity: number;
+    zIndex: number;
+}

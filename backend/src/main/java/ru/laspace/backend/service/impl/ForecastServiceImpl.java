@@ -20,7 +20,7 @@ import ru.laspace.backend.service.ForecastService;
 @RequiredArgsConstructor
 
 public class ForecastServiceImpl implements ForecastService {
-    private ForecastRepository forecastRepository;
+    private final ForecastRepository forecastRepository;
 
     @Override
     @Transactional(readOnly = true)
