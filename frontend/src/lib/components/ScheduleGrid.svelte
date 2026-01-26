@@ -177,10 +177,7 @@
                     style="left: {item.position.left}; width: {item.position.width}; top: {item.position.top}; height: {item.position.height}"
                     title="{item.title || ''} {item.startTime}-{item.endTime}"
                 >
-                    <div class="interval-content" style="background: {item.color}; border-color: {item.color}">
-                        <div class="interval-time">
-                            {item.startTime} - {item.endTime}
-                        </div>
+                    <div class="interval-content" style="background: {item.color};">
                     </div>
                 </div>
             {/each}
@@ -304,8 +301,7 @@
         height: 100%;
         width: 100%;
         border-radius: 4px;
-        border: 2px solid;
-        padding: 0.25rem 0.5rem;
+        border: 1px solid black;
         display: flex;
         align-items: center;
         justify-content: center;

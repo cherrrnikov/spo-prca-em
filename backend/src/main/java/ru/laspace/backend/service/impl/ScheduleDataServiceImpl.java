@@ -8,11 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ru.laspace.backend.dto.schedule.Id06DataResponse;
-import ru.laspace.backend.dto.schedule.Id06KvdDto;
-import ru.laspace.backend.dto.schedule.Id06MainDto;
-import ru.laspace.backend.dto.schedule.Id06TnpDto;
-import ru.laspace.backend.dto.schedule.Id06TsDto;
+import ru.laspace.backend.dto.id06.Id06DataResponse;
+import ru.laspace.backend.dto.id06.Id06KvdDto;
+import ru.laspace.backend.dto.id06.Id06MainDto;
+import ru.laspace.backend.dto.id06.Id06TnpDto;
+import ru.laspace.backend.dto.id06.Id06TsDto;
 import ru.laspace.backend.repository.Id06Repository;
 import ru.laspace.backend.service.ScheduleDataService;
 

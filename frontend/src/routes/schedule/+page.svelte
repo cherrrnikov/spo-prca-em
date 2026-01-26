@@ -55,7 +55,7 @@
     let intervals = $state<TimeInterval[]>([]);
     let operatorData = $state<OperatorData | null>(null);
     let ppiAssignments = $state<PpiAssignment[]>([]);
-    let operatorDataLoaded = $state(false); // новое состояние
+    let operatorDataLoaded = $state(false); 
 
     let selectedMode = $state<string | null>(null);
     let createdPrograms = $state<CreatedProgramData[]>([]);
@@ -196,19 +196,16 @@
         const modeIntervals = allIntervals.filter(interval => interval.mode === modeId);
         
         if (modeIntervals.length === 0) {
-            // Если нет интервалов, возвращаем начало дня
             return {
                 startTime: '00:00',
                 available: true
             };
         }
         
-        // Сортируем интервалы по времени начала
         const sortedIntervals = [...modeIntervals].sort((a, b) => 
             timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
         );
         
-        // Проверяем окно от начала дня до первого интервала
         const firstIntervalStart = timeToMinutes(sortedIntervals[0].startTime);
         if (firstIntervalStart >= duration) {
             return {

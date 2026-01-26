@@ -1,6 +1,7 @@
 package ru.laspace.backend.controller;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.laspace.backend.dto.id06.Id06DataResponse;
+import ru.laspace.backend.service.ConstantsService;
 import ru.laspace.backend.service.ScheduleDataService;
 
 @Slf4j
@@ -31,6 +33,7 @@ import ru.laspace.backend.service.ScheduleDataService;
 public class ScheduleDataController {
 
     private final ScheduleDataService scheduleDataService;
+    private final ConstantsService constantsService;
 
     @Operation(summary = "Получить данные оператора по дате", description = """
             Возвращает последнюю запись из таблицы id06 и все связанные записи
@@ -48,7 +51,7 @@ public class ScheduleDataController {
         log.info("Запрос данных оператора для даты: {}", date);
 
         try {
-            Id06DataResponse data = scheduleDataService.getOperatorData(date);
+            Id06DataResponse data = (Id06DataResponse) scheduleDataService.getOperatorData(date);
 
             if (data == null) {
                 log.info("Данные не найдены для даты: {}", date);
@@ -60,6 +63,36 @@ public class ScheduleDataController {
 
         } catch (Exception e) {
             log.error("Ошибка при получении данных для даты {}: {}", date, e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @Operation(summary = "Получить стандартные длительности режимов", description = "Возвращает стандартные длительности в секундах для всех типов режимов из таблицы констант")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Длительности успешно получены", content = @Content(schema = @Schema(example = """
+                       {
+                           "astr": 300,
+                           "s": 420,
+                           "omi": 60,
+                           "tnp": 516,
+                           "kvd": 420,
+                           "ts": 420,
+                           "ona": 60
+                       }
+                    """))),
+            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+    })
+    @GetMapping("/mode-durations")
+    public ResponseEntity<Map<String, Integer>> getModeDurations() {
+        log.info("Запрос стандартных длительностей режимов");
+
+        try {
+            Map<String, Integer> durations = constantsService.getModeDurations();
+            log.info("Возвращаем {} длительностей режимов", durations.size());
+            return ResponseEntity.ok(durations);
+
+        } catch (Exception e) {
+            log.error("Ошибка при получении длительностей режимов: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }

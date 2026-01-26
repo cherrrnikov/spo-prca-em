@@ -1,4 +1,4 @@
-package ru.laspace.backend.dto.schedule;
+package ru.laspace.backend.dto.id06;
 
 import java.time.LocalDateTime;
 

@@ -12,10 +12,10 @@ import org.springframework.stereotype.Repository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ru.laspace.backend.dto.schedule.Id06KvdDto;
-import ru.laspace.backend.dto.schedule.Id06MainDto;
-import ru.laspace.backend.dto.schedule.Id06TnpDto;
-import ru.laspace.backend.dto.schedule.Id06TsDto;
+import ru.laspace.backend.dto.id06.Id06KvdDto;
+import ru.laspace.backend.dto.id06.Id06MainDto;
+import ru.laspace.backend.dto.id06.Id06TnpDto;
+import ru.laspace.backend.dto.id06.Id06TsDto;
 
 @Repository
 @Slf4j
@@ -84,7 +84,6 @@ public class Id06Repository {
         return jdbcTemplate.query(sql, new Id06TsRowMapper(), idMain);
     }
 
-    // RowMapper'ы
     private static class Id06MainRowMapper implements RowMapper<Id06MainDto> {
         @Override
         public Id06MainDto mapRow(ResultSet rs, int rowNum) throws SQLException {

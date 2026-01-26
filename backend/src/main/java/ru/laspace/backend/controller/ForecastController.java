@@ -17,12 +17,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import ru.laspace.backend.dto.forecast.ForecastDataResponse;
 import ru.laspace.backend.service.ForecastService;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/forecast")
-@RequiredArgsContructor
+@RequiredArgsConstructor
 @CrossOrigin
 @Tag(name = "Прогнозные данные", description = "API для работы с прогнозными данными (тени, засветки)")
 public class ForecastController {

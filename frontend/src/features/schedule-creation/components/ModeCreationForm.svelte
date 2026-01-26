@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ModeCreationForm, TsMsuConfig } from "$lib/types/schedule";
+	import { onMount } from "svelte";
 
     // Используем объекты с методами для изменения значений
     let msu1Vd = $state({ 
@@ -23,6 +24,8 @@
         ik4: false, ik5: false, ik6: false, ik7: false,
         ik8: false, ik9: false, ik10: false
     });
+
+    let modeDurations = $state<Record<string, number>>({});
 
     export const customerCodes = [
         { value: 1, label: '01 - Заказчик 1'},
@@ -95,6 +98,21 @@
         onCancel: () => void;
     }>();
 
+    onMount(async () => {
+        await loadModeDurations();
+    });
+
+    async function loadModeDurations() {
+        try {
+            const response = await fetch('http://localhost:8081/api/schedule/mode-durations');
+            if (response.ok) {
+                modeDurations = await response.json();
+            } 
+        } catch (error) {
+            console.error("Ошибка загрузки длительностей:", error);
+        }
+    }
+
     $effect(() => {
         if (selectedMode) {
             let formModeType: 'kvd' | 'tnp' | 'ts' | 's' | 'omi' | 'ona' | 'astr' | null = null;
@@ -102,31 +120,31 @@
             switch(selectedMode) {
                 case 'mode_1': // Астрокорр.
                     formModeType = 'astr';
-                    formData.duration = 300; 
+                    // formData.duration = 300; 
                     break;
                 case 'mode_2': // Съемки
                     formModeType = 's';
-                    formData.duration = 420; 
+                    // formData.duration = 420; 
                     break;
                 case 'mode_3': // Распр. ОМИ
                     formModeType = 'omi';
-                    formData.duration = 60; 
+                    // formData.duration = 60; 
                     break;
                 case 'mode_4': // Режимы ТНП
                     formModeType = 'tnp';
-                    formData.duration = 516;
+                    // formData.duration = 516;
                     break;
                 case 'mode_5': // Калибр. ВД
                     formModeType = 'kvd';
-                    formData.duration = 420;
+                    // formData.duration = 420;
                     break;
                 case 'mode_6': // Техн. съемки
                     formModeType = 'ts';
-                    formData.duration = 420;
+                    // formData.duration = 420;
                     break;
                 case 'mode_7': // Юстировки ОНА
                     formModeType = 'ona';
-                    formData.duration = 60; 
+                    // formData.duration = 60; 
                     break;
                 default:
                     console.warn('Unknown mode selected:', selectedMode);
@@ -134,6 +152,10 @@
             }
             
             formData.modeType = formModeType;
+
+            if (modeDurations[formModeType] !== undefined) {
+                formData.duration = modeDurations[formModeType];
+            }
             
             if (formModeType !== 'kvd' && formModeType !== 'ts') {
                 msu1Vd = { vd1: false, vd2: false, vd3: false };

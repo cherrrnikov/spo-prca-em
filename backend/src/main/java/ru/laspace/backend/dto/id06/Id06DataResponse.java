@@ -1,4 +1,4 @@
-package ru.laspace.backend.dto.id;
+package ru.laspace.backend.dto.id06;
 
 import java.util.List;
 
