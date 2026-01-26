@@ -73,6 +73,7 @@
             <input 
                 type="time" 
                 value={selectedTime}
+                disabled
                 on:input={(e) => selectedTime = e.target.value}
                 class="time-input"
             />

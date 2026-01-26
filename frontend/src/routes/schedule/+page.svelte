@@ -70,6 +70,7 @@
     let operatorData = $state<OperatorData | null>(null);
     let ppiAssignments = $state<PpiAssignment[]>([]);
     let operatorDataLoaded = $state(false); 
+    let selectedProgramDate = $state<string>('');
 
     let forecastData = $state<ForecastData | null>(null);
     let shadowIntervals = $state<ShadowInterval[]>([]);
@@ -299,8 +300,18 @@
 
         if (newOperatorData.main?.dNp) {
             const date = newOperatorData.main.dNp.split('T')[0];
+            selectedProgramDate = date;
             loadForecastData(date);
         }
+    }
+
+    function formatDate(dateString: string): string {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
     }
 
     async function loadForecastData(date: string) {
@@ -415,8 +426,52 @@
         
         intervals = [...intervals, timeInterval];
         
-        selectedMode = null;
+        // selectedMode = null;
+        resetCurrentFormData();
     }
+
+    function resetCurrentFormData() {
+        currentFormData = {
+            modeType: selectedMode, 
+            ppiNum: 1,
+            duration: 300,
+            customerCode: 5,
+            startTime: '10:00', 
+            msu1Vd: [],
+            msu2Vd: [],
+            msu1Config: {
+                prMsu: 0,
+                prVdMsu: 0,
+                prIkMsu: 0,
+                vd1: 0,
+                vd2: 0,
+                vd3: 0,
+                ik4: 0,
+                ik5: 0,
+                ik6: 0,
+                ik7: 0,
+                ik8: 0,
+                ik9: 0,
+                ik10: 0
+            },
+            msu2Config: {
+                prMsu: 0,
+                prVdMsu: 0,
+                prIkMsu: 0,
+                vd1: 0,
+                vd2: 0,
+                vd3: 0,
+                ik4: 0,
+                ik5: 0,
+                ik6: 0,
+                ik7: 0,
+                ik8: 0,
+                ik9: 0,
+                ik10: 0
+            }
+        };
+    }
+
     
    function createProgramModeData(formData: ModeCreationForm, tempId: string): ProgramModeData {
 
@@ -571,6 +626,20 @@
                 onCancel={handleCreationCancel}
                 onDataProcessed={updateIntervalsFromOperatorData}
             />
+        {:else if creationMode === 'operator' && operatorDataLoaded}
+            <div class="header-content">
+                <FileMenu 
+                    {userData}
+                    onOperatorCreate={startOperatorCreation}
+                    onReferenceCreate={startReferenceCreation}
+                />
+                <div class="program-date-info">
+                    <h2 class="program-date-title">
+                        Программа работы БЦА действует с <strong>{formatDate(selectedProgramDate)}</strong> 
+                        по <strong>{formatDate(selectedProgramDate)} 23:59:59</strong>
+                    </h2>
+                </div>
+            </div>
         {:else}
             <FileMenu 
                 {userData}
@@ -624,6 +693,11 @@
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         flex-shrink: 0;
     }
+    .header-content {
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
     
     .grid-container {
         padding: 0;
@@ -649,5 +723,24 @@
         flex: 1;
         padding: 1rem 2rem;
         background: #f5f7fa;
+        max-width: 50%;
+    }
+
+    .program-date-info {
+        margin-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .program-date-title {
+        font-size: 1rem;
+        font-weight: bold;
+        color: #2d3748;
+        margin: 0;
+        text-align: right;
+    }
+    
+    .program-date-title strong {
+        font-weight: bold;
+        color: #2c5282;
     }
 </style>

@@ -143,52 +143,7 @@
                 formData.duration = modeDurations[modeCode];
             }
             
-            if (selectedMode !== 7 && selectedMode !== 8) {
-                msu1Vd = { vd1: false, vd2: false, vd3: false };
-                msu2Vd = { vd1: false, vd2: false, vd3: false };
-                msu1Ik = {
-                    ik4: false, ik5: false, ik6: false, ik7: false,
-                    ik8: false, ik9: false, ik10: false
-                };
-                msu2Ik = {
-                    ik4: false, ik5: false, ik6: false, ik7: false,
-                    ik8: false, ik9: false, ik10: false
-                };
-                
-                formData.msu1Vd = [];
-                formData.msu2Vd = [];
-                
-                formData.msu1Config = {
-                    prMsu: 0,
-                    prVdMsu: 0,
-                    prIkMsu: 0,
-                    vd1: 0,
-                    vd2: 0,
-                    vd3: 0,
-                    ik4: 0,
-                    ik5: 0,
-                    ik6: 0,
-                    ik7: 0,
-                    ik8: 0,
-                    ik9: 0,
-                    ik10: 0
-                };
-                formData.msu2Config = {
-                    prMsu: 0,
-                    prVdMsu: 0,
-                    prIkMsu: 0,
-                    vd1: 0,
-                    vd2: 0,
-                    vd3: 0,
-                    ik4: 0,
-                    ik5: 0,
-                    ik6: 0,
-                    ik7: 0,
-                    ik8: 0,
-                    ik9: 0,
-                    ik10: 0
-                };
-            }
+            resetCheckboxes();
         }
     });
 
@@ -274,7 +229,59 @@
             return;
         }
         console.log('Отправляем данные:', formData);
-        onSubmit(formData);
+
+        const dataToSubmit = { ...formData };
+        
+        resetCheckboxes();
+        
+        formData.startTime = '10:00';
+        onSubmit(dataToSubmit);
+    }
+
+    function resetCheckboxes() {
+        msu1Vd = { vd1: false, vd2: false, vd3: false };
+        msu2Vd = { vd1: false, vd2: false, vd3: false };
+        msu1Ik = {
+            ik4: false, ik5: false, ik6: false, ik7: false,
+            ik8: false, ik9: false, ik10: false
+        };
+        msu2Ik = {
+            ik4: false, ik5: false, ik6: false, ik7: false,
+            ik8: false, ik9: false, ik10: false
+        };
+        
+        formData.msu1Vd = [];
+        formData.msu2Vd = [];
+        formData.msu1Config = {
+            prMsu: 0,
+            prVdMsu: 0,
+            prIkMsu: 0,
+            vd1: 0,
+            vd2: 0,
+            vd3: 0,
+            ik4: 0,
+            ik5: 0,
+            ik6: 0,
+            ik7: 0,
+            ik8: 0,
+            ik9: 0,
+            ik10: 0
+        };
+        formData.msu2Config = {
+            prMsu: 0,
+            prVdMsu: 0,
+            prIkMsu: 0,
+            vd1: 0,
+            vd2: 0,
+            vd3: 0,
+            ik4: 0,
+            ik5: 0,
+            ik6: 0,
+            ik7: 0,
+            ik8: 0,
+            ik9: 0,
+            ik10: 0
+        };
     }
 
     function isVdSelected(msu: 'msu1' | 'msu2', vdNumber: 1 | 2 | 3): boolean {
@@ -295,7 +302,7 @@
 
     <div class="form-content">
         <div class="form-section">
-            <h4>Пункт приёма информации (ППИ)</h4>
+            <span class="form-section_title">Пункт приёма информации (ППИ)</span>
             <div class="form-group">
                 <select bind:value={formData.ppiNum}>
                     {#each ppiList as ppi}
@@ -307,7 +314,7 @@
 
         {#if selectedMode === 7}
             <div class="form-section">
-                <h4>Комплект МСУ-ГС 1</h4>
+                <span class="form-section_title">Комплект МСУ-ГС 1</span>
                 <div class="checkbox-group">
                     {#each [1, 2, 3] as vd}
                         <label class="checkbox-label">
@@ -323,7 +330,7 @@
             </div>
             
             <div class="form-section">
-                <h4>Комплект МСУ-ГС 2</h4>
+                <span class="form-section_title">Комплект МСУ-ГС 2</span>
                 <div class="checkbox-group">
                     {#each [1, 2, 3] as vd}
                         <label class="checkbox-label">
@@ -339,7 +346,7 @@
             </div>
         {:else if selectedMode === 8}
             <div class="form-section">
-                <h4>Комплект МСУ-ГС 1</h4>
+                <span class="form-section_title">Комплект МСУ-ГС 1</span>
                 <div class="ts-config-grid">
                     <div class="checkbox-group">
                         {#each [1, 2, 3] as vd}
@@ -370,7 +377,7 @@
             </div>
 
             <div class="form-section">
-                <h4>Комплект МСУ-ГС 2</h4>
+                <span class="form-section_title">Комплект МСУ-ГС 2</span>
                 <div class="ts-config-grid">
                     <div class="checkbox-group">
                         {#each [1, 2, 3] as vd}
@@ -402,7 +409,6 @@
         {/if}
 
         <div class="form-section">
-            <h4>Основные параметры</h4>
             <div class="form-grid">
                 <div class="form-group">
                     <label>Код заказчика:</label>
@@ -439,9 +445,9 @@
         <button on:click={handleSubmit} class="btn-submit">
             Добавить режим
         </button>
-        <button on:click={onCancel} class="btn-cancel">
+        <!-- <button on:click={onCancel} class="btn-cancel">
             Отмена
-        </button>
+        </button> -->
     </div>
 </div>
 
@@ -454,7 +460,7 @@
     }
 
     .form-header {
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
     }
 
     .form-header h3 {
@@ -472,10 +478,11 @@
         display: flex;
         flex-direction: column;
     }
-
-    .form-section h4 {
-        margin: 0 0 0.5rem 0;
-        font-size: 1rem;
+    .form-section_title {
+        margin-bottom: 0.5rem;
+    }
+    .form-section span {
+        font-size: 0.875rem;
         color: #4a5568;
         font-weight: 600;
     }
@@ -489,7 +496,7 @@
     .form-group {
         display: flex;
         flex-direction: column;
-        gap: 0.375rem;
+        gap: 0.5rem;
     }
 
     .form-group label {
@@ -515,7 +522,7 @@
     .checkbox-label {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.3rem;
         cursor: pointer;
         font-size: 0.875rem;
     }
