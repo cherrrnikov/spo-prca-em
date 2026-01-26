@@ -1,6 +1,6 @@
 export interface TimeInterval {
     id: string;
-    mode: string;
+    mode: number;
     startTime: string;
     endTime: string;
     city: string;
@@ -10,7 +10,7 @@ export interface TimeInterval {
 }
 
 export interface WorkMode {
-    id: string;
+    id: number;
     label: string;
     order: string;
 }
@@ -207,7 +207,7 @@ export interface ProgramCreationState {
 }
 
 export interface ModeCreationForm {
-    modeType: 'kvd' | 'tnp' | 'ts' | 's' | 'omi' | 'ona' | 'astr' | null;
+    modeType: number | null;
     ppiNum: number;
     duration: number;
     customerCode: number;

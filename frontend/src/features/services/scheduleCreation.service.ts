@@ -270,7 +270,7 @@ export class ScheduleCreationService {
                 if (assignment) {
                     intervals.push({
                         id: `kvd_${kvd.id}`,
-                        mode: 'mode_5', // Калибр. ВД
+                        mode: 5, // Калибр. ВД
                         startTime: this.formatTimeFromISO(kvd.dn),
                         endTime: this.formatTimeFromISO(kvd.dk),
                         city: this.getCityByPpi(assignment.ppiNum),
@@ -291,7 +291,7 @@ export class ScheduleCreationService {
                 if (assignment) {
                     intervals.push({
                         id: `tnp_${tnp.id}`,
-                        mode: 'mode_4', // Режимы ТНП
+                        mode: 4, // Режимы ТНП
                         startTime: this.formatTimeFromISO(tnp.dn),
                         endTime: this.formatTimeFromISO(tnp.dk),
                         city: this.getCityByPpi(assignment.ppiNum),
@@ -312,7 +312,7 @@ export class ScheduleCreationService {
                 if (assignment) {
                     intervals.push({
                         id: `ts_${ts.id}`,
-                        mode: 'mode_6', // Техн. съемки
+                        mode: 8, // Техн. съемки
                         startTime: this.formatTimeFromISO(ts.dn),
                         endTime: this.formatTimeFromISO(ts.dk),
                         city: this.getCityByPpi(assignment.ppiNum),

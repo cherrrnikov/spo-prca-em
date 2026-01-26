@@ -8,7 +8,7 @@
     } = $props<{
         intervals: TimeInterval[];
         workModes?: WorkMode[];
-        onModeSelect?: (modeId: string) => void;
+        onModeSelect?: (modeId: number) => void;
     }>();
 
     const HOURS = Array.from({length: 24}, (_, i) => i);
@@ -21,7 +21,7 @@
     let cellWidth = $derived(0);
     let gridContainer = $state<HTMLDivElement>();
     
-    let selectedMode = $state<string | null>(null);
+    let selectedMode = $state<number | null>(null);
 
     function updateContainerWidth() {
         if (gridContainer) {
@@ -105,7 +105,7 @@
             .filter((item) => item !== null);
     }
     
-    function selectMode(modeId: string) {
+    function selectMode(modeId: number) {
         selectedMode = selectedMode === modeId ? null : modeId;
         const modeToSend = selectedMode || modeId;
         

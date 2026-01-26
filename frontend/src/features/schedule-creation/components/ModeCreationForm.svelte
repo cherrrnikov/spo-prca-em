@@ -48,6 +48,26 @@
         { id: 10, name: '9 - Москва (НИЦ "Планета")', num: 10 }
     ];
 
+    const MODE_ID_TO_CODE: Record<number, string> = {
+        9: 'astr',  // Астрокоррекция
+        1: 's',     // Съемки
+        2: 'omi',   // ОМИ
+        4: 'tnp',   // ТНП
+        7: 'kvd',   // КВД
+        8: 'ts',    // ТС
+        6: 'ona'    // Юстировка ОНА
+    };
+
+    const MODE_NAMES: Record<number, string> = {
+        9: 'Астрокоррекция',
+        1: 'Съемки',
+        2: 'Распр. ОМИ',
+        4: 'Режимы ТНП',
+        7: 'Калибр. ВД',
+        8: 'Техн. съемки',
+        6: 'Юстировки ОНА'
+    };
+
     let {
         selectedMode,
         formData = $bindable<ModeCreationForm>({
@@ -92,7 +112,7 @@
         onSubmit,
         onCancel
     } = $props<{
-        selectedMode: string;
+        selectedMode: number;
         formData?: ModeCreationForm;
         onSubmit: (data: ModeCreationForm) => void;
         onCancel: () => void;
@@ -115,49 +135,15 @@
 
     $effect(() => {
         if (selectedMode) {
-            let formModeType: 'kvd' | 'tnp' | 'ts' | 's' | 'omi' | 'ona' | 'astr' | null = null;
-            
-            switch(selectedMode) {
-                case 'mode_1': // Астрокорр.
-                    formModeType = 'astr';
-                    // formData.duration = 300; 
-                    break;
-                case 'mode_2': // Съемки
-                    formModeType = 's';
-                    // formData.duration = 420; 
-                    break;
-                case 'mode_3': // Распр. ОМИ
-                    formModeType = 'omi';
-                    // formData.duration = 60; 
-                    break;
-                case 'mode_4': // Режимы ТНП
-                    formModeType = 'tnp';
-                    // formData.duration = 516;
-                    break;
-                case 'mode_5': // Калибр. ВД
-                    formModeType = 'kvd';
-                    // formData.duration = 420;
-                    break;
-                case 'mode_6': // Техн. съемки
-                    formModeType = 'ts';
-                    // formData.duration = 420;
-                    break;
-                case 'mode_7': // Юстировки ОНА
-                    formModeType = 'ona';
-                    // formData.duration = 60; 
-                    break;
-                default:
-                    console.warn('Unknown mode selected:', selectedMode);
-                    return;
-            }
-            
-            formData.modeType = formModeType;
+            formData.modeType = selectedMode;
 
-            if (modeDurations[formModeType] !== undefined) {
-                formData.duration = modeDurations[formModeType];
+            const modeCode = MODE_ID_TO_CODE[selectedMode];
+            
+            if (modeCode && modeDurations[modeCode] !== undefined) {
+                formData.duration = modeDurations[modeCode];
             }
             
-            if (formModeType !== 'kvd' && formModeType !== 'ts') {
+            if (selectedMode !== 7 && selectedMode !== 8) {
                 msu1Vd = { vd1: false, vd2: false, vd3: false };
                 msu2Vd = { vd1: false, vd2: false, vd3: false };
                 msu1Ik = {
@@ -319,7 +305,7 @@
             </div>
         </div>
 
-        {#if selectedMode === 'mode_5'}
+        {#if selectedMode === 7}
             <div class="form-section">
                 <h4>Комплект МСУ-ГС 1</h4>
                 <div class="checkbox-group">
@@ -351,7 +337,7 @@
                     {/each}
                 </div>
             </div>
-        {:else if selectedMode === 'mode_6'}
+        {:else if selectedMode === 8}
             <div class="form-section">
                 <h4>Комплект МСУ-ГС 1</h4>
                 <div class="ts-config-grid">

@@ -33,14 +33,24 @@
 
     
     const workModes: WorkMode[] = [
-        { id: 'mode_1', label: 'Астрокорр.', order: '0' },
-        { id: 'mode_2', label: 'Съемки', order: '1' },
-        { id: 'mode_3', label: 'Распр. ОМИ', order: '2' },
-        { id: 'mode_4', label: 'Режимы ТНП', order: '3' },
-        { id: 'mode_5', label: 'Калибр. ВД', order: '4' },
-        { id: 'mode_6', label: 'Техн. съемки', order: '5' },
-        { id: 'mode_7', label: 'Юстировки ОНА', order: '6' }
+        { id: 9, label: 'Астрокорр.', order: '0' },
+        { id: 1, label: 'Съемки', order: '1' },
+        { id: 2, label: 'Распр. ОМИ', order: '2' },
+        { id: 4, label: 'Режимы ТНП', order: '3' },
+        { id: 7, label: 'Калибр. ВД', order: '4' },
+        { id: 8, label: 'Техн. съемки', order: '5' },
+        { id: 6, label: 'Юстировки ОНА', order: '6' }
     ];
+
+    const MODE_ID_TO_CODE: Record<number, string> = {
+        9: 'astr',  // Астрокоррекция
+        1: 's',     // Съемки
+        2: 'omi',   // ОМИ
+        4: 'tnp',   // ТНП
+        7: 'kvd',   // КВД
+        8: 'ts',    // ТС
+        6: 'ona'    // Юстировка ОНА
+    };
     
     export const customerCodes = [
         { value: 1, label: '01 - Заказчик 1'},
@@ -57,7 +67,7 @@
     let ppiAssignments = $state<PpiAssignment[]>([]);
     let operatorDataLoaded = $state(false); 
 
-    let selectedMode = $state<string | null>(null);
+    let selectedMode = $state<number | null>(null);
     let createdPrograms = $state<CreatedProgramData[]>([]);
     let currentFormData = $state<ModeCreationForm>({
         modeType: null,
@@ -136,7 +146,7 @@
     function checkIntervalOverlap(
         newStartTime: string,
         newDuration: number,
-        modeId: string
+        modeId: number
     ): { overlaps: boolean; conflictingInterval?: TimeInterval } {
         const newEndTime = calculateEndTime(newStartTime, newDuration);
         const newStartMinutes = timeToMinutes(newStartTime);
@@ -181,7 +191,7 @@
     
     function findAvailableTimeSlot(
         duration: number,
-        modeId: string
+        modeId: number
     ): { startTime: string; available: boolean } | null {
         const dayStart = 0; // 00:00
         const dayEnd = 24 * 60; // 24:00
@@ -278,7 +288,7 @@
         intervals = newIntervals;
     }
 
-    function handleModeSelect(modeId: string) {
+    function handleModeSelect(modeId: number) {
         if (!operatorDataLoaded) {
             console.log("Данные оператора не загружены");
             return;
@@ -288,26 +298,26 @@
             return;
         }
 
-        let formModeType: 'kvd' | 'tnp' | 'ts' | 's' | 'omi' | 'ona' | 'astr' | null = null;
-        let defaultDuration = 300;
+        // let formModeType: 'kvd' | 'tnp' | 'ts' | 's' | 'omi' | 'ona' | 'astr' | null = null;
+        // let defaultDuration = 300;
         
-        switch(modeId) {
-            case 'mode_1': formModeType = 'astr'; defaultDuration = 300; break;
-            case 'mode_2': formModeType = 's'; defaultDuration = 420; break;
-            case 'mode_3': formModeType = 'omi'; defaultDuration = 60; break;
-            case 'mode_4': formModeType = 'tnp'; defaultDuration = 516; break;
-            case 'mode_5': formModeType = 'kvd'; defaultDuration = 420; break;
-            case 'mode_6': formModeType = 'ts'; defaultDuration = 420; break;
-            case 'mode_7': formModeType = 'ona'; defaultDuration = 60; break;
-            default:
-                console.warn('Unknown mode selected:', modeId);
-                return;
-        }
+        // switch(modeId) {
+        //     case 'mode_1': formModeType = 'astr'; defaultDuration = 300; break;
+        //     case 'mode_2': formModeType = 's'; defaultDuration = 420; break;
+        //     case 'mode_3': formModeType = 'omi'; defaultDuration = 60; break;
+        //     case 'mode_4': formModeType = 'tnp'; defaultDuration = 516; break;
+        //     case 'mode_5': formModeType = 'kvd'; defaultDuration = 420; break;
+        //     case 'mode_6': formModeType = 'ts'; defaultDuration = 420; break;
+        //     case 'mode_7': formModeType = 'ona'; defaultDuration = 60; break;
+        //     default:
+        //         console.warn('Unknown mode selected:', modeId);
+        //         return;
+        // }
         
         selectedMode = modeId;
         
-        currentFormData.modeType = formModeType;
-        currentFormData.duration = defaultDuration;
+        currentFormData.modeType = modeId;
+        currentFormData.duration = 300;
         currentFormData.ppiNum = 1;
         currentFormData.customerCode = 5;
         currentFormData.startTime = '10:00';
@@ -356,7 +366,7 @@
             return;
         }
 
-        const modeId = getModeIdForInterval(formData.modeType!);
+        const modeId = formData.modeType!;
         const overlapCheck = checkIntervalOverlap(
             formData.startTime, 
             formData.duration, 
@@ -397,13 +407,13 @@
             numKa: operatorData?.main.nKa || 1,
             dateOn: calculateDateFromTime(formData.startTime),
             dateOff: calculateEndDate(formData.startTime, formData.duration),
-            kodMode: getKodMode(formData.modeType!),
+            kodMode: formData.modeType!,
             numPpi: formData.ppiNum,
             dlit: formData.duration,
             zakazchik: getCustomerLabel(formData.customerCode)
         };
         
-        if (formData.modeType === 'kvd') {
+        if (formData.modeType === 7) {
             return {
                 ...baseData,
                 kvdData: {
@@ -416,7 +426,7 @@
                     prZg: 0
                 }
             };
-        } else if (formData.modeType === 'ts') {
+        } else if (formData.modeType === 8) {
             return {
                 ...baseData,
                 tsData: {
@@ -455,7 +465,7 @@
                     prOtklZg: 0
                 }
             };
-        } else if (formData.modeType === 'tnp') {
+        } else if (formData.modeType === 4) {
             return {
                 ...baseData,
                 tnpData: {
@@ -473,11 +483,10 @@
     
     function createTimeInterval(formData: ModeCreationForm, tempId: string): TimeInterval {
         const endTime = calculateEndTime(formData.startTime, formData.duration);
-        const modeId = getModeIdForInterval(formData.modeType!);
         
         const interval = {
             id: tempId,
-            mode: modeId,
+            mode: formData.modeType!,
             startTime: formData.startTime,
             endTime,
             city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
@@ -511,50 +520,15 @@
         return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
     }
     
-    function getKodMode(modeType: string): number {
+    function getModeTitle(modeType: number): string {
         switch(modeType) {
-            case 'astr': return 1; // Астрокоррекции
-            case 's': return 2;    // Съемки
-            case 'omi': return 3;  // Распр. ОМИ (но для ОМИ обычно отдельный код)
-            case 'tnp': return 4;
-            case 'kvd': return 3;  // Калибровка ВД (обычно тот же код что и ОМИ)
-            case 'ts': return 5;
-            case 'ona': return 6;  // Юстировки ОНА
-            default: return 0;
-        }
-    }
-    
-    function getModeIdForInterval(modeType: string | null): string {
-        if (!modeType) return 'mode_1';
-        
-        switch(modeType) {
-            case 'astr': return 'mode_1';
-            case 's': return 'mode_2';
-            case 'omi': return 'mode_3';
-            case 'tnp': return 'mode_4';
-            case 'kvd': return 'mode_5';
-            case 'ts': return 'mode_6';
-            case 'ona': return 'mode_7';
-            case 'mode_1': return 'mode_1';
-            case 'mode_2': return 'mode_2';
-            case 'mode_3': return 'mode_3';
-            case 'mode_4': return 'mode_4';
-            case 'mode_5': return 'mode_5';
-            case 'mode_6': return 'mode_6';
-            case 'mode_7': return 'mode_7';
-            default: return 'mode_1';
-        }
-    }
-        
-    function getModeTitle(modeType: string): string {
-        switch(modeType) {
-            case 'astr': return 'Астрокоррекции';
-            case 's': return 'Съемки';
-            case 'omi': return 'Распр. ОМИ';
-            case 'tnp': return 'Режим ТНП';
-            case 'kvd': return 'Калибровка ВД';
-            case 'ts': return 'Технологическая съемка';
-            case 'ona': return 'Юстировки ОНА';
+            case 9: return 'Астрокоррекции';
+            case 1: return 'Съемки';
+            case 2: return 'Распр. ОМИ';
+            case 4: return 'Режим ТНП';
+            case 7: return 'Калибровка ВД';
+            case 8: return 'Технологическая съемка';
+            case 6: return 'Юстировки ОНА';
             default: return 'Режим';
         }
     }
