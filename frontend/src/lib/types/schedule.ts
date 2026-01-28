@@ -7,6 +7,12 @@ export interface TimeInterval {
     color: string;
     title?: string;
     description?: string;
+    hasConflict?: boolean;  // true если есть пересечение с интервалом другого режима
+    conflictWith?: number[]; // массив mode id с которыми есть пересечение
+    willBeSaved?: boolean;  // true - будет сохранено, false - не будет сохранено
+    nearZasvetka?: boolean;          // true если интервал близко к засветке (< 60 секунд)
+    zasvetkaConflict?: boolean;      // true если пересекается с засветкой
+    zasvetkaDistance?: number;       // расстояние до ближайшей засветки в секундах
 }
 
 export interface WorkMode {

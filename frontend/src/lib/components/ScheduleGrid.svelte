@@ -6,13 +6,17 @@
         shadowIntervals = [],
         zasvetkaIntervals = [],
         workModes = [],
-        onModeSelect
+        onModeSelect,
+        getIntervalColor,
+        getIntervalTitle
     } = $props<{
         intervals: TimeInterval[];
         shadowIntervals?: ShadowInterval[];
         zasvetkaIntervals?: ZasvetkaInterval[];
         workModes?: WorkMode[];
         onModeSelect?: (modeId: number) => void;
+        getIntervalColor?: (interval: TimeInterval) => string;
+        getIntervalTitle?: (interval: TimeInterval) => string;
     }>();
 
     const HOURS = Array.from({length: 24}, (_, i) => i);
@@ -98,7 +102,7 @@
 
         const allPositionedIntervals: any[] = [];
         
-        intervals.forEach((interval: { mode: any; id: any; startTime: any; endTime: any; }) => {
+        intervals.forEach((interval: TimeInterval) => {
             const modeIndex = workModes.findIndex((m: { id: any; }) => m.id === interval.mode);
             
             if (modeIndex === -1) {
@@ -106,11 +110,21 @@
                 return;
             }
             
+            const color = getIntervalColor?.(interval) || interval.color;
+            const title = getIntervalTitle?.(interval) || interval.title || '';
+            
             allPositionedIntervals.push({
                 ...interval,
                 type: 'schedule',
                 modeIndex,
-                position: getPositionForInterval(interval.startTime, interval.endTime, modeIndex)
+                color, 
+                position: getPositionForInterval(interval.startTime, interval.endTime, modeIndex),
+                className: interval.zasvetkaConflict || interval.nearZasvetka 
+                ? 'zasvetka-conflict-interval' 
+                : interval.hasConflict 
+                    ? 'conflict-interval' 
+                    : '',
+                title: `${title} ${interval.startTime}-${interval.endTime}`
             });
         });
         
@@ -217,7 +231,7 @@
         >
             {#each getPositionedIntervals() as item}
                 <div 
-                    class="interval interval-{item.type}" 
+                    class="interval interval-{item.type} {item.className}" 
                     style="
                         left: {item.position.left}; 
                         width: {item.position.width}; 
@@ -227,7 +241,7 @@
                         opacity: {item.opacity || 1};
                         z-index: {item.zIndex || 10};
                     "
-                    title="{(item.title || '') + ' ' + item.startTime + '-' + item.endTime}"
+                    title="{item.title}"
                 >
                     {#if item.type === 'schedule'}
                         <div class="interval-content" style="background: {item.color};">
@@ -421,4 +435,5 @@
         font-weight: 600;
         font-size: clamp(0.65rem, 0.8vw, 0.8rem);
     }
+    
 </style>

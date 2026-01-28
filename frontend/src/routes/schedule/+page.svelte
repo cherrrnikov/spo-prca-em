@@ -387,6 +387,251 @@
         };
     }
 
+    function checkZasvetkaProximity(
+        intervalStart: string,
+        intervalEnd: string,
+        zasvetkaIntervals: ZasvetkaInterval[]
+    ): {
+        nearZasvetka: boolean;
+        zasvetkaConflict: boolean;
+        minDistance: number;
+    } {
+        const intervalStartMinutes = timeToMinutes(intervalStart);
+        const intervalEndMinutes = timeToMinutes(intervalEnd);
+        const SAFETY_BUFFER = 1; // 60 секунд = 1 минута
+        
+        let minDistance = Infinity;
+        let nearZasvetka = false;
+        let zasvetkaConflict = false;
+
+        for (const zasvetka of zasvetkaIntervals) {
+            const zasvetkaStart = timeToMinutes(zasvetka.startTime);
+            const zasvetkaEnd = timeToMinutes(zasvetka.endTime);
+            
+            const overlaps = (
+                (intervalStartMinutes >= zasvetkaStart && intervalStartMinutes < zasvetkaEnd) ||
+                (intervalEndMinutes > zasvetkaStart && intervalEndMinutes <= zasvetkaEnd) ||
+                (intervalStartMinutes <= zasvetkaStart && intervalEndMinutes >= zasvetkaEnd)
+            );
+            
+            if (overlaps) {
+                zasvetkaConflict = true;
+                minDistance = 0;
+                break; // Если пересекается, дальше не проверяем
+            }
+            
+            if (intervalEndMinutes <= zasvetkaStart) {
+                const distance = zasvetkaStart - intervalEndMinutes;
+                if (distance < SAFETY_BUFFER) {
+                    nearZasvetka = true;
+                    minDistance = Math.min(minDistance, distance);
+                }
+            }
+            
+            if (intervalStartMinutes >= zasvetkaEnd) {
+                const distance = intervalStartMinutes - zasvetkaEnd;
+                if (distance < SAFETY_BUFFER) {
+                    nearZasvetka = true;
+                    minDistance = Math.min(minDistance, distance);
+                }
+            }
+        }
+        
+        return {
+            nearZasvetka,
+            zasvetkaConflict,
+            minDistance: minDistance === Infinity ? 0 : minDistance
+        };
+    }
+    
+    function checkAllConflicts(): TimeInterval[] {
+        const allIntervals = [
+            ...intervals,
+            ...(operatorData ? 
+                ScheduleCreationService.convertToTimeIntervals(operatorData, ppiAssignments, workModes) : 
+                [])
+        ];
+        
+        const updatedIntervals = [...allIntervals].map(interval => ({
+            ...interval,
+            hasConflict: false,
+            conflictWith: [],
+            nearZasvetka: false,
+            zasvetkaConflict: false,
+            zasvetkaDistance: 0,
+            willBeSaved: true
+        }));
+        
+        for (let i = 0; i < updatedIntervals.length; i++) {
+            for (let j = i + 1; j < updatedIntervals.length; j++) {
+                const intervalA = updatedIntervals[i];
+                const intervalB = updatedIntervals[j];
+                
+                if (intervalA.mode === intervalB.mode) {
+                    continue;
+                }
+                
+                const overlap = checkTwoIntervalsOverlap(
+                    intervalA.startTime,
+                    intervalA.endTime,
+                    intervalB.startTime,
+                    intervalB.endTime
+                );
+                
+                if (overlap) {
+                    intervalA.hasConflict = true;
+                    intervalB.hasConflict = true;
+                    
+                    if (!intervalA.conflictWith?.includes(intervalB.mode)) {
+                        intervalA.conflictWith = [...(intervalA.conflictWith || []), intervalB.mode];
+                    }
+                    if (!intervalB.conflictWith?.includes(intervalA.mode)) {
+                        intervalB.conflictWith = [...(intervalB.conflictWith || []), intervalA.mode];
+                    }
+                    
+                    intervalA.willBeSaved = false;
+                    intervalB.willBeSaved = false;
+                }
+            }
+        }
+        
+        updatedIntervals.forEach(interval => {
+            const zasvetkaCheck = checkZasvetkaProximity(
+                interval.startTime,
+                interval.endTime,
+                zasvetkaIntervals
+            );
+            
+            interval.nearZasvetka = zasvetkaCheck.nearZasvetka;
+            interval.zasvetkaConflict = zasvetkaCheck.zasvetkaConflict;
+            interval.zasvetkaDistance = zasvetkaCheck.minDistance;
+            
+            if (zasvetkaCheck.zasvetkaConflict || zasvetkaCheck.nearZasvetka) {
+                interval.willBeSaved = false;
+            }
+        });
+        
+        return updatedIntervals;
+    }
+    
+    function checkTwoIntervalsOverlap(
+        startA: string,
+        endA: string,
+        startB: string,
+        endB: string
+    ): boolean {
+        const startMinutesA = timeToMinutes(startA);
+        const endMinutesA = timeToMinutes(endA);
+        const startMinutesB = timeToMinutes(startB);
+        const endMinutesB = timeToMinutes(endB);
+        
+        return (
+            (startMinutesA >= startMinutesB && startMinutesA < endMinutesB) ||
+            (endMinutesA > startMinutesB && endMinutesA <= endMinutesB) ||
+            (startMinutesA <= startMinutesB && endMinutesA >= endMinutesB)
+        );
+    }
+    
+    function createTimeInterval(formData: ModeCreationForm, tempId: string): TimeInterval {
+        const endTime = calculateEndTime(formData.startTime, formData.duration);
+        
+        const interval: TimeInterval = {
+            id: tempId,
+            mode: formData.modeType!,
+            startTime: formData.startTime,
+            endTime,
+            city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
+            color: ScheduleCreationService.getColorByPpi(formData.ppiNum),
+            title: getModeTitle(formData.modeType!),
+            ppi: formData.ppiNum, 
+            dlit: formData.duration,
+            hasConflict: false,
+            conflictWith: [],
+            nearZasvetka: false,
+            zasvetkaConflict: false,
+            zasvetkaDistance: 0,
+            willBeSaved: true
+        };
+        
+        checkAndUpdateAllConflictsForNewInterval(interval);
+        
+        return interval;
+    }
+
+    function checkAndUpdateAllConflictsForNewInterval(newInterval: TimeInterval) {
+        const allIntervals = [
+            ...intervals,
+            ...(operatorData ? 
+                ScheduleCreationService.convertToTimeIntervals(operatorData, ppiAssignments, workModes) : 
+                [])
+        ];
+        
+        let hasConflict = false;
+        const conflictWith: number[] = [];
+        
+        for (const existingInterval of allIntervals) {
+            if (existingInterval.mode === newInterval.mode) {
+                continue;
+            }
+            
+            const overlap = checkTwoIntervalsOverlap(
+                newInterval.startTime,
+                newInterval.endTime,
+                existingInterval.startTime,
+                existingInterval.endTime
+            );
+            
+            if (overlap) {
+                hasConflict = true;
+                if (!conflictWith.includes(existingInterval.mode)) {
+                    conflictWith.push(existingInterval.mode);
+                }
+            }
+        }
+        
+        newInterval.hasConflict = hasConflict;
+        newInterval.conflictWith = conflictWith;
+        
+        const zasvetkaCheck = checkZasvetkaProximity(
+            newInterval.startTime,
+            newInterval.endTime,
+            zasvetkaIntervals
+        );
+        
+        newInterval.nearZasvetka = zasvetkaCheck.nearZasvetka;
+        newInterval.zasvetkaConflict = zasvetkaCheck.zasvetkaConflict;
+        newInterval.zasvetkaDistance = zasvetkaCheck.minDistance;
+        
+        newInterval.willBeSaved = !hasConflict && !zasvetkaCheck.zasvetkaConflict && !zasvetkaCheck.nearZasvetka;
+    }
+    
+    function updateAllConflicts() {
+        const allIntervals = [
+            ...intervals,
+            ...(operatorData ? 
+                ScheduleCreationService.convertToTimeIntervals(operatorData, ppiAssignments, workModes) : 
+                [])
+        ];
+        
+        const intervalsWithConflicts = checkAllConflicts();
+        
+        intervals = intervals.map(interval => {
+            const updatedInterval = intervalsWithConflicts.find(i => i.id === interval.id);
+            if (updatedInterval) {
+                return {
+                    ...interval,
+                    hasConflict: updatedInterval.hasConflict,
+                    conflictWith: updatedInterval.conflictWith,
+                    nearZasvetka: updatedInterval.nearZasvetka,
+                    zasvetkaConflict: updatedInterval.zasvetkaConflict,
+                    zasvetkaDistance: updatedInterval.zasvetkaDistance,
+                    willBeSaved: updatedInterval.willBeSaved
+                };
+            }
+            return interval;
+        });
+    }
+    
     function handleModeFormSubmit(formData: ModeCreationForm) {
         if (!operatorDataLoaded) {
             console.log("Данные оператора не загружены");
@@ -398,24 +643,24 @@
         }
 
         const modeId = formData.modeType!;
-        const overlapCheck = checkIntervalOverlap(
+        
+        const sameModeOverlap = checkIntervalOverlap(
             formData.startTime, 
             formData.duration, 
             modeId
         );
         
-        if (overlapCheck.overlaps) {
-            const conflicting = overlapCheck.conflictingInterval;
+        if (sameModeOverlap.overlaps) {
+            const conflicting = sameModeOverlap.conflictingInterval;
             alert(`Ошибка: интервал пересекается с существующим интервалом\n` +
-                  `Время конфликта: ${conflicting?.startTime} - ${conflicting?.endTime}\n` +
-                  `Попробуйте выбрать другое время или уменьшить длительность.`);
+                `Время конфликта: ${conflicting?.startTime} - ${conflicting?.endTime}\n` +
+                `Попробуйте выбрать другое время или уменьшить длительность.`);
             return;
         }
-
+        
         const tempId = `created_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
         const modeData = createProgramModeData(formData, tempId);
-        console.log('Создан новый интервал с данными:', modeData);
         const timeInterval = createTimeInterval(formData, tempId);
         
         createdPrograms = [...createdPrograms, {
@@ -426,8 +671,38 @@
         
         intervals = [...intervals, timeInterval];
         
-        // selectedMode = null;
+        updateAllConflicts();
+        
         resetCurrentFormData();
+    }
+    
+    function getIntervalColor(interval: TimeInterval): string {
+        if (interval.zasvetkaConflict || interval.nearZasvetka) {
+            return '#ffffff'; 
+        }
+        if (interval.hasConflict) {
+            return '#ff0000';
+        }
+        return interval.color;
+    }
+    
+    function getIntervalTitle(interval: TimeInterval): string {
+        let title = interval.title || '';
+        
+        if (interval.hasConflict) {
+            const conflictModes = interval.conflictWith?.map(modeId => {
+                const mode = workModes.find(m => m.id === modeId);
+                return mode?.label || `Режим ${modeId}`;
+            }).join(', ');
+            
+            title += ` (КОНФЛИКТ: ${conflictModes})`;
+        }
+        
+        if (!interval.willBeSaved) {
+            title += ' [НЕ БУДЕТ СОХРАНЕНО]';
+        }
+        
+        return title;
     }
 
     function resetCurrentFormData() {
@@ -556,24 +831,6 @@
         }
     }
     
-    function createTimeInterval(formData: ModeCreationForm, tempId: string): TimeInterval {
-        const endTime = calculateEndTime(formData.startTime, formData.duration);
-        
-        const interval = {
-            id: tempId,
-            mode: formData.modeType!,
-            startTime: formData.startTime,
-            endTime,
-            city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
-            color: ScheduleCreationService.getColorByPpi(formData.ppiNum),
-            title: getModeTitle(formData.modeType!),
-            ppi: formData.ppiNum, 
-            dlit: formData.duration
-        };
-        
-        return interval;
-    }
-    
     function calculateDateFromTime(timeString: string): string {
         const today = new Date();
         const [hours, minutes] = timeString.split(':').map(Number);
@@ -656,6 +913,8 @@
             {zasvetkaIntervals}
             {workModes}
             onModeSelect={handleModeSelect}
+            getIntervalColor={getIntervalColor}
+            getIntervalTitle={getIntervalTitle}
         />
     </div>
 

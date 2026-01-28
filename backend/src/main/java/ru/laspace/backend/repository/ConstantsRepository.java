@@ -19,7 +19,7 @@ public class ConstantsRepository {
     private static final Map<String, Integer> MODE_TO_CID = Map.of(
             "astr", 6,
             "s", 90,
-            "omi", 11,
+            "omi", 92,
             "tnp", 88,
             "kvd", 87,
             "ts", 89,
