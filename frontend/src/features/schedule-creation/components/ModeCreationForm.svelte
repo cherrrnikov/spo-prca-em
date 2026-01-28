@@ -293,6 +293,8 @@
         const ikKey = `ik${ikNumber}` as keyof typeof msu1Ik;
         return msu === 'msu1' ? msu1Ik[ikKey] : msu2Ik[ikKey];
     }
+
+    const isDurationDisabled = $derived(selectedMode === 8);
 </script>
 
 <div class="mode-creation-form">
@@ -435,6 +437,8 @@
                         bind:value={formData.duration}
                         min="60"
                         step="60"
+                        disabled={isDurationDisabled}
+                        class:disabled={isDurationDisabled}
                     />
                 </div>
             </div>
@@ -512,6 +516,18 @@
         border-radius: 4px;
         font-size: 0.875rem;
         width: 100%;
+    }
+
+    .form-group input:disabled {
+        background-color: #f7fafc;
+        border-color: #e2e8f0;
+        color: #a0aec0;
+    }
+    
+    .form-group input.disabled {
+        background-color: #f7fafc;
+        border-color: #e2e8f0;
+        color: #a0aec0;
     }
 
     .checkbox-group {

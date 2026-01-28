@@ -403,7 +403,7 @@ export class ScheduleCreationService {
                 endTime: this.formatTimeFromISO(shadow.dTOut),
                 duration: shadow.duration,
                 title: 'Тень',
-                color: 'rgb(128, 128, 128)',
+                color: 'rgba(83, 83, 83, 1)',
                 opacity: 1,
                 zIndex: 1
             })),
@@ -414,7 +414,7 @@ export class ScheduleCreationService {
                 endTime: this.formatTimeFromISO(zasvetka.dTOut),
                 duration: zasvetka.duration,
                 title: 'Засветка',
-                color: 'rgba(255, 255, 255, 1)',
+                color: 'rgba(175, 175, 175, 1)',
                 opacity: 1,
                 zIndex: 2
             }))
