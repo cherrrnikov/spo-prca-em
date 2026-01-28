@@ -7,6 +7,16 @@ export interface TimeInterval {
     color: string;
     title?: string;
     description?: string;
+    ppi?: number;
+    dlit?: number;
+    customerCode?: number;
+    
+    msu1Vd?: number[];
+    msu2Vd?: number[];
+    
+    msu1Config?: TsMsuConfig;
+    msu2Config?: TsMsuConfig;
+    
     hasConflict?: boolean;  // true если есть пересечение с интервалом другого режима
     conflictWith?: number[]; // массив mode id с которыми есть пересечение
     willBeSaved?: boolean;  // true - будет сохранено, false - не будет сохранено

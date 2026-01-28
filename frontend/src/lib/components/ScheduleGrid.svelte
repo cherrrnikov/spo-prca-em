@@ -8,7 +8,10 @@
         workModes = [],
         onModeSelect,
         getIntervalColor,
-        getIntervalTitle
+        getIntervalTitle,
+        onIntervalClick, 
+        onIntervalDelete, 
+        selectedIntervalId = null
     } = $props<{
         intervals: TimeInterval[];
         shadowIntervals?: ShadowInterval[];
@@ -17,6 +20,9 @@
         onModeSelect?: (modeId: number) => void;
         getIntervalColor?: (interval: TimeInterval) => string;
         getIntervalTitle?: (interval: TimeInterval) => string;
+        onIntervalClick?: (interval: TimeInterval) => void; 
+        onIntervalDelete?: (intervalId: string) => void; 
+        selectedIntervalId?: string | null;
     }>();
 
     const HOURS = Array.from({length: 24}, (_, i) => i);
@@ -30,6 +36,46 @@
     let gridContainer = $state<HTMLDivElement>();
     
     let selectedMode = $state<number | null>(null);
+
+    let contextMenu = $state<{
+        show: boolean;
+        x: number;
+        y: number;
+        intervalId: string;
+    }>({
+        show: false,
+        x: 0,
+        y: 0,
+        intervalId: ''
+    });
+
+    function closeContextMenu() {
+        contextMenu.show = false;
+    }
+
+    function handleIntervalClick(event: MouseEvent, interval: TimeInterval) {
+        event.preventDefault();
+        
+        if (event.button === 0) { // Левая кнопка мыши
+            // Передаем данные интервала родительскому компоненту
+            onIntervalClick?.(interval);
+        } else if (event.button === 2) { // Правая кнопка мыши
+            contextMenu = {
+                show: true,
+                x: event.clientX,
+                y: event.clientY,
+                intervalId: interval.id
+            };
+            event.preventDefault();
+        }
+    }
+
+    function handleDeleteInterval() {
+        if (contextMenu.intervalId) {
+            onIntervalDelete?.(contextMenu.intervalId);
+            closeContextMenu();
+        }
+    }
 
     function updateContainerWidth() {
         if (gridContainer) {
@@ -59,6 +105,14 @@
             const calculatedWidth = availableWidth / 24;
             
             cellWidth = Math.max(MIN_CELL_WIDTH, Math.min(calculatedWidth, MAX_CELL_WIDTH));
+        }
+    });
+
+    $effect(() => {
+        if (contextMenu.show) {
+            const handleClickOutside = () => closeContextMenu();
+            document.addEventListener('click', handleClickOutside);
+            return () => document.removeEventListener('click', handleClickOutside);
         }
     });
 
@@ -119,11 +173,15 @@
                 modeIndex,
                 color, 
                 position: getPositionForInterval(interval.startTime, interval.endTime, modeIndex),
-                className: interval.zasvetkaConflict || interval.nearZasvetka 
-                ? 'zasvetka-conflict-interval' 
-                : interval.hasConflict 
-                    ? 'conflict-interval' 
-                    : '',
+                className: `${
+                    interval.zasvetkaConflict || interval.nearZasvetka 
+                        ? 'zasvetka-conflict-interval' 
+                        : interval.hasConflict 
+                            ? 'conflict-interval' 
+                            : ''
+                } ${
+                    interval.id === selectedIntervalId ? 'selected-interval' : ''
+                }`.trim(),
                 title: `${title} ${interval.startTime}-${interval.endTime}`
             });
         });
@@ -242,6 +300,8 @@
                         z-index: {item.zIndex || 10};
                     "
                     title="{item.title}"
+                    on:click={(e) => handleIntervalClick(e, item)}
+                    on:contextmenu|preventDefault={(e) => handleIntervalClick(e, item)}
                 >
                     {#if item.type === 'schedule'}
                         <div class="interval-content" style="background: {item.color};">
@@ -251,6 +311,18 @@
             {/each}
         </div>
     </div>
+
+    {#if contextMenu.show}
+        <div 
+            class="context-menu"
+            style="position: fixed; left: {contextMenu.x}px; top: {contextMenu.y}px;"
+            on:click|stopPropagation
+        >
+            <button class="delete-btn" on:click={handleDeleteInterval}>
+                Удалить
+            </button>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -436,4 +508,34 @@
         font-size: clamp(0.65rem, 0.8vw, 0.8rem);
     }
     
+    .selected-interval {
+        border: 3px solid #2c5282 !important;
+        box-shadow: 0 0 15px rgba(44, 82, 130, 0.5) !important;
+        z-index: 30 !important;
+    }
+
+    .context-menu {
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        padding: 0;
+        z-index: 1000;
+    }
+
+    .delete-btn {
+        padding: 8px;
+        background: #ffffff;
+        color: rgb(255, 0, 0);
+        border: 1px solid red;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        transition: background 0.2s;
+    }
+
+    .delete-btn:hover {
+        background: #ff0000;
+        color: white;
+    }
 </style>

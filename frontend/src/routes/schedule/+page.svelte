@@ -123,6 +123,9 @@
     onMount(() => {
         loadUserData();
     });
+
+    let editingInterval = $state<TimeInterval | null>(null);
+    let selectedIntervalId = $state<string | null>(null);
     
     function loadUserData() {
         try {
@@ -152,6 +155,159 @@
             console.error('Error parsing user data:', error);
             userData = null;
         }
+    }
+
+    function handleIntervalClick(interval: TimeInterval) {
+        editingInterval = { 
+            ...interval,
+            // Добавляем дефолтные значения для отсутствующих полей
+            msu1Vd: interval.msu1Vd || [],
+            msu2Vd: interval.msu2Vd || [],
+            msu1Config: interval.msu1Config || {
+                prMsu: 0,
+                prVdMsu: 0,
+                prIkMsu: 0,
+                vd1: 0,
+                vd2: 0,
+                vd3: 0,
+                ik4: 0,
+                ik5: 0,
+                ik6: 0,
+                ik7: 0,
+                ik8: 0,
+                ik9: 0,
+                ik10: 0
+            },
+            msu2Config: interval.msu2Config || {
+                prMsu: 0,
+                prVdMsu: 0,
+                prIkMsu: 0,
+                vd1: 0,
+                vd2: 0,
+                vd3: 0,
+                ik4: 0,
+                ik5: 0,
+                ik6: 0,
+                ik7: 0,
+                ik8: 0,
+                ik9: 0,
+                ik10: 0
+            },
+            customerCode: interval.customerCode || 1 // дефолтный код
+        };
+        selectedIntervalId = interval.id;
+        selectedMode = interval.mode;
+    }
+
+    function handleIntervalDelete(intervalId: string) {
+        intervals = intervals.filter(interval => interval.id !== intervalId);
+        
+        createdPrograms = createdPrograms.filter(program => program.tempId !== intervalId);
+        
+        if (editingInterval?.id === intervalId) {
+            editingInterval = null;
+            selectedIntervalId = null;
+            selectedMode = null;
+        }
+        
+        updateAllConflicts();
+    }
+
+    function handleIntervalUpdate(formData: ModeCreationForm) {
+        if (!editingInterval) return;
+        
+        const sameModeOverlap = checkIntervalOverlapForUpdate(
+            formData.startTime, 
+            formData.duration, 
+            editingInterval.mode,
+            editingInterval.id
+        );
+        
+        if (sameModeOverlap.overlaps) {
+            const conflicting = sameModeOverlap.conflictingInterval;
+            alert(`Ошибка: интервал пересекается с существующим интервалом\n` +
+                  `Время конфликта: ${conflicting?.startTime} - ${conflicting?.endTime}\n` +
+                  `Попробуйте выбрать другое время или уменьшить длительность.`);
+            return;
+        }
+        
+        const updatedInterval: TimeInterval = {
+            ...editingInterval,
+            startTime: formData.startTime,
+            endTime: calculateEndTime(formData.startTime, formData.duration),
+            ppi: formData.ppiNum,
+            dlit: formData.duration,
+            city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
+            color: ScheduleCreationService.getColorByPpi(formData.ppiNum),
+            msu1Vd: formData.msu1Vd,
+            msu2Vd: formData.msu2Vd,
+            msu1Config: formData.msu1Config,
+            msu2Config: formData.msu2Config
+        };
+        
+        intervals = intervals.map(interval => 
+            interval.id === editingInterval!.id ? updatedInterval : interval
+        );
+        
+        createdPrograms = createdPrograms.map(program => {
+            if (program.tempId === editingInterval!.id) {
+                const modeData = createProgramModeData(formData, editingInterval!.id);
+                return {
+                    ...program,
+                    modeData,
+                    timeInterval: updatedInterval
+                };
+            }
+            return program;
+        });
+        
+        updateAllConflicts();
+        
+        editingInterval = null;
+        selectedIntervalId = null;
+        resetCurrentFormData();
+    }
+
+    function checkIntervalOverlapForUpdate(
+        newStartTime: string,
+        newDuration: number,
+        modeId: number,
+        excludeIntervalId: string
+    ): { overlaps: boolean; conflictingInterval?: TimeInterval } {
+        const newEndTime = calculateEndTime(newStartTime, newDuration);
+        const newStartMinutes = timeToMinutes(newStartTime);
+        const newEndMinutes = timeToMinutes(newEndTime);
+        
+        const allIntervals = [
+            ...intervals,
+            ...(operatorData ? 
+                ScheduleCreationService.convertToTimeIntervals(operatorData, ppiAssignments, workModes) : 
+                [])
+        ];
+        
+        for (const interval of allIntervals) {
+            if (interval.id === excludeIntervalId || interval.mode !== modeId) {
+                continue;
+            }
+            
+            const existingStartMinutes = timeToMinutes(interval.startTime);
+            const existingEndMinutes = timeToMinutes(interval.endTime);
+            
+            const overlaps = (
+                (newStartMinutes >= existingStartMinutes && newStartMinutes < existingEndMinutes) ||
+                (newEndMinutes > existingStartMinutes && newEndMinutes <= existingEndMinutes) ||
+                (newStartMinutes <= existingStartMinutes && newEndMinutes >= existingEndMinutes)
+            );
+            
+            if (overlaps) {
+                return { 
+                    overlaps: true, 
+                    conflictingInterval: interval 
+                };
+            }
+        }
+        
+        return { overlaps: false };
     }
 
     function checkIntervalOverlap(
@@ -545,17 +701,40 @@
             title: getModeTitle(formData.modeType!),
             ppi: formData.ppiNum, 
             dlit: formData.duration,
+            customerCode: formData.customerCode,
             hasConflict: false,
             conflictWith: [],
             nearZasvetka: false,
             zasvetkaConflict: false,
             zasvetkaDistance: 0,
-            willBeSaved: true
+            willBeSaved: true,
+            msu1Vd: formData.modeType === 7 ? formData.msu1Vd : [],
+            msu2Vd: formData.modeType === 7 ? formData.msu2Vd : [],
+            msu1Config: formData.modeType === 8 ? formData.msu1Config : getDefaultMsuConfig(),
+            msu2Config: formData.modeType === 8 ? formData.msu2Config : getDefaultMsuConfig()
         };
-        
+
         checkAndUpdateAllConflictsForNewInterval(interval);
         
         return interval;
+    }
+
+    function getDefaultMsuConfig() {
+        return {
+            prMsu: 0,
+            prVdMsu: 0,
+            prIkMsu: 0,
+            vd1: 0,
+            vd2: 0,
+            vd3: 0,
+            ik4: 0,
+            ik5: 0,
+            ik6: 0,
+            ik7: 0,
+            ik8: 0,
+            ik9: 0,
+            ik10: 0
+        };
     }
 
     function checkAndUpdateAllConflictsForNewInterval(newInterval: TimeInterval) {
@@ -673,7 +852,8 @@
         
         updateAllConflicts();
         
-        resetCurrentFormData();
+        editingInterval = null;
+        selectedIntervalId = null;
     }
     
     function getIntervalColor(interval: TimeInterval): string {
@@ -706,6 +886,8 @@
     }
 
     function resetCurrentFormData() {
+        if (editingInterval) return;
+        
         currentFormData = {
             modeType: selectedMode, 
             ppiNum: 1,
@@ -749,8 +931,7 @@
 
     
    function createProgramModeData(formData: ModeCreationForm, tempId: string): ProgramModeData {
-
-    const mainId = operatorData?.main.id || 0;
+        const mainId = operatorData?.main.id || 0;
 
         const baseData = {
             numRp: 0,
@@ -872,7 +1053,12 @@
     
     function handleModeFormCancel() {
         selectedMode = null;
-        // operatorDataLoaded = false;
+        editingInterval = null;
+        selectedIntervalId = null;
+        
+        if (!selectedMode) {
+            resetCurrentFormData();
+        }
     }
 </script>
 
@@ -915,6 +1101,9 @@
             onModeSelect={handleModeSelect}
             getIntervalColor={getIntervalColor}
             getIntervalTitle={getIntervalTitle}
+            onIntervalClick={handleIntervalClick}
+            onIntervalDelete={handleIntervalDelete}
+            {selectedIntervalId}
         />
     </div>
 
@@ -922,9 +1111,10 @@
         <div class="creation-form-container">
             <ModeCreationFormComponent
                 {selectedMode}
-                bind:formData={currentFormData}
+                {editingInterval}
                 onSubmit={handleModeFormSubmit}
                 onCancel={handleModeFormCancel}
+                onUpdate={handleIntervalUpdate}
             />
         </div>
     {/if}

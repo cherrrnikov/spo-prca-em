@@ -7,6 +7,7 @@ import type {
     ProgramModeData,
     ShadowInterval,
     TimeInterval,
+    TsMsuConfig,
     WorkMode,
     ZasvetkaInterval
 } from '$lib/types/schedule';
@@ -327,7 +328,39 @@ export class ScheduleCreationService {
             });
         }
         
-        return intervals;
+        return intervals.map(interval => ({
+            ...interval,
+            // Добавляем дефолтные значения
+            msu1Vd: interval.msu1Vd || [],
+            msu2Vd: interval.msu2Vd || [],
+            msu1Config: interval.msu1Config || this.getDefaultMsuConfig(),
+            msu2Config: interval.msu2Config || this.getDefaultMsuConfig(),
+            customerCode: interval.customerCode || 1,
+            hasConflict: false,
+            conflictWith: [],
+            nearZasvetka: false,
+            zasvetkaConflict: false,
+            zasvetkaDistance: 0,
+            willBeSaved: true
+        }));
+    }
+
+    static getDefaultMsuConfig(): TsMsuConfig {
+        return {
+            prMsu: 0,
+            prVdMsu: 0,
+            prIkMsu: 0,
+            vd1: 0,
+            vd2: 0,
+            vd3: 0,
+            ik4: 0,
+            ik5: 0,
+            ik6: 0,
+            ik7: 0,
+            ik8: 0,
+            ik9: 0,
+            ik10: 0
+        };
     }
 
     static formatTimeFromISO(isoString: string): string {

@@ -1,8 +1,7 @@
 <script lang="ts">
-	import type { ModeCreationForm, TsMsuConfig } from "$lib/types/schedule";
-	import { onMount } from "svelte";
+    import type { ModeCreationForm, TimeInterval, TsMsuConfig } from "$lib/types/schedule";
+    import { onMount } from "svelte";
 
-    // Используем объекты с методами для изменения значений
     let msu1Vd = $state({ 
         vd1: false, 
         vd2: false, 
@@ -70,53 +69,31 @@
 
     let {
         selectedMode,
-        formData = $bindable<ModeCreationForm>({
-            modeType: null,
-            ppiNum: 1,
-            duration: 300,
-            customerCode: 1,
-            startTime: '10:00',
-            msu1Vd: [],
-            msu2Vd: [],
-            msu1Config: {
-                prMsu: 0,
-                prVdMsu: 0,
-                prIkMsu: 0,
-                vd1: 0,
-                vd2: 0,
-                vd3: 0,
-                ik4: 0,
-                ik5: 0,
-                ik6: 0,
-                ik7: 0,
-                ik8: 0,
-                ik9: 0,
-                ik10: 0
-            },
-            msu2Config: {
-                prMsu: 0,
-                prVdMsu: 0,
-                prIkMsu: 0,
-                vd1: 0,
-                vd2: 0,
-                vd3: 0,
-                ik4: 0,
-                ik5: 0,
-                ik6: 0,
-                ik7: 0,
-                ik8: 0,
-                ik9: 0,
-                ik10: 0
-            }
-        }),
         onSubmit,
-        onCancel
+        onCancel,
+        editingInterval = null, 
+        onUpdate
     } = $props<{
         selectedMode: number;
-        formData?: ModeCreationForm;
         onSubmit: (data: ModeCreationForm) => void;
         onCancel: () => void;
+        editingInterval?: TimeInterval | null; 
+        onUpdate?: (data: ModeCreationForm) => void;
     }>();
+
+    const isEditMode = $derived(!!editingInterval);
+
+    let localFormData = $state<ModeCreationForm>({
+        modeType: null,
+        ppiNum: 1,
+        duration: 300,
+        customerCode: 1,
+        startTime: '10:00',
+        msu1Vd: [],
+        msu2Vd: [],
+        msu1Config: getDefaultMsuConfig(),
+        msu2Config: getDefaultMsuConfig()
+    });
 
     onMount(async () => {
         await loadModeDurations();
@@ -134,125 +111,87 @@
     }
 
     $effect(() => {
-        if (selectedMode) {
-            formData.modeType = selectedMode;
-
-            const modeCode = MODE_ID_TO_CODE[selectedMode];
+        if (editingInterval) {
+            console.log('Заполняем форму из интервала:', editingInterval);
             
+            localFormData.modeType = editingInterval.mode;
+            localFormData.ppiNum = editingInterval.ppi || 1;
+            localFormData.duration = editingInterval.dlit || 300;
+            localFormData.startTime = editingInterval.startTime;
+            localFormData.customerCode = editingInterval.customerCode || 1;
+            
+            if (editingInterval.mode === 7) {
+                localFormData.msu1Vd = editingInterval.msu1Vd || [];
+                localFormData.msu2Vd = editingInterval.msu2Vd || [];
+                
+                msu1Vd = { 
+                    vd1: localFormData.msu1Vd.includes(1),
+                    vd2: localFormData.msu1Vd.includes(2),
+                    vd3: localFormData.msu1Vd.includes(3)
+                };
+                
+                msu2Vd = { 
+                    vd1: localFormData.msu2Vd.includes(1),
+                    vd2: localFormData.msu2Vd.includes(2),
+                    vd3: localFormData.msu2Vd.includes(3)
+                };
+                
+            } else if (editingInterval.mode === 8) {
+                localFormData.msu1Config = editingInterval.msu1Config || getDefaultMsuConfig();
+                localFormData.msu2Config = editingInterval.msu2Config || getDefaultMsuConfig();
+                
+                msu1Vd = { 
+                    vd1: localFormData.msu1Config?.vd1 === 1,
+                    vd2: localFormData.msu1Config?.vd2 === 1,
+                    vd3: localFormData.msu1Config?.vd3 === 1
+                };
+                
+                msu1Ik = {
+                    ik4: localFormData.msu1Config?.ik4 === 1,
+                    ik5: localFormData.msu1Config?.ik5 === 1,
+                    ik6: localFormData.msu1Config?.ik6 === 1,
+                    ik7: localFormData.msu1Config?.ik7 === 1,
+                    ik8: localFormData.msu1Config?.ik8 === 1,
+                    ik9: localFormData.msu1Config?.ik9 === 1,
+                    ik10: localFormData.msu1Config?.ik10 === 1
+                };
+                
+                msu2Vd = { 
+                    vd1: localFormData.msu2Config?.vd1 === 1,
+                    vd2: localFormData.msu2Config?.vd2 === 1,
+                    vd3: localFormData.msu2Config?.vd3 === 1
+                };
+                
+                msu2Ik = {
+                    ik4: localFormData.msu2Config?.ik4 === 1,
+                    ik5: localFormData.msu2Config?.ik5 === 1,
+                    ik6: localFormData.msu2Config?.ik6 === 1,
+                    ik7: localFormData.msu2Config?.ik7 === 1,
+                    ik8: localFormData.msu2Config?.ik8 === 1,
+                    ik9: localFormData.msu2Config?.ik9 === 1,
+                    ik10: localFormData.msu2Config?.ik10 === 1
+                };
+            }
+            
+            else {
+                resetCheckboxes();
+            }
+        }
+        else if (selectedMode && selectedMode !== localFormData.modeType) {
+            console.log('Создаем новый интервал для режима:', selectedMode);
+            localFormData.modeType = selectedMode;
+            
+            const modeCode = MODE_ID_TO_CODE[selectedMode];
             if (modeCode && modeDurations[modeCode] !== undefined) {
-                formData.duration = modeDurations[modeCode];
+                localFormData.duration = modeDurations[modeCode];
             }
             
             resetCheckboxes();
         }
     });
 
-    function handleVdCheckbox(msu: 'msu1' | 'msu2', vdNumber: 1 | 2 | 3) {
-        const vdKey = `vd${vdNumber}` as keyof typeof msu1Vd;
-        
-        if (msu === 'msu1') {
-            msu1Vd[vdKey] = !msu1Vd[vdKey];
-            const newArray: number[] = [];
-            
-            if (msu1Vd.vd1) newArray.push(1);
-            if (msu1Vd.vd2) newArray.push(2);
-            if (msu1Vd.vd3) newArray.push(3);
-            
-            formData.msu1Vd = newArray;
-            
-            formData.msu1Config.prMsu = newArray.length > 0 ? 1 : 0;
-        } else {
-            msu2Vd[vdKey] = !msu2Vd[vdKey];
-            const newArray: number[] = [];
-            
-            if (msu2Vd.vd1) newArray.push(1);
-            if (msu2Vd.vd2) newArray.push(2);
-            if (msu2Vd.vd3) newArray.push(3);
-            
-            formData.msu2Vd = newArray;
-            
-            formData.msu2Config.prMsu = newArray.length > 0 ? 1 : 0;
-        }
-    }
-
-    function handleTsCheckbox(type: 'vd' | 'ik', msu: 'msu1' | 'msu2', number: number) {
-        if (type === 'vd') {
-            const vdKey = `vd${number}` as keyof typeof msu1Vd;
-            
-            if (msu === 'msu1') {
-                msu1Vd[vdKey] = !msu1Vd[vdKey];
-                formData.msu1Config[`vd${number}` as keyof TsMsuConfig] = msu1Vd[vdKey] ? 1 : 0;
-
-                const hasAnyVd = msu1Vd.vd1 || msu1Vd.vd2 || msu1Vd.vd3;
-                formData.msu1Config.prVdMsu = hasAnyVd ? 1 : 0;
-                
-                const hasAnyIk = Object.values(msu1Ik).some(v => v);
-                formData.msu1Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
-            } else {
-                msu2Vd[vdKey] = !msu2Vd[vdKey];
-                formData.msu2Config[`vd${number}` as keyof TsMsuConfig] = msu2Vd[vdKey] ? 1 : 0;
-                
-                const hasAnyVd = msu2Vd.vd1 || msu2Vd.vd2 || msu2Vd.vd3;
-                formData.msu2Config.prVdMsu = hasAnyVd ? 1 : 0;
-                
-                const hasAnyIk = Object.values(msu2Ik).some(v => v);
-                formData.msu2Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
-            }
-        } else {
-            const ikKey = `ik${number}` as keyof typeof msu1Ik;
-            
-            if (msu === 'msu1') {
-                msu1Ik[ikKey] = !msu1Ik[ikKey];
-                formData.msu1Config[`ik${number}` as keyof TsMsuConfig] = msu1Ik[ikKey] ? 1 : 0;
-                
-                const hasAnyIk = Object.values(msu1Ik).some(v => v);
-                formData.msu1Config.prIkMsu = hasAnyIk ? 1 : 0;
-                
-                const hasAnyVd = msu1Vd.vd1 || msu1Vd.vd2 || msu1Vd.vd3;
-                formData.msu1Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
-            } else {
-                msu2Ik[ikKey] = !msu2Ik[ikKey];
-                formData.msu2Config[`ik${number}` as keyof TsMsuConfig] = msu2Ik[ikKey] ? 1 : 0;
-                
-                const hasAnyIk = Object.values(msu2Ik).some(v => v);
-                formData.msu2Config.prIkMsu = hasAnyIk ? 1 : 0;
-                
-                const hasAnyVd = msu2Vd.vd1 || msu2Vd.vd2 || msu2Vd.vd3;
-                formData.msu2Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
-            }
-        }
-    }
-
-    function handleSubmit() {
-        if (!formData.startTime || formData.duration <= 0) {
-            alert('Укажите время начала и длительность');
-            return;
-        }
-        console.log('Отправляем данные:', formData);
-
-        const dataToSubmit = { ...formData };
-        
-        resetCheckboxes();
-        
-        formData.startTime = '10:00';
-        onSubmit(dataToSubmit);
-    }
-
-    function resetCheckboxes() {
-        msu1Vd = { vd1: false, vd2: false, vd3: false };
-        msu2Vd = { vd1: false, vd2: false, vd3: false };
-        msu1Ik = {
-            ik4: false, ik5: false, ik6: false, ik7: false,
-            ik8: false, ik9: false, ik10: false
-        };
-        msu2Ik = {
-            ik4: false, ik5: false, ik6: false, ik7: false,
-            ik8: false, ik9: false, ik10: false
-        };
-        
-        formData.msu1Vd = [];
-        formData.msu2Vd = [];
-        formData.msu1Config = {
+    function getDefaultMsuConfig() {
+        return {
             prMsu: 0,
             prVdMsu: 0,
             prIkMsu: 0,
@@ -267,7 +206,196 @@
             ik9: 0,
             ik10: 0
         };
-        formData.msu2Config = {
+    }
+
+
+    function resetCheckboxesForKvdEdit() {
+        msu1Vd = { 
+            vd1: localFormData.msu1Vd.includes(1),
+            vd2: localFormData.msu1Vd.includes(2),
+            vd3: localFormData.msu1Vd.includes(3)
+        };
+        
+        msu2Vd = { 
+            vd1: localFormData.msu2Vd.includes(1),
+            vd2: localFormData.msu2Vd.includes(2),
+            vd3: localFormData.msu2Vd.includes(3)
+        };
+        
+        msu1Ik = {
+            ik4: false, ik5: false, ik6: false, ik7: false,
+            ik8: false, ik9: false, ik10: false
+        };
+        msu2Ik = {
+            ik4: false, ik5: false, ik6: false, ik7: false,
+            ik8: false, ik9: false, ik10: false
+        };
+    }
+
+    function resetCheckboxesForTsEdit() {
+        msu1Vd = { 
+            vd1: localFormData.msu1Config?.vd1 === 1,
+            vd2: localFormData.msu1Config?.vd2 === 1,
+            vd3: localFormData.msu1Config?.vd3 === 1
+        };
+        
+        msu1Ik = {
+            ik4: localFormData.msu1Config?.ik4 === 1,
+            ik5: localFormData.msu1Config?.ik5 === 1,
+            ik6: localFormData.msu1Config?.ik6 === 1,
+            ik7: localFormData.msu1Config?.ik7 === 1,
+            ik8: localFormData.msu1Config?.ik8 === 1,
+            ik9: localFormData.msu1Config?.ik9 === 1,
+            ik10: localFormData.msu1Config?.ik10 === 1
+        };
+        
+        msu2Vd = { 
+            vd1: localFormData.msu2Config?.vd1 === 1,
+            vd2: localFormData.msu2Config?.vd2 === 1,
+            vd3: localFormData.msu2Config?.vd3 === 1
+        };
+        
+        msu2Ik = {
+            ik4: localFormData.msu2Config?.ik4 === 1,
+            ik5: localFormData.msu2Config?.ik5 === 1,
+            ik6: localFormData.msu2Config?.ik6 === 1,
+            ik7: localFormData.msu2Config?.ik7 === 1,
+            ik8: localFormData.msu2Config?.ik8 === 1,
+            ik9: localFormData.msu2Config?.ik9 === 1,
+            ik10: localFormData.msu2Config?.ik10 === 1
+        };
+    }
+
+    function handleVdCheckbox(msu: 'msu1' | 'msu2', vdNumber: 1 | 2 | 3) {
+        const vdKey = `vd${vdNumber}` as keyof typeof msu1Vd;
+        
+        if (msu === 'msu1') {
+            msu1Vd[vdKey] = !msu1Vd[vdKey];
+            const newArray: number[] = [];
+            
+            if (msu1Vd.vd1) newArray.push(1);
+            if (msu1Vd.vd2) newArray.push(2);
+            if (msu1Vd.vd3) newArray.push(3);
+            
+            localFormData.msu1Vd = newArray;
+            
+            localFormData.msu1Config.prMsu = newArray.length > 0 ? 1 : 0;
+        } else {
+            msu2Vd[vdKey] = !msu2Vd[vdKey];
+            const newArray: number[] = [];
+            
+            if (msu2Vd.vd1) newArray.push(1);
+            if (msu2Vd.vd2) newArray.push(2);
+            if (msu2Vd.vd3) newArray.push(3);
+            
+            localFormData.msu2Vd = newArray;
+            
+            localFormData.msu2Config.prMsu = newArray.length > 0 ? 1 : 0;
+        }
+    }
+
+    function handleTsCheckbox(type: 'vd' | 'ik', msu: 'msu1' | 'msu2', number: number) {
+        if (type === 'vd') {
+            const vdKey = `vd${number}` as keyof typeof msu1Vd;
+            
+            if (msu === 'msu1') {
+                msu1Vd[vdKey] = !msu1Vd[vdKey];
+                localFormData.msu1Config[`vd${number}` as keyof TsMsuConfig] = msu1Vd[vdKey] ? 1 : 0;
+
+                const hasAnyVd = msu1Vd.vd1 || msu1Vd.vd2 || msu1Vd.vd3;
+                localFormData.msu1Config.prVdMsu = hasAnyVd ? 1 : 0;
+                
+                const hasAnyIk = Object.values(msu1Ik).some(v => v);
+                localFormData.msu1Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
+            } else {
+                msu2Vd[vdKey] = !msu2Vd[vdKey];
+                localFormData.msu2Config[`vd${number}` as keyof TsMsuConfig] = msu2Vd[vdKey] ? 1 : 0;
+                
+                const hasAnyVd = msu2Vd.vd1 || msu2Vd.vd2 || msu2Vd.vd3;
+                localFormData.msu2Config.prVdMsu = hasAnyVd ? 1 : 0;
+                
+                const hasAnyIk = Object.values(msu2Ik).some(v => v);
+                localFormData.msu2Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
+            }
+        } else {
+            const ikKey = `ik${number}` as keyof typeof msu1Ik;
+            
+            if (msu === 'msu1') {
+                msu1Ik[ikKey] = !msu1Ik[ikKey];
+                localFormData.msu1Config[`ik${number}` as keyof TsMsuConfig] = msu1Ik[ikKey] ? 1 : 0;
+                
+                const hasAnyIk = Object.values(msu1Ik).some(v => v);
+                localFormData.msu1Config.prIkMsu = hasAnyIk ? 1 : 0;
+                
+                const hasAnyVd = msu1Vd.vd1 || msu1Vd.vd2 || msu1Vd.vd3;
+                localFormData.msu1Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
+            } else {
+                msu2Ik[ikKey] = !msu2Ik[ikKey];
+                localFormData.msu2Config[`ik${number}` as keyof TsMsuConfig] = msu2Ik[ikKey] ? 1 : 0;
+                
+                const hasAnyIk = Object.values(msu2Ik).some(v => v);
+                localFormData.msu2Config.prIkMsu = hasAnyIk ? 1 : 0;
+                
+                const hasAnyVd = msu2Vd.vd1 || msu2Vd.vd2 || msu2Vd.vd3;
+                localFormData.msu2Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
+            }
+        }
+    }
+
+    function handleSubmit() {
+        if (!localFormData.startTime || localFormData.duration <= 0) {
+            alert('Укажите время начала и длительность');
+            return;
+        }
+
+        const dataToSubmit = { ...localFormData };
+        
+        if (isEditMode) {
+            onUpdate?.(dataToSubmit);
+        } else {
+            onSubmit(dataToSubmit);
+        }
+
+        if (!isEditMode) {
+            resetCheckboxes();
+            localFormData.startTime = '10:00';
+        }
+        
+        // Обновляем родительский formData
+        Object.assign(formData, localFormData);
+        formData.startTime = '10:00';
+    }
+
+    function resetCheckboxes() {
+        msu1Vd = { vd1: false, vd2: false, vd3: false };
+        msu2Vd = { vd1: false, vd2: false, vd3: false };
+        msu1Ik = {
+            ik4: false, ik5: false, ik6: false, ik7: false,
+            ik8: false, ik9: false, ik10: false
+        };
+        msu2Ik = {
+            ik4: false, ik5: false, ik6: false, ik7: false,
+            ik8: false, ik9: false, ik10: false
+        };
+        
+        localFormData.msu1Vd = [];
+        localFormData.msu2Vd = [];
+        localFormData.msu1Config = {
+            prMsu: 0,
+            prVdMsu: 0,
+            prIkMsu: 0,
+            vd1: 0,
+            vd2: 0,
+            vd3: 0,
+            ik4: 0,
+            ik5: 0,
+            ik6: 0,
+            ik7: 0,
+            ik8: 0,
+            ik9: 0,
+            ik10: 0
+        };
+        localFormData.msu2Config = {
             prMsu: 0,
             prVdMsu: 0,
             prIkMsu: 0,
@@ -293,19 +421,18 @@
         const ikKey = `ik${ikNumber}` as keyof typeof msu1Ik;
         return msu === 'msu1' ? msu1Ik[ikKey] : msu2Ik[ikKey];
     }
-
 </script>
 
 <div class="mode-creation-form">
     <div class="form-header">
-        <h3>Добавление новой записи</h3>
+        <h3>{isEditMode ? 'Редактирование записи' : 'Добавление новой записи'}</h3>
     </div>
 
     <div class="form-content">
         <div class="form-section">
             <span class="form-section_title">Пункт приёма информации (ППИ)</span>
             <div class="form-group">
-                <select bind:value={formData.ppiNum}>
+                <select bind:value={localFormData.ppiNum}>
                     {#each ppiList as ppi}
                         <option value={ppi.num}>{ppi.name}</option>
                     {/each}
@@ -413,7 +540,7 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label>Код заказчика:</label>
-                    <select bind:value={formData.customerCode}>
+                    <select bind:value={localFormData.customerCode}>
                         {#each customerCodes as code}
                             <option value={code.value}>{code.label}</option>
                         {/each}
@@ -424,7 +551,7 @@
                     <label>Время начала:</label>
                     <input 
                         type="time" 
-                        bind:value={formData.startTime}
+                        bind:value={localFormData.startTime}
                         step="300"
                     />
                 </div>
@@ -433,7 +560,7 @@
                     <label>Длительность (сек):</label>
                     <input 
                         type="number" 
-                        bind:value={formData.duration}
+                        bind:value={localFormData.duration}
                         min="60"
                         step="60"
                         disabled={selectedMode === 8}
@@ -445,11 +572,13 @@
 
     <div class="form-actions">
         <button on:click={handleSubmit} class="btn-submit">
-            Добавить режим
+            {isEditMode ? 'Сохранить изменения' : 'Добавить режим'}
         </button>
-        <!-- <button on:click={onCancel} class="btn-cancel">
-            Отмена
-        </button> -->
+        {#if isEditMode}
+            <button on:click={onCancel} class="btn-cancel">
+                Отменить редактирование
+            </button>
+        {/if}
     </div>
 </div>
 
