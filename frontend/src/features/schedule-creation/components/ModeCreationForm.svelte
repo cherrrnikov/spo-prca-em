@@ -185,6 +185,8 @@
             if (modeCode && modeDurations[modeCode] !== undefined) {
                 localFormData.duration = modeDurations[modeCode];
             }
+
+            console.log('Новая запись:', localFormData);
             
             resetCheckboxes();
         }
@@ -360,10 +362,6 @@
             resetCheckboxes();
             localFormData.startTime = '10:00';
         }
-        
-        // Обновляем родительский formData
-        Object.assign(formData, localFormData);
-        formData.startTime = '10:00';
     }
 
     function resetCheckboxes() {

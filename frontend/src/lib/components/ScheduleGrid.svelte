@@ -509,8 +509,7 @@
     }
     
     .selected-interval {
-        border: 3px solid #2c5282 !important;
-        box-shadow: 0 0 15px rgba(44, 82, 130, 0.5) !important;
+        outline: 2px solid black !important;
         z-index: 30 !important;
     }
 

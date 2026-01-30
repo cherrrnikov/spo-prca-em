@@ -200,6 +200,12 @@
     }
 
     function handleIntervalDelete(intervalId: string) {
+        console.log(`Удаление интервала: ${intervalId}`);
+
+        const intervalToDelete = intervals.find(interval => interval.id === intervalId);
+        if (intervalToDelete) {
+            console.log(`   Удаляемый интервал: ${intervalToDelete.startTime} - ${intervalToDelete.endTime}, Режим: ${intervalToDelete.mode}`);
+        }
         intervals = intervals.filter(interval => interval.id !== intervalId);
         
         createdPrograms = createdPrograms.filter(program => program.tempId !== intervalId);
@@ -211,10 +217,16 @@
         }
         
         updateAllConflicts();
+
+        logAllIntervals('После удаления');
     }
 
     function handleIntervalUpdate(formData: ModeCreationForm) {
         if (!editingInterval) return;
+
+        console.log(`Редактирование интервала: ${editingInterval.id}`);
+        console.log(`   Старые значения: ${editingInterval.startTime} - ${editingInterval.endTime}`);
+        console.log(`   Новые значения: ${formData.startTime}, длительность ${formData.duration} сек`);
         
         const sameModeOverlap = checkIntervalOverlapForUpdate(
             formData.startTime, 
@@ -266,6 +278,8 @@
         editingInterval = null;
         selectedIntervalId = null;
         resetCurrentFormData();
+
+        logAllIntervals('После редактирования интервала');
     }
 
     function checkIntervalOverlapForUpdate(
@@ -278,14 +292,7 @@
         const newStartMinutes = timeToMinutes(newStartTime);
         const newEndMinutes = timeToMinutes(newEndTime);
         
-        const allIntervals = [
-            ...intervals,
-            ...(operatorData ? 
-                ScheduleCreationService.convertToTimeIntervals(operatorData, ppiAssignments, workModes) : 
-                [])
-        ];
-        
-        for (const interval of allIntervals) {
+        for (const interval of intervals) {
             if (interval.id === excludeIntervalId || interval.mode !== modeId) {
                 continue;
             }
@@ -319,14 +326,7 @@
         const newStartMinutes = timeToMinutes(newStartTime);
         const newEndMinutes = timeToMinutes(newEndTime);
         
-        const allIntervals = [
-            ...intervals,
-            ...(operatorData ? 
-                ScheduleCreationService.convertToTimeIntervals(operatorData, ppiAssignments, workModes) : 
-                [])
-        ];
-        
-        for (const interval of allIntervals) {
+        for (const interval of intervals) {
             if (interval.mode !== modeId) {
                 continue;
             }
@@ -350,7 +350,7 @@
         
         return { overlaps: false };
     }
-    
+        
     function timeToMinutes(time: string): number {
         const [hours, minutes] = time.split(':').map(Number);
         return hours * 60 + minutes;
@@ -363,14 +363,8 @@
         const dayStart = 0; // 00:00
         const dayEnd = 24 * 60; // 24:00
 
-        const allIntervals = [
-        ...intervals,
-        ...(operatorData ? 
-            ScheduleCreationService.convertToTimeIntervals(operatorData, ppiAssignments, workModes) : 
-            [])
-    ];
-        
-        const modeIntervals = allIntervals.filter(interval => interval.mode === modeId);
+        // Используем только текущие интервалы
+        const modeIntervals = intervals.filter(interval => interval.mode === modeId);
         
         if (modeIntervals.length === 0) {
             return {
@@ -459,6 +453,8 @@
             selectedProgramDate = date;
             loadForecastData(date);
         }
+
+        logAllIntervals('После загрузки данных оператора');
     }
 
     function formatDate(dateString: string): string {
@@ -601,14 +597,7 @@
     }
     
     function checkAllConflicts(): TimeInterval[] {
-        const allIntervals = [
-            ...intervals,
-            ...(operatorData ? 
-                ScheduleCreationService.convertToTimeIntervals(operatorData, ppiAssignments, workModes) : 
-                [])
-        ];
-        
-        const updatedIntervals = [...allIntervals].map(interval => ({
+        const updatedIntervals = intervals.map(interval => ({
             ...interval,
             hasConflict: false,
             conflictWith: [],
@@ -785,13 +774,6 @@
     }
     
     function updateAllConflicts() {
-        const allIntervals = [
-            ...intervals,
-            ...(operatorData ? 
-                ScheduleCreationService.convertToTimeIntervals(operatorData, ppiAssignments, workModes) : 
-                [])
-        ];
-        
         const intervalsWithConflicts = checkAllConflicts();
         
         intervals = intervals.map(interval => {
@@ -822,6 +804,8 @@
         }
 
         const modeId = formData.modeType!;
+
+        console.log(`Создание нового интервала: Режим ${modeId}, время ${formData.startTime}, длительность ${formData.duration} сек`);
         
         const sameModeOverlap = checkIntervalOverlap(
             formData.startTime, 
@@ -841,6 +825,8 @@
         
         const modeData = createProgramModeData(formData, tempId);
         const timeInterval = createTimeInterval(formData, tempId);
+
+        console.log(`   Создан интервал: ${timeInterval.startTime} - ${timeInterval.endTime}, ППИ: ${timeInterval.ppi}`);
         
         createdPrograms = [...createdPrograms, {
             tempId,
@@ -854,6 +840,8 @@
         
         editingInterval = null;
         selectedIntervalId = null;
+
+        logAllIntervals('После создания нового интервала');
     }
     
     function getIntervalColor(interval: TimeInterval): string {
@@ -1059,6 +1047,19 @@
         if (!selectedMode) {
             resetCurrentFormData();
         }
+    }
+
+    function logAllIntervals(action: string) {
+        console.log(`${action} - Все интервалы на сетке:`, intervals);
+        
+        console.log(`Интервалы из createdPrograms (${createdPrograms.length} шт.):`);
+        console.log('Созданные интервалы:', createdPrograms);
+        
+        console.log('Статистика:');
+        console.log(`   Всего интервалов: ${intervals.length}`);
+        console.log(`   Будет сохранено: ${intervals.filter(i => i.willBeSaved).length}`);
+        console.log(`   С конфликтами: ${intervals.filter(i => i.hasConflict).length}`);
+        console.log(`   С засветками: ${intervals.filter(i => i.zasvetkaConflict || i.nearZasvetka).length}`);
     }
 </script>
 
