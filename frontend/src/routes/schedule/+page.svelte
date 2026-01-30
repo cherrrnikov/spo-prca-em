@@ -86,6 +86,11 @@
         duration: 300,
         customerCode: 5,
         startTime: '10:00',
+        kvdConfig: {
+            prMsu: 0, // 0-МСУ1, 1-МСУ2
+            prBssd: 0, // 0-БССД1, 1-БССД2  
+            prZg: 0
+        },
         msu1Vd: [],
         msu2Vd: [],
         msu1Config: {
@@ -251,12 +256,19 @@
             dlit: formData.duration,
             city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
             color: ScheduleCreationService.getColorByPpi(formData.ppiNum),
-            msu1Vd: formData.msu1Vd,
-            msu2Vd: formData.msu2Vd,
-            msu1Config: formData.msu1Config,
-            msu2Config: formData.msu2Config
         };
         
+        if (formData.modeType === 7 && formData.kvdConfig) {
+            updatedInterval.kvdConfig = { ...formData.kvdConfig };
+            updatedInterval.msu1Vd = formData.kvdConfig.prMsu === 0 ? [1] : [];
+            updatedInterval.msu2Vd = formData.kvdConfig.prMsu === 1 ? [1] : [];
+        }
+        
+        if (formData.modeType === 8) {
+            updatedInterval.msu1Config = { ...formData.msu1Config };
+            updatedInterval.msu2Config = { ...formData.msu2Config };
+        }
+
         intervals = intervals.map(interval => 
             interval.id === editingInterval!.id ? updatedInterval : interval
         );
@@ -678,6 +690,10 @@
     }
     
     function createTimeInterval(formData: ModeCreationForm, tempId: string): TimeInterval {
+        console.log('createTimeInterval с formData:', formData);
+        console.log('msu1Config в createTimeInterval:', formData.msu1Config);
+        console.log('msu2Config в createTimeInterval:', formData.msu2Config);
+        
         const endTime = calculateEndTime(formData.startTime, formData.duration);
         
         const interval: TimeInterval = {
@@ -697,11 +713,18 @@
             zasvetkaConflict: false,
             zasvetkaDistance: 0,
             willBeSaved: true,
-            msu1Vd: formData.modeType === 7 ? formData.msu1Vd : [],
-            msu2Vd: formData.modeType === 7 ? formData.msu2Vd : [],
-            msu1Config: formData.modeType === 8 ? formData.msu1Config : getDefaultMsuConfig(),
-            msu2Config: formData.modeType === 8 ? formData.msu2Config : getDefaultMsuConfig()
         };
+
+        if (formData.modeType === 7 && formData.kvdConfig) {
+            interval.kvdConfig = { ...formData.kvdConfig };
+            interval.msu1Vd = formData.kvdConfig.prMsu === 0 ? [1] : [];
+            interval.msu2Vd = formData.kvdConfig.prMsu === 1 ? [1] : [];
+        }
+        
+        if (formData.modeType === 8) {
+            interval.msu1Config = { ...formData.msu1Config };
+            interval.msu2Config = { ...formData.msu2Config };
+        }
 
         checkAndUpdateAllConflictsForNewInterval(interval);
         
@@ -918,7 +941,11 @@
     }
 
     
-   function createProgramModeData(formData: ModeCreationForm, tempId: string): ProgramModeData {
+    function createProgramModeData(formData: ModeCreationForm, tempId: string): ProgramModeData {
+        console.log('createProgramModeData для режима', formData.modeType);
+        console.log('formData.msu1Config:', formData.msu1Config);
+        console.log('formData.msu2Config:', formData.msu2Config);
+        
         const mainId = operatorData?.main.id || 0;
 
         const baseData = {
@@ -933,6 +960,16 @@
         };
         
         if (formData.modeType === 7) {
+            console.log('Создание данных для КВД');
+            console.log('formData.msu1Vd:', formData.msu1Vd);
+            console.log('formData.msu2Vd:', formData.msu2Vd);
+            
+            const kvdConfig = formData.kvdConfig || {
+                prMsu: 0,
+                prBssd: 0,
+                prZg: 0
+            };
+            
             return {
                 ...baseData,
                 kvdData: {
@@ -940,12 +977,20 @@
                     idMain: mainId,
                     dn: baseData.dateOn,
                     dk: baseData.dateOff,
-                    prMsu: formData.msu1Vd.length > 0 ? 1 : 0,
-                    prBssd: formData.msu2Vd.length > 0 ? 1 : 0,
-                    prZg: 0
+                    prMsu: kvdConfig.prMsu,
+                    prBssd: kvdConfig.prBssd,
+                    prZg: kvdConfig.prZg
                 }
             };
         } else if (formData.modeType === 8) {
+            console.log('Создание данных для ТС');
+            console.log('msu1Config:', formData.msu1Config);
+            console.log('msu2Config:', formData.msu2Config);
+            
+            // Убедимся что конфиги не undefined
+            const msu1Config = formData.msu1Config || getDefaultMsuConfig();
+            const msu2Config = formData.msu2Config || getDefaultMsuConfig();
+            
             return {
                 ...baseData,
                 tsData: {
@@ -955,32 +1000,32 @@
                     dk: baseData.dateOff,
                     tip: 1,
                     reg: 1,
-                    prMsu1: formData.msu1Config.prMsu,
-                    prVdMsu1: formData.msu1Config.prVdMsu,
-                    prIkMsu1: formData.msu1Config.prIkMsu,
-                    prVd1_1: formData.msu1Config.vd1,
-                    prVd2_1: formData.msu1Config.vd2,
-                    prVd3_1: formData.msu1Config.vd3,
-                    prIk4_1: formData.msu1Config.ik4,
-                    prIk5_1: formData.msu1Config.ik5,
-                    prIk6_1: formData.msu1Config.ik6,
-                    prIk7_1: formData.msu1Config.ik7,
-                    prIk8_1: formData.msu1Config.ik8,
-                    prIk9_1: formData.msu1Config.ik9,
-                    prIk10_1: formData.msu1Config.ik10,
-                    prMsu2: formData.msu2Config.prMsu,
-                    prVdMsu2: formData.msu2Config.prVdMsu,
-                    prIkMsu2: formData.msu2Config.prIkMsu,
-                    prVd1_2: formData.msu2Config.vd1,
-                    prVd2_2: formData.msu2Config.vd2,
-                    prVd3_2: formData.msu2Config.vd3,
-                    prIk4_2: formData.msu2Config.ik4,
-                    prIk5_2: formData.msu2Config.ik5,
-                    prIk6_2: formData.msu2Config.ik6,
-                    prIk7_2: formData.msu2Config.ik7,
-                    prIk8_2: formData.msu2Config.ik8,
-                    prIk9_2: formData.msu2Config.ik9,
-                    prIk10_2: formData.msu2Config.ik10,
+                    prMsu1: msu1Config.prMsu || 0,
+                    prVdMsu1: msu1Config.prVdMsu || 0,
+                    prIkMsu1: msu1Config.prIkMsu || 0,
+                    prVd1_1: msu1Config.vd1 || 0,
+                    prVd2_1: msu1Config.vd2 || 0,
+                    prVd3_1: msu1Config.vd3 || 0,
+                    prIk4_1: msu1Config.ik4 || 0,
+                    prIk5_1: msu1Config.ik5 || 0,
+                    prIk6_1: msu1Config.ik6 || 0,
+                    prIk7_1: msu1Config.ik7 || 0,
+                    prIk8_1: msu1Config.ik8 || 0,
+                    prIk9_1: msu1Config.ik9 || 0,
+                    prIk10_1: msu1Config.ik10 || 0,
+                    prMsu2: msu2Config.prMsu || 0,
+                    prVdMsu2: msu2Config.prVdMsu || 0,
+                    prIkMsu2: msu2Config.prIkMsu || 0,
+                    prVd1_2: msu2Config.vd1 || 0,
+                    prVd2_2: msu2Config.vd2 || 0,
+                    prVd3_2: msu2Config.vd3 || 0,
+                    prIk4_2: msu2Config.ik4 || 0,
+                    prIk5_2: msu2Config.ik5 || 0,
+                    prIk6_2: msu2Config.ik6 || 0,
+                    prIk7_2: msu2Config.ik7 || 0,
+                    prIk8_2: msu2Config.ik8 || 0,
+                    prIk9_2: msu2Config.ik9 || 0,
+                    prIk10_2: msu2Config.ik10 || 0,
                     prOtklZg: 0
                 }
             };
@@ -1044,9 +1089,7 @@
         editingInterval = null;
         selectedIntervalId = null;
         
-        if (!selectedMode) {
-            resetCurrentFormData();
-        }
+        resetCurrentFormData()
     }
 
     function logAllIntervals(action: string) {

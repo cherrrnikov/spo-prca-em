@@ -2,6 +2,7 @@
     import type { ModeCreationForm, TimeInterval, TsMsuConfig } from "$lib/types/schedule";
     import { onMount } from "svelte";
 
+    // Для режима TS (техническая съемка) оставляем старые чекбоксы
     let msu1Vd = $state({ 
         vd1: false, 
         vd2: false, 
@@ -32,6 +33,13 @@
         { value: 3, label: '03 - Заказчик 3'},
         { value: 4, label: '04 - Заказчик 4'},
         { value: 5, label: '05 - Заказчик 5'}
+    ];
+
+    const zgOptions = [
+        { value: 0, label: 'ЗГ1' },
+        { value: 1, label: 'ЗГ2' },
+        { value: 2, label: 'ЗГ3' },
+        { value: 3, label: 'ЗГ4' }
     ];
 
     const ppiList = [
@@ -92,7 +100,12 @@
         msu1Vd: [],
         msu2Vd: [],
         msu1Config: getDefaultMsuConfig(),
-        msu2Config: getDefaultMsuConfig()
+        msu2Config: getDefaultMsuConfig(),
+        kvdConfig: {
+            prMsu: 0,
+            prBssd: 0,
+            prZg: 0
+        }
     });
 
     onMount(async () => {
@@ -113,6 +126,8 @@
     $effect(() => {
         if (editingInterval) {
             console.log('Заполняем форму из интервала:', editingInterval);
+            console.log('msu1Config:', editingInterval.msu1Config);
+            console.log('msu2Config:', editingInterval.msu2Config);
             
             localFormData.modeType = editingInterval.mode;
             localFormData.ppiNum = editingInterval.ppi || 1;
@@ -121,64 +136,67 @@
             localFormData.customerCode = editingInterval.customerCode || 1;
             
             if (editingInterval.mode === 7) {
+                if (editingInterval.kvdConfig) {
+                    localFormData.kvdConfig = { ...editingInterval.kvdConfig };
+                } else {
+                    const hasMsu2 = editingInterval.msu2Vd && editingInterval.msu2Vd.length > 0;
+                    localFormData.kvdConfig = {
+                        prMsu: hasMsu2 ? 1 : 0,
+                        prBssd: 0,
+                        prZg: 0
+                    };
+                }
+                            
+                // Для совместимости заполняем старые поля
                 localFormData.msu1Vd = editingInterval.msu1Vd || [];
                 localFormData.msu2Vd = editingInterval.msu2Vd || [];
-                
-                msu1Vd = { 
-                    vd1: localFormData.msu1Vd.includes(1),
-                    vd2: localFormData.msu1Vd.includes(2),
-                    vd3: localFormData.msu1Vd.includes(3)
-                };
-                
-                msu2Vd = { 
-                    vd1: localFormData.msu2Vd.includes(1),
-                    vd2: localFormData.msu2Vd.includes(2),
-                    vd3: localFormData.msu2Vd.includes(3)
-                };
                 
             } else if (editingInterval.mode === 8) {
                 localFormData.msu1Config = editingInterval.msu1Config || getDefaultMsuConfig();
                 localFormData.msu2Config = editingInterval.msu2Config || getDefaultMsuConfig();
                 
+                console.log('Для ТС загружаем конфиг:', localFormData.msu1Config);
+                
                 msu1Vd = { 
-                    vd1: localFormData.msu1Config?.vd1 === 1,
-                    vd2: localFormData.msu1Config?.vd2 === 1,
-                    vd3: localFormData.msu1Config?.vd3 === 1
+                    vd1: localFormData.msu1Config.vd1 === 1,
+                    vd2: localFormData.msu1Config.vd2 === 1,
+                    vd3: localFormData.msu1Config.vd3 === 1
                 };
                 
                 msu1Ik = {
-                    ik4: localFormData.msu1Config?.ik4 === 1,
-                    ik5: localFormData.msu1Config?.ik5 === 1,
-                    ik6: localFormData.msu1Config?.ik6 === 1,
-                    ik7: localFormData.msu1Config?.ik7 === 1,
-                    ik8: localFormData.msu1Config?.ik8 === 1,
-                    ik9: localFormData.msu1Config?.ik9 === 1,
-                    ik10: localFormData.msu1Config?.ik10 === 1
+                    ik4: localFormData.msu1Config.ik4 === 1,
+                    ik5: localFormData.msu1Config.ik5 === 1,
+                    ik6: localFormData.msu1Config.ik6 === 1,
+                    ik7: localFormData.msu1Config.ik7 === 1,
+                    ik8: localFormData.msu1Config.ik8 === 1,
+                    ik9: localFormData.msu1Config.ik9 === 1,
+                    ik10: localFormData.msu1Config.ik10 === 1
                 };
                 
                 msu2Vd = { 
-                    vd1: localFormData.msu2Config?.vd1 === 1,
-                    vd2: localFormData.msu2Config?.vd2 === 1,
-                    vd3: localFormData.msu2Config?.vd3 === 1
+                    vd1: localFormData.msu2Config.vd1 === 1,
+                    vd2: localFormData.msu2Config.vd2 === 1,
+                    vd3: localFormData.msu2Config.vd3 === 1
                 };
                 
                 msu2Ik = {
-                    ik4: localFormData.msu2Config?.ik4 === 1,
-                    ik5: localFormData.msu2Config?.ik5 === 1,
-                    ik6: localFormData.msu2Config?.ik6 === 1,
-                    ik7: localFormData.msu2Config?.ik7 === 1,
-                    ik8: localFormData.msu2Config?.ik8 === 1,
-                    ik9: localFormData.msu2Config?.ik9 === 1,
-                    ik10: localFormData.msu2Config?.ik10 === 1
+                    ik4: localFormData.msu2Config.ik4 === 1,
+                    ik5: localFormData.msu2Config.ik5 === 1,
+                    ik6: localFormData.msu2Config.ik6 === 1,
+                    ik7: localFormData.msu2Config.ik7 === 1,
+                    ik8: localFormData.msu2Config.ik8 === 1,
+                    ik9: localFormData.msu2Config.ik9 === 1,
+                    ik10: localFormData.msu2Config.ik10 === 1
                 };
-            }
-            
-            else {
+            } else {
                 resetCheckboxes();
             }
         }
         else if (selectedMode && selectedMode !== localFormData.modeType) {
             console.log('Создаем новый интервал для режима:', selectedMode);
+
+            resetForm();
+            
             localFormData.modeType = selectedMode;
             
             const modeCode = MODE_ID_TO_CODE[selectedMode];
@@ -187,12 +205,10 @@
             }
 
             console.log('Новая запись:', localFormData);
-            
-            resetCheckboxes();
         }
     });
 
-    function getDefaultMsuConfig() {
+    function getDefaultMsuConfig(): TsMsuConfig {
         return {
             prMsu: 0,
             prVdMsu: 0,
@@ -210,141 +226,88 @@
         };
     }
 
-
-    function resetCheckboxesForKvdEdit() {
-        msu1Vd = { 
-            vd1: localFormData.msu1Vd.includes(1),
-            vd2: localFormData.msu1Vd.includes(2),
-            vd3: localFormData.msu1Vd.includes(3)
-        };
-        
-        msu2Vd = { 
-            vd1: localFormData.msu2Vd.includes(1),
-            vd2: localFormData.msu2Vd.includes(2),
-            vd3: localFormData.msu2Vd.includes(3)
-        };
-        
-        msu1Ik = {
-            ik4: false, ik5: false, ik6: false, ik7: false,
-            ik8: false, ik9: false, ik10: false
-        };
-        msu2Ik = {
-            ik4: false, ik5: false, ik6: false, ik7: false,
-            ik8: false, ik9: false, ik10: false
-        };
-    }
-
-    function resetCheckboxesForTsEdit() {
-        msu1Vd = { 
-            vd1: localFormData.msu1Config?.vd1 === 1,
-            vd2: localFormData.msu1Config?.vd2 === 1,
-            vd3: localFormData.msu1Config?.vd3 === 1
-        };
-        
-        msu1Ik = {
-            ik4: localFormData.msu1Config?.ik4 === 1,
-            ik5: localFormData.msu1Config?.ik5 === 1,
-            ik6: localFormData.msu1Config?.ik6 === 1,
-            ik7: localFormData.msu1Config?.ik7 === 1,
-            ik8: localFormData.msu1Config?.ik8 === 1,
-            ik9: localFormData.msu1Config?.ik9 === 1,
-            ik10: localFormData.msu1Config?.ik10 === 1
-        };
-        
-        msu2Vd = { 
-            vd1: localFormData.msu2Config?.vd1 === 1,
-            vd2: localFormData.msu2Config?.vd2 === 1,
-            vd3: localFormData.msu2Config?.vd3 === 1
-        };
-        
-        msu2Ik = {
-            ik4: localFormData.msu2Config?.ik4 === 1,
-            ik5: localFormData.msu2Config?.ik5 === 1,
-            ik6: localFormData.msu2Config?.ik6 === 1,
-            ik7: localFormData.msu2Config?.ik7 === 1,
-            ik8: localFormData.msu2Config?.ik8 === 1,
-            ik9: localFormData.msu2Config?.ik9 === 1,
-            ik10: localFormData.msu2Config?.ik10 === 1
-        };
-    }
-
-    function handleVdCheckbox(msu: 'msu1' | 'msu2', vdNumber: 1 | 2 | 3) {
-        const vdKey = `vd${vdNumber}` as keyof typeof msu1Vd;
-        
-        if (msu === 'msu1') {
-            msu1Vd[vdKey] = !msu1Vd[vdKey];
-            const newArray: number[] = [];
-            
-            if (msu1Vd.vd1) newArray.push(1);
-            if (msu1Vd.vd2) newArray.push(2);
-            if (msu1Vd.vd3) newArray.push(3);
-            
-            localFormData.msu1Vd = newArray;
-            
-            localFormData.msu1Config.prMsu = newArray.length > 0 ? 1 : 0;
-        } else {
-            msu2Vd[vdKey] = !msu2Vd[vdKey];
-            const newArray: number[] = [];
-            
-            if (msu2Vd.vd1) newArray.push(1);
-            if (msu2Vd.vd2) newArray.push(2);
-            if (msu2Vd.vd3) newArray.push(3);
-            
-            localFormData.msu2Vd = newArray;
-            
-            localFormData.msu2Config.prMsu = newArray.length > 0 ? 1 : 0;
-        }
-    }
-
+    // Для режима TS
     function handleTsCheckbox(type: 'vd' | 'ik', msu: 'msu1' | 'msu2', number: number) {
+        console.log(`handleTsCheckbox: ${type}, ${msu}, ${number}`);
+        
         if (type === 'vd') {
             const vdKey = `vd${number}` as keyof typeof msu1Vd;
             
             if (msu === 'msu1') {
-                msu1Vd[vdKey] = !msu1Vd[vdKey];
-                localFormData.msu1Config[`vd${number}` as keyof TsMsuConfig] = msu1Vd[vdKey] ? 1 : 0;
+                const newValue = !msu1Vd[vdKey];
+                msu1Vd[vdKey] = newValue;
+                
+                // Обновляем конфиг
+                const configKey = `vd${number}` as keyof TsMsuConfig;
+                localFormData.msu1Config[configKey] = newValue ? 1 : 0;
 
                 const hasAnyVd = msu1Vd.vd1 || msu1Vd.vd2 || msu1Vd.vd3;
                 localFormData.msu1Config.prVdMsu = hasAnyVd ? 1 : 0;
                 
                 const hasAnyIk = Object.values(msu1Ik).some(v => v);
                 localFormData.msu1Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
+                
+                console.log(`МСУ1 ВД${number}: ${newValue ? 1 : 0}, конфиг:`, localFormData.msu1Config);
             } else {
-                msu2Vd[vdKey] = !msu2Vd[vdKey];
-                localFormData.msu2Config[`vd${number}` as keyof TsMsuConfig] = msu2Vd[vdKey] ? 1 : 0;
+                const newValue = !msu2Vd[vdKey];
+                msu2Vd[vdKey] = newValue;
+                
+                // Обновляем конфиг
+                const configKey = `vd${number}` as keyof TsMsuConfig;
+                localFormData.msu2Config[configKey] = newValue ? 1 : 0;
                 
                 const hasAnyVd = msu2Vd.vd1 || msu2Vd.vd2 || msu2Vd.vd3;
                 localFormData.msu2Config.prVdMsu = hasAnyVd ? 1 : 0;
                 
                 const hasAnyIk = Object.values(msu2Ik).some(v => v);
                 localFormData.msu2Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
+                
+                console.log(`МСУ2 ВД${number}: ${newValue ? 1 : 0}, конфиг:`, localFormData.msu2Config);
             }
         } else {
             const ikKey = `ik${number}` as keyof typeof msu1Ik;
             
             if (msu === 'msu1') {
-                msu1Ik[ikKey] = !msu1Ik[ikKey];
-                localFormData.msu1Config[`ik${number}` as keyof TsMsuConfig] = msu1Ik[ikKey] ? 1 : 0;
+                const newValue = !msu1Ik[ikKey];
+                msu1Ik[ikKey] = newValue;
+                
+                // Обновляем конфиг
+                const configKey = `ik${number}` as keyof TsMsuConfig;
+                localFormData.msu1Config[configKey] = newValue ? 1 : 0;
                 
                 const hasAnyIk = Object.values(msu1Ik).some(v => v);
                 localFormData.msu1Config.prIkMsu = hasAnyIk ? 1 : 0;
                 
                 const hasAnyVd = msu1Vd.vd1 || msu1Vd.vd2 || msu1Vd.vd3;
                 localFormData.msu1Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
+                
+                console.log(`МСУ1 ИК${number}: ${newValue ? 1 : 0}, конфиг:`, localFormData.msu1Config);
             } else {
-                msu2Ik[ikKey] = !msu2Ik[ikKey];
-                localFormData.msu2Config[`ik${number}` as keyof TsMsuConfig] = msu2Ik[ikKey] ? 1 : 0;
+                const newValue = !msu2Ik[ikKey];
+                msu2Ik[ikKey] = newValue;
+                
+                // Обновляем конфиг
+                const configKey = `ik${number}` as keyof TsMsuConfig;
+                localFormData.msu2Config[configKey] = newValue ? 1 : 0;
                 
                 const hasAnyIk = Object.values(msu2Ik).some(v => v);
                 localFormData.msu2Config.prIkMsu = hasAnyIk ? 1 : 0;
                 
                 const hasAnyVd = msu2Vd.vd1 || msu2Vd.vd2 || msu2Vd.vd3;
                 localFormData.msu2Config.prMsu = (hasAnyVd || hasAnyIk) ? 1 : 0;
+                
+                console.log(`МСУ2 ИК${number}: ${newValue ? 1 : 0}, конфиг:`, localFormData.msu2Config);
             }
         }
     }
 
     function handleSubmit() {
+        console.log('handleSubmit вызван');
+        console.log('localFormData перед отправкой:', localFormData);
+        console.log('msu1Config перед отправкой:', localFormData.msu1Config);
+        console.log('msu2Config перед отправкой:', localFormData.msu2Config);
+        console.log('kvdConfig перед отправкой:', localFormData.kvdConfig);
+        
         if (!localFormData.startTime || localFormData.duration <= 0) {
             alert('Укажите время начала и длительность');
             return;
@@ -352,15 +315,48 @@
 
         const dataToSubmit = { ...localFormData };
         
+        // Создаем новые объекты для конфигов чтобы избежать ссылочных проблем
+        dataToSubmit.msu1Config = { ...localFormData.msu1Config };
+        dataToSubmit.msu2Config = { ...localFormData.msu2Config };
+        if (localFormData.kvdConfig) {
+            dataToSubmit.kvdConfig = { ...localFormData.kvdConfig };
+        }
+        
+        console.log('Отправляемые данные:', dataToSubmit);
+        
         if (isEditMode) {
             onUpdate?.(dataToSubmit);
         } else {
             onSubmit(dataToSubmit);
+            resetForm();
         }
+    }
 
-        if (!isEditMode) {
-            resetCheckboxes();
-            localFormData.startTime = '10:00';
+    function resetForm() {
+        resetCheckboxes();
+        
+        localFormData = {
+            modeType: selectedMode, 
+            ppiNum: 1,
+            duration: 300,
+            customerCode: 1,
+            startTime: '10:00',
+            msu1Vd: [],
+            msu2Vd: [],
+            msu1Config: getDefaultMsuConfig(),
+            msu2Config: getDefaultMsuConfig(),
+            kvdConfig: { // Важно инициализировать
+                prMsu: 0,
+                prBssd: 0,
+                prZg: 0
+            }
+        };
+        
+        if (selectedMode) {
+            const modeCode = MODE_ID_TO_CODE[selectedMode];
+            if (modeCode && modeDurations[modeCode] !== undefined) {
+                localFormData.duration = modeDurations[modeCode];
+            }
         }
     }
 
@@ -378,46 +374,8 @@
         
         localFormData.msu1Vd = [];
         localFormData.msu2Vd = [];
-        localFormData.msu1Config = {
-            prMsu: 0,
-            prVdMsu: 0,
-            prIkMsu: 0,
-            vd1: 0,
-            vd2: 0,
-            vd3: 0,
-            ik4: 0,
-            ik5: 0,
-            ik6: 0,
-            ik7: 0,
-            ik8: 0,
-            ik9: 0,
-            ik10: 0
-        };
-        localFormData.msu2Config = {
-            prMsu: 0,
-            prVdMsu: 0,
-            prIkMsu: 0,
-            vd1: 0,
-            vd2: 0,
-            vd3: 0,
-            ik4: 0,
-            ik5: 0,
-            ik6: 0,
-            ik7: 0,
-            ik8: 0,
-            ik9: 0,
-            ik10: 0
-        };
-    }
-
-    function isVdSelected(msu: 'msu1' | 'msu2', vdNumber: 1 | 2 | 3): boolean {
-        const vdKey = `vd${vdNumber}` as keyof typeof msu1Vd;
-        return msu === 'msu1' ? msu1Vd[vdKey] : msu2Vd[vdKey];
-    }
-
-    function isIkSelected(msu: 'msu1' | 'msu2', ikNumber: 4 | 5 | 6 | 7 | 8 | 9 | 10): boolean {
-        const ikKey = `ik${ikNumber}` as keyof typeof msu1Ik;
-        return msu === 'msu1' ? msu1Ik[ikKey] : msu2Ik[ikKey];
+        localFormData.msu1Config = getDefaultMsuConfig();
+        localFormData.msu2Config = getDefaultMsuConfig();
     }
 </script>
 
@@ -440,37 +398,73 @@
 
         {#if selectedMode === 7}
             <div class="form-section">
-                <span class="form-section_title">Комплект МСУ-ГС 1</span>
-                <div class="checkbox-group">
-                    {#each [1, 2, 3] as vd}
-                        <label class="checkbox-label">
-                            <input 
-                                type="checkbox"
-                                checked={msu1Vd[`vd${vd}` as keyof typeof msu1Vd]}
-                                on:change={() => handleVdCheckbox('msu1', vd as 1 | 2 | 3)}
-                            />
-                            <span>ВД{vd}</span>
-                        </label>
-                    {/each}
-                </div>
-            </div>
-            
-            <div class="form-section">
-                <span class="form-section_title">Комплект МСУ-ГС 2</span>
-                <div class="checkbox-group">
-                    {#each [1, 2, 3] as vd}
-                        <label class="checkbox-label">
-                            <input 
-                                type="checkbox"
-                                checked={msu2Vd[`vd${vd}` as keyof typeof msu2Vd]}
-                                on:change={() => handleVdCheckbox('msu2', vd as 1 | 2 | 3)}
-                            />
-                            <span>ВД{vd}</span>
-                        </label>
-                    {/each}
+                <div class="kvd-config-grid">
+                    <div class="form-group">
+                        <label>Комплект МСУ:</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input 
+                                    type="radio"
+                                    name="kvd-msu"
+                                    value="0"
+                                    checked={localFormData.kvdConfig.prMsu === 0}
+                                    on:change={() => localFormData.kvdConfig.prMsu = 0}
+                                />
+                                <span>МСУ-1</span>
+                            </label>
+                            <label class="radio-label">
+                                <input 
+                                    type="radio"
+                                    name="kvd-msu"
+                                    value="1"
+                                    checked={localFormData.kvdConfig.prMsu === 1}
+                                    on:change={() => localFormData.kvdConfig.prMsu = 1}
+                                />
+                                <span>МСУ-2</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>БССД:</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input 
+                                    type="radio"
+                                    name="kvd-bssd"
+                                    value="0"
+                                    checked={localFormData.kvdConfig.prBssd === 0}
+                                    on:change={() => localFormData.kvdConfig.prBssd = 0}
+                                />
+                                <span>БССД1</span>
+                            </label>
+                            <label class="radio-label">
+                                <input 
+                                    type="radio"
+                                    name="kvd-bssd"
+                                    value="1"
+                                    checked={localFormData.kvdConfig.prBssd === 1}
+                                    on:change={() => localFormData.kvdConfig.prBssd = 1}
+                                />
+                                <span>БССД2</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>ЗГ:</label>
+                        <select 
+                            bind:value={localFormData.kvdConfig.prZg}
+                        >
+                            {#each zgOptions as zg}
+                                <option value={zg.value}>{zg.label}</option>
+                            {/each}
+                        </select>
+                    </div>
                 </div>
             </div>
         {:else if selectedMode === 8}
+            <!-- Режим TS - старая структура -->
             <div class="form-section">
                 <span class="form-section_title">Комплект МСУ-ГС 1</span>
                 <div class="ts-config-grid">
@@ -580,10 +574,10 @@
     </div>
 </div>
 
+
 <style>
     .mode-creation-form {
         border-radius: 8px;
-        /* max-width: 800px; */
         display: flex;
         flex-direction: column;
     }
@@ -600,6 +594,7 @@
 
     .form-content {
         display: flex;
+        /* flex-direction: column; */
         gap: 1.5rem;
     }
 
@@ -616,7 +611,8 @@
         font-weight: 600;
     }
 
-    .form-grid {
+    .form-grid,
+    .kvd-config-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 1rem;
@@ -643,6 +639,19 @@
         width: 100%;
     }
 
+    .radio-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .radio-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
     .checkbox-group {
         display: flex;
         flex-direction: column;
@@ -659,7 +668,6 @@
     .form-actions {
         display: flex;
         gap: 0.75rem;
-        /* justify-content: flex-end; */
         padding-top: 1rem;
         margin-top: auto;
     }

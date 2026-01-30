@@ -10,6 +10,12 @@ export interface TimeInterval {
     ppi?: number;
     dlit?: number;
     customerCode?: number;
+
+    kvdConfig?: {
+        prMsu: number; // 0-МСУ1, 1-МСУ2
+        prBssd: number; // 0-БССД1, 1-БССД2  
+        prZg: number; // 0-ЗГ1, 1-ЗГ2, 2-ЗГ3, 3-ЗГ4
+    };
     
     msu1Vd?: number[];
     msu2Vd?: number[];
@@ -228,10 +234,13 @@ export interface ModeCreationForm {
     duration: number;
     customerCode: number;
     startTime: string;
-    // kvd
+    kvdConfig: {
+        prMsu: number; // 0-МСУ1, 1-МСУ2
+        prBssd: number; // 0-БССД1, 1-БССД2  
+        prZg: number; // 0-ЗГ1, 1-ЗГ2, 2-ЗГ3, 3-ЗГ4
+    };
     msu1Vd: number[];
     msu2Vd: number[];
-    // ts
     msu1Config: TsMsuConfig;
     msu2Config: TsMsuConfig;
 }
