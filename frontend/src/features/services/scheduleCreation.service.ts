@@ -2,6 +2,7 @@ import type {
     CreatedProgramData,
     CreateProgramRequest,
     ForecastData,
+    Id06TsDto,
     OperatorData,
     PpiAssignment,
     ProgramModeData,
@@ -72,7 +73,7 @@ export class ScheduleCreationService {
                         numKa,
                         dateOn: kvd.dn,
                         dateOff: kvd.dk,
-                        kodMode: 3,
+                        kodMode: 7,
                         numPpi: assignment.ppiNum,
                         dlit: this.calculateDuration(kvd.dn, kvd.dk),
                         kvdData: {
@@ -123,14 +124,17 @@ export class ScheduleCreationService {
                 );
                 
                 if (assignment) {
+                    // Для ТС отправляем ОДНУ запись с полным интервалом
+                    // Разбивка на подынтервалы делается только для отображения
                     modes.push({
                         numRp,
                         numKa,
                         dateOn: ts.dn,
                         dateOff: ts.dk,
-                        kodMode: 5,
+                        kodMode: 8, // Код режима для ТС
                         numPpi: assignment.ppiNum,
                         dlit: this.calculateDuration(ts.dn, ts.dk),
+                        zakazchik: this.getCustomerLabel(operatorData.main?.kZajv || 5),
                         tsData: {
                             id: ts.id,
                             idMain: ts.idMain,
@@ -138,7 +142,6 @@ export class ScheduleCreationService {
                             dk: ts.dk,
                             tip: ts.tip,
                             reg: ts.reg,
-                            dlit: this.calculateDuration(ts.dn, ts.dk), 
                             prMsu1: ts.prMsu1,
                             prVdMsu1: ts.prVdMsu1,
                             prIkMsu1: ts.prIkMsu1,
@@ -176,6 +179,17 @@ export class ScheduleCreationService {
         console.log("Подготовленные записи режимов ПРЦА: ", modes);
 
         return { mainData, modes };
+    }
+
+    static getCustomerLabel(code: number): string {
+        const customerLabels: Record<number, string> = {
+            1: 'Заказчик 1',
+            2: 'Заказчик 2',
+            3: 'Заказчик 3',
+            4: 'Заказчик 4',
+            5: 'Заказчик 5'
+        };
+        return customerLabels[code] || 'Неизвестный заказчик';
     }
 
     static generateProgramNumber(): number {
@@ -274,13 +288,22 @@ export class ScheduleCreationService {
                 if (assignment) {
                     intervals.push({
                         id: `kvd_${kvd.id}`,
-                        mode: 5, // Калибр. ВД
+                        mode: 7, // Калибр. ВД
                         startTime: this.formatTimeFromISO(kvd.dn),
                         endTime: this.formatTimeFromISO(kvd.dk),
                         city: this.getCityByPpi(assignment.ppiNum),
                         color: this.getColorByPpi(assignment.ppiNum),
                         title: `Калибровка ВД (ППИ ${assignment.ppiNum})`,
-                        description: `Калибровка ВД, ID: ${kvd.id}`
+                        description: `Калибровка ВД, ID: ${kvd.id}`,
+                        ppi: assignment.ppiNum,
+                        dlit: this.calculateDuration(kvd.dn, kvd.dk),
+                        customerCode: operatorData.main?.kZajv || 5,
+                        hasConflict: false,
+                        conflictWith: [],
+                        nearZasvetka: false,
+                        zasvetkaConflict: false,
+                        zasvetkaDistance: 0,
+                        willBeSaved: true
                     });
                 }
             });
@@ -301,7 +324,16 @@ export class ScheduleCreationService {
                         city: this.getCityByPpi(assignment.ppiNum),
                         color: this.getColorByPpi(assignment.ppiNum),
                         title: `ТНП (ППИ ${assignment.ppiNum})`,
-                        description: `Режим ТНП, длительность: ${tnp.dlit} сек`
+                        description: `Режим ТНП, длительность: ${tnp.dlit} сек`,
+                        ppi: assignment.ppiNum,
+                        dlit: tnp.dlit,
+                        customerCode: operatorData.main?.kZajv || 5,
+                        hasConflict: false,
+                        conflictWith: [],
+                        nearZasvetka: false,
+                        zasvetkaConflict: false,
+                        zasvetkaDistance: 0,
+                        willBeSaved: true
                     });
                 }
             });
@@ -309,33 +341,18 @@ export class ScheduleCreationService {
         
         if (operatorData.tsList && operatorData.tsList.length > 0) {
             operatorData.tsList.forEach(ts => {
-                const assignment = ppiAssignments.find(a => 
-                    a.recordId === ts.id && a.recordType === 'ts'
-                );
-                
-                if (assignment) {
-                    intervals.push({
-                        id: `ts_${ts.id}`,
-                        mode: 8, // Техн. съемки
-                        startTime: this.formatTimeFromISO(ts.dn),
-                        endTime: this.formatTimeFromISO(ts.dk),
-                        city: this.getCityByPpi(assignment.ppiNum),
-                        color: this.getColorByPpi(assignment.ppiNum),
-                        title: `Техн. съёмка (ППИ ${assignment.ppiNum})`,
-                        description: `Технологическая съемка, тип: ${ts.tip}, режим: ${ts.reg}`
-                    });
-                }
+                const tsSubIntervals = this.convertTsToSubIntervals(ts, ppiAssignments);
+                intervals.push(...tsSubIntervals);
             });
         }
         
         return intervals.map(interval => ({
             ...interval,
-            // Добавляем дефолтные значения
             msu1Vd: interval.msu1Vd || [],
             msu2Vd: interval.msu2Vd || [],
             msu1Config: interval.msu1Config || this.getDefaultMsuConfig(),
             msu2Config: interval.msu2Config || this.getDefaultMsuConfig(),
-            customerCode: interval.customerCode || 1,
+            customerCode: interval.customerCode || operatorData.main?.kZajv || 1,
             hasConflict: false,
             conflictWith: [],
             nearZasvetka: false,
@@ -343,6 +360,101 @@ export class ScheduleCreationService {
             zasvetkaDistance: 0,
             willBeSaved: true
         }));
+    }
+
+    static convertTsToSubIntervals(
+        tsRecord: Id06TsDto,
+        ppiAssignments: PpiAssignment[]
+    ): TimeInterval[] {
+        const subIntervals: TimeInterval[] = [];
+        
+        const assignment = ppiAssignments.find(
+            a => a.recordId === tsRecord.id && a.recordType === 'ts'
+        );
+        
+        const ppiNum = assignment?.ppiNum || 1;
+        const city = this.getCityByPpi(ppiNum);
+        const color = this.getColorByPpi(ppiNum);
+        
+        const stepMinutes = tsRecord.tip === 0 ? 30 : 15;
+        const subIntervalDuration = 7; 
+        
+        const startDate = new Date(tsRecord.dn);
+        const endDate = new Date(tsRecord.dk);
+        
+        let currentTime = new Date(startDate);
+        
+        // Генерируем подынтервалы до тех пор, пока следующий интервал не выйдет за границы
+        while (currentTime.getTime() + (subIntervalDuration * 60000) <= endDate.getTime()) {
+            const subStartTime = new Date(currentTime);
+            const subEndTime = new Date(subStartTime.getTime() + (subIntervalDuration * 60000));
+            
+            const formatTime = (date: Date): string => {
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                return `${hours}:${minutes}`;
+            };
+            
+            const subInterval: TimeInterval = {
+                id: `ts_${tsRecord.id}_${formatTime(subStartTime)}`,
+                mode: 8, 
+                startTime: formatTime(subStartTime),
+                endTime: formatTime(subEndTime),
+                city,
+                color,
+                title: `Техн. съёмка (tip=${tsRecord.tip}, ППИ ${ppiNum})`,
+                description: `Технологическая съемка, тип: ${tsRecord.tip}, режим: ${tsRecord.reg}`,
+                ppi: ppiNum,
+                dlit: subIntervalDuration * 60, 
+                customerCode: 5, 
+                
+                msu1Config: {
+                    prMsu: tsRecord.prMsu1 || 0,
+                    prVdMsu: tsRecord.prVdMsu1 || 0,
+                    prIkMsu: tsRecord.prIkMsu1 || 0,
+                    vd1: tsRecord.prVd1_1 || 0,
+                    vd2: tsRecord.prVd2_1 || 0,
+                    vd3: tsRecord.prVd3_1 || 0,
+                    ik4: tsRecord.prIk4_1 || 0,
+                    ik5: tsRecord.prIk5_1 || 0,
+                    ik6: tsRecord.prIk6_1 || 0,
+                    ik7: tsRecord.prIk7_1 || 0,
+                    ik8: tsRecord.prIk8_1 || 0,
+                    ik9: tsRecord.prIk9_1 || 0,
+                    ik10: tsRecord.prIk10_1 || 0
+                },
+                msu2Config: {
+                    prMsu: tsRecord.prMsu2 || 0,
+                    prVdMsu: tsRecord.prVdMsu2 || 0,
+                    prIkMsu: tsRecord.prIkMsu2 || 0,
+                    vd1: tsRecord.prVd1_2 || 0,
+                    vd2: tsRecord.prVd2_2 || 0,
+                    vd3: tsRecord.prVd3_2 || 0,
+                    ik4: tsRecord.prIk4_2 || 0,
+                    ik5: tsRecord.prIk5_2 || 0,
+                    ik6: tsRecord.prIk6_2 || 0,
+                    ik7: tsRecord.prIk7_2 || 0,
+                    ik8: tsRecord.prIk8_2 || 0,
+                    ik9: tsRecord.prIk9_2 || 0,
+                    ik10: tsRecord.prIk10_2 || 0
+                },
+                hasConflict: false,
+                conflictWith: [],
+                willBeSaved: true,
+                nearZasvetka: false,
+                zasvetkaConflict: false,
+                zasvetkaDistance: 0
+            };
+            
+            subIntervals.push(subInterval);
+            
+            // Переходим к следующему временному слоту
+            // Добавляем stepMinutes минут к текущему времени
+            currentTime.setMinutes(currentTime.getMinutes() + stepMinutes);
+        }
+        
+        console.log(`ТС запись ${tsRecord.id} разбита на ${subIntervals.length} подынтервалов (шаг: ${stepMinutes} мин)`);
+        return subIntervals;
     }
 
     static getDefaultMsuConfig(): TsMsuConfig {
@@ -438,7 +550,7 @@ export class ScheduleCreationService {
                 title: 'Тень',
                 color: 'rgba(83, 83, 83, 1)',
                 opacity: 1,
-                zIndex: 1
+                zIndex: 2
             })),
             zasvetki: forecastData.zasvetki.map(zasvetka => ({
                 id: `zasvetka_${zasvetka.id}`,
@@ -449,7 +561,7 @@ export class ScheduleCreationService {
                 title: 'Засветка',
                 color: 'rgba(175, 175, 175, 1)',
                 opacity: 1,
-                zIndex: 2
+                zIndex: 1
             }))
         };
     }

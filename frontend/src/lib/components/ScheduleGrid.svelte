@@ -441,14 +441,14 @@
     }
     
     .interval-shadow {
-        z-index: 10;
+        z-index: 20;
         border-left: 1px solid black;
         border-right: 1px solid black;
         border-radius: 0; 
     }
 
     .interval-zasvetka {
-        z-index: 20;
+        z-index: 10;
         border-left: 1px solid black;
         border-right: 1px solid black;
         border-radius: 0; 
