@@ -31,6 +31,11 @@ export interface TimeInterval {
     zasvetkaDistance?: number;       // расстояние до ближайшей засветки в секундах
 }
 
+export interface CustomerCode {
+    value: number;
+    label: string;
+}
+
 export interface WorkMode {
     id: number;
     label: string;
@@ -46,8 +51,12 @@ export interface City {
 export interface Ppi {
     id: number;
     name: string;
-    // code: string;
     numPpi: number;
+}
+
+export interface ZgOption {
+    value: number;
+    label: string;
 }
 
 export interface Id06MainDto {

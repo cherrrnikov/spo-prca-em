@@ -1,5 +1,16 @@
 <script lang="ts">
-    import type { ModeCreationForm, TimeInterval, TsMsuConfig } from "$lib/types/schedule";
+    import {
+    	CUSTOMER_CODES,
+    	MODE_ID_TO_CODE,
+    	PPI_LIST,
+    	WORK_MODES,
+    	ZG_OPTIONS
+    } from "$lib/constants/schedule";
+    import type {
+    	ModeCreationForm,
+    	TimeInterval,
+    	TsMsuConfig
+    } from "$lib/types/schedule";
     import { onMount } from "svelte";
 
     // Для режима TS (техническая съемка) оставляем старые чекбоксы
@@ -27,53 +38,15 @@
 
     let modeDurations = $state<Record<string, number>>({});
 
-    export const customerCodes = [
-        { value: 1, label: '01 - Заказчик 1'},
-        { value: 2, label: '02 - Заказчик 2'},
-        { value: 3, label: '03 - Заказчик 3'},
-        { value: 4, label: '04 - Заказчик 4'},
-        { value: 5, label: '05 - Заказчик 5'}
-    ];
+    export const customerCodes = CUSTOMER_CODES;
 
-    const zgOptions = [
-        { value: 0, label: 'ЗГ1' },
-        { value: 1, label: 'ЗГ2' },
-        { value: 2, label: 'ЗГ3' },
-        { value: 3, label: 'ЗГ4' }
-    ];
+    const zgOptions = ZG_OPTIONS;
 
-    const ppiList = [
-        { id: 1, name: '0 - Обнинск', num: 1 },
-        { id: 2, name: '1 - Долгопрудный', num: 2 },
-        { id: 3, name: '2 - Новосибирск', num: 3 },
-        { id: 4, name: '3 - Хабаровск', num: 4 },
-        { id: 5, name: '4 - Байконур', num: 5 },
-        { id: 6, name: '5 - Ханты-Мансийск', num: 6 },
-        { id: 7, name: '6 - Железногорск', num: 7 },
-        { id: 8, name: '7 - Улан-Удэ', num: 8 },
-        { id: 9, name: '8 - Москва (НЦ ОМЗ)', num: 9 },
-        { id: 10, name: '9 - Москва (НИЦ "Планета")', num: 10 }
-    ];
+    const ppiList = PPI_LIST;
 
-    const MODE_ID_TO_CODE: Record<number, string> = {
-        9: 'astr',  // Астрокоррекция
-        1: 's',     // Съемки
-        2: 'omi',   // ОМИ
-        4: 'tnp',   // ТНП
-        7: 'kvd',   // КВД
-        8: 'ts',    // ТС
-        6: 'ona'    // Юстировка ОНА
-    };
+    const modeIdToCode = MODE_ID_TO_CODE;
 
-    const MODE_NAMES: Record<number, string> = {
-        9: 'Астрокоррекция',
-        1: 'Съемки',
-        2: 'Распр. ОМИ',
-        4: 'Режимы ТНП',
-        7: 'Калибр. ВД',
-        8: 'Техн. съемки',
-        6: 'Юстировки ОНА'
-    };
+    const workModes = WORK_MODES;
 
     let {
         selectedMode,
@@ -199,7 +172,7 @@
             
             localFormData.modeType = selectedMode;
             
-            const modeCode = MODE_ID_TO_CODE[selectedMode];
+            const modeCode = modeIdToCode[selectedMode];
             if (modeCode && modeDurations[modeCode] !== undefined) {
                 localFormData.duration = modeDurations[modeCode];
             }
@@ -353,7 +326,7 @@
         };
         
         if (selectedMode) {
-            const modeCode = MODE_ID_TO_CODE[selectedMode];
+            const modeCode = modeIdToCode[selectedMode];
             if (modeCode && modeDurations[modeCode] !== undefined) {
                 localFormData.duration = modeDurations[modeCode];
             }
@@ -372,8 +345,7 @@
             ik8: false, ik9: false, ik10: false
         };
         
-        // localFormData.msu1Vd = [];
-        // localFormData.msu2Vd = [];
+
         localFormData.msu1Config = getDefaultMsuConfig();
         localFormData.msu2Config = getDefaultMsuConfig();
     }

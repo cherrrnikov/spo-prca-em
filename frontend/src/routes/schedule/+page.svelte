@@ -4,6 +4,12 @@
     import CityLegend from '$lib/components/CityLegend.svelte';
     import FileMenu from '$lib/components/FileMenu.svelte';
     import ScheduleGrid from '$lib/components/ScheduleGrid.svelte';
+    import {
+    	CITIES,
+    	CUSTOMER_CODES,
+    	MODE_ID_TO_CODE,
+    	WORK_MODES
+    } from '$lib/constants/schedule';
     import type { UserResponse } from '$lib/types/auth';
     import type {
     	CreatedProgramData,
@@ -14,55 +20,16 @@
     	ProgramModeData,
     	ShadowInterval,
     	TimeInterval,
-    	WorkMode,
-
     	ZasvetkaInterval
     } from '$lib/types/schedule';
     import CreationHeader from '../../features/schedule-creation/components/CreationHeader.svelte';
     import ModeCreationFormComponent from '../../features/schedule-creation/components/ModeCreationForm.svelte';
     import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
 
-    const cities = [
-        { id: 'obninsk', name: 'Обнинск', color: '#f4fc0a' },
-        { id: 'dolgoprudniy', name: 'Долгопрудный', color: '#b80afc' },
-        { id: 'novosibirsk', name: 'Новосибирск', color: '#0afcf4' },
-        { id: 'khabarovsk', name: 'Хабаровск', color: '#593315' },
-        { id: 'baykonur', name: 'Байконур', color: '#152359' },
-        { id: 'khanty-mansiysk', name: 'Ханты-Мансийск', color: '#78866b' },
-        { id: 'zheleznogorsk', name: 'Железногорск', color: '#6110b3' },
-        { id: 'ulan-ude', name: 'Улан-Удэ', color: '#6197c9' },
-        { id: 'moscow-omz', name: 'Москва (НЦ ОМЗ)', color: '#1a5216' },
-        { id: 'moscow-planeta', name: 'Москва (ФГБУ НИЦ "Планета")', color: '#24f016' }
-    ];
-
-    
-    const workModes: WorkMode[] = [
-        { id: 9, label: 'Астрокорр.', order: '0' },
-        { id: 1, label: 'Съемки', order: '1' },
-        { id: 2, label: 'Распр. ОМИ', order: '2' },
-        { id: 4, label: 'Режимы ТНП', order: '3' },
-        { id: 7, label: 'Калибр. ВД', order: '4' },
-        { id: 8, label: 'Техн. съемки', order: '5' },
-        { id: 6, label: 'Юстировки ОНА', order: '6' }
-    ];
-
-    const MODE_ID_TO_CODE: Record<number, string> = {
-        9: 'astr',  // Астрокоррекция
-        1: 's',     // Съемки
-        2: 'omi',   // ОМИ
-        4: 'tnp',   // ТНП
-        7: 'kvd',   // КВД
-        8: 'ts',    // ТС
-        6: 'ona'    // Юстировка ОНА
-    };
-    
-    export const customerCodes = [
-        { value: 1, label: '01 - Заказчик 1'},
-        { value: 2, label: '02 - Заказчик 2'},
-        { value: 3, label: '03 - Заказчик 3'},
-        { value: 4, label: '04 - Заказчик 4'},
-        { value: 5, label: '05 - Заказчик 5'}
-    ];
+    const cities = CITIES;
+    const workModes = WORK_MODES;
+    const customerCodes = CUSTOMER_CODES;
+    const modeIdToCode = MODE_ID_TO_CODE;
 
     let userData = $state<UserResponse | null>(null);
     let creationMode = $state<'operator' | 'reference' | null>(null);
@@ -91,8 +58,8 @@
             prBssd: 0, // 0-БССД1, 1-БССД2  
             prZg: 0
         },
-        msu1Vd: [],
-        msu2Vd: [],
+        // msu1Vd: [],
+        // msu2Vd: [],
         msu1Config: {
             prMsu: 0,
             prVdMsu: 0,
@@ -516,8 +483,8 @@
         currentFormData.ppiNum = 1;
         currentFormData.customerCode = 5;
         currentFormData.startTime = '10:00';
-        currentFormData.msu1Vd = [];
-        currentFormData.msu2Vd = [];
+        // currentFormData.msu1Vd = [];
+        // currentFormData.msu2Vd = [];
         
         currentFormData.msu1Config = {
             prMsu: 0,
@@ -905,8 +872,8 @@
             duration: 300,
             customerCode: 5,
             startTime: '10:00', 
-            msu1Vd: [],
-            msu2Vd: [],
+            // msu1Vd: [],
+            // msu2Vd: [],
             msu1Config: {
                 prMsu: 0,
                 prVdMsu: 0,
@@ -960,10 +927,6 @@
         };
         
         if (formData.modeType === 7) {
-            console.log('Создание данных для КВД');
-            console.log('formData.msu1Vd:', formData.msu1Vd);
-            console.log('formData.msu2Vd:', formData.msu2Vd);
-            
             const kvdConfig = formData.kvdConfig || {
                 prMsu: 0,
                 prBssd: 0,
