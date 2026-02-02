@@ -166,8 +166,8 @@
         editingInterval = { 
             ...interval,
             // Добавляем дефолтные значения для отсутствующих полей
-            msu1Vd: interval.msu1Vd || [],
-            msu2Vd: interval.msu2Vd || [],
+            // msu1Vd: interval.msu1Vd || [],
+            // msu2Vd: interval.msu2Vd || [],
             msu1Config: interval.msu1Config || {
                 prMsu: 0,
                 prVdMsu: 0,
@@ -260,8 +260,8 @@
         
         if (formData.modeType === 7 && formData.kvdConfig) {
             updatedInterval.kvdConfig = { ...formData.kvdConfig };
-            updatedInterval.msu1Vd = formData.kvdConfig.prMsu === 0 ? [1] : [];
-            updatedInterval.msu2Vd = formData.kvdConfig.prMsu === 1 ? [1] : [];
+            // updatedInterval.msu1Vd = formData.kvdConfig.prMsu === 0 ? [1] : [];
+            // updatedInterval.msu2Vd = formData.kvdConfig.prMsu === 1 ? [1] : [];
         }
         
         if (formData.modeType === 8) {
@@ -717,8 +717,8 @@
 
         if (formData.modeType === 7 && formData.kvdConfig) {
             interval.kvdConfig = { ...formData.kvdConfig };
-            interval.msu1Vd = formData.kvdConfig.prMsu === 0 ? [1] : [];
-            interval.msu2Vd = formData.kvdConfig.prMsu === 1 ? [1] : [];
+            // interval.msu1Vd = formData.kvdConfig.prMsu === 0 ? [1] : [];
+            // interval.msu2Vd = formData.kvdConfig.prMsu === 1 ? [1] : [];
         }
         
         if (formData.modeType === 8) {

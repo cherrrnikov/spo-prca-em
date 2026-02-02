@@ -348,8 +348,8 @@ export class ScheduleCreationService {
         
         return intervals.map(interval => ({
             ...interval,
-            msu1Vd: interval.msu1Vd || [],
-            msu2Vd: interval.msu2Vd || [],
+            // msu1Vd: interval.msu1Vd || [],
+            // msu2Vd: interval.msu2Vd || [],
             msu1Config: interval.msu1Config || this.getDefaultMsuConfig(),
             msu2Config: interval.msu2Config || this.getDefaultMsuConfig(),
             customerCode: interval.customerCode || operatorData.main?.kZajv || 1,

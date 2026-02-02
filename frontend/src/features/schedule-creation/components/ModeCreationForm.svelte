@@ -97,8 +97,8 @@
         duration: 300,
         customerCode: 1,
         startTime: '10:00',
-        msu1Vd: [],
-        msu2Vd: [],
+        // msu1Vd: [],
+        // msu2Vd: [],
         msu1Config: getDefaultMsuConfig(),
         msu2Config: getDefaultMsuConfig(),
         kvdConfig: {
@@ -147,9 +147,9 @@
                     };
                 }
                             
-                // Для совместимости заполняем старые поля
-                localFormData.msu1Vd = editingInterval.msu1Vd || [];
-                localFormData.msu2Vd = editingInterval.msu2Vd || [];
+                // // Для совместимости заполняем старые поля
+                // localFormData.msu1Vd = editingInterval.msu1Vd || [];
+                // localFormData.msu2Vd = editingInterval.msu2Vd || [];
                 
             } else if (editingInterval.mode === 8) {
                 localFormData.msu1Config = editingInterval.msu1Config || getDefaultMsuConfig();
@@ -341,8 +341,8 @@
             duration: 300,
             customerCode: 1,
             startTime: '10:00',
-            msu1Vd: [],
-            msu2Vd: [],
+            // msu1Vd: [],
+            // msu2Vd: [],
             msu1Config: getDefaultMsuConfig(),
             msu2Config: getDefaultMsuConfig(),
             kvdConfig: { // Важно инициализировать
@@ -372,8 +372,8 @@
             ik8: false, ik9: false, ik10: false
         };
         
-        localFormData.msu1Vd = [];
-        localFormData.msu2Vd = [];
+        // localFormData.msu1Vd = [];
+        // localFormData.msu2Vd = [];
         localFormData.msu1Config = getDefaultMsuConfig();
         localFormData.msu2Config = getDefaultMsuConfig();
     }

@@ -17,8 +17,8 @@ export interface TimeInterval {
         prZg: number; // 0-ЗГ1, 1-ЗГ2, 2-ЗГ3, 3-ЗГ4
     };
     
-    msu1Vd?: number[];
-    msu2Vd?: number[];
+    // msu1Vd?: number[];
+    // msu2Vd?: number[];
     
     msu1Config?: TsMsuConfig;
     msu2Config?: TsMsuConfig;
@@ -220,13 +220,13 @@ export interface PpiAssignment {
     ppiNum: number;
 }
 
-export interface ProgramCreationState {
-    step: 'form' | 'ppi_selection' | 'review' | 'saving';
-    currentRecordType: 'kvd' | 'tnp' | 'ts' | null;
-    currentRecordIndex: number;
-    processedRecords: number;
-    totalRecords: number;
-}
+// export interface ProgramCreationState {
+//     step: 'form' | 'ppi_selection' | 'review' | 'saving';
+//     currentRecordType: 'kvd' | 'tnp' | 'ts' | null;
+//     currentRecordIndex: number;
+//     processedRecords: number;
+//     totalRecords: number;
+// }
 
 export interface ModeCreationForm {
     modeType: number | null;
@@ -239,8 +239,8 @@ export interface ModeCreationForm {
         prBssd: number; // 0-БССД1, 1-БССД2  
         prZg: number; // 0-ЗГ1, 1-ЗГ2, 2-ЗГ3, 3-ЗГ4
     };
-    msu1Vd: number[];
-    msu2Vd: number[];
+    // msu1Vd: number[];
+    // msu2Vd: number[];
     msu1Config: TsMsuConfig;
     msu2Config: TsMsuConfig;
 }
@@ -273,7 +273,7 @@ export interface ScheduleCreationState {
     currentRecordIndex: number;
     processedRecords: number;
     totalRecords: number;
-    createdIntervals: CreatedProgramData[];
+    createdIntervals?: CreatedProgramData[];
 }
 
 export interface ForecastDto {
