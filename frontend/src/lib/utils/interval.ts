@@ -1,4 +1,5 @@
 import type { TimeInterval, ZasvetkaInterval } from '$lib/types/schedule';
+import { IntervalValidationService } from './intervalValidation';
 import { TimeUtils } from './time';
 
 export class IntervalUtils {
@@ -8,10 +9,23 @@ export class IntervalUtils {
         startB: string,
         endB: string
     ): boolean {
+        if (!IntervalValidationService.isTimeValid(startA) || 
+            !IntervalValidationService.isTimeValid(endA) ||
+            !IntervalValidationService.isTimeValid(startB) || 
+            !IntervalValidationService.isTimeValid(endB)) {
+            console.warn('Некорректное время в интервале');
+            return false;
+        }
+
         const startMinutesA = TimeUtils.timeToMinutes(startA);
         const endMinutesA = TimeUtils.timeToMinutes(endA);
         const startMinutesB = TimeUtils.timeToMinutes(startB);
         const endMinutesB = TimeUtils.timeToMinutes(endB);
+        
+        if (endMinutesA >= 24 * 60 || endMinutesB >= 24 * 60) {
+            console.warn('Интервал выходит за границы суток');
+            return true; // Возвращаем конфликт, так как интервал некорректен
+        }
         
         return (
             (startMinutesA >= startMinutesB && startMinutesA < endMinutesB) ||

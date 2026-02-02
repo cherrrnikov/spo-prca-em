@@ -89,4 +89,44 @@ export class ScheduleConverterService {
             }))
         };
     }
+
+    static createDateWithTime(baseDate: Date, timeStr: string): Date {
+        const date = new Date(baseDate);
+        
+        if (timeStr.includes('T') || timeStr.includes('-')) {
+            try {
+                return new Date(timeStr);
+            } catch {
+                // Если не удалось распарсить, продолжаем
+            }
+        }
+        
+        // Если только время HH:MM
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        date.setHours(hours || 0, minutes || 0, 0, 0);
+        return date;
+    }
+
+    static extractTimeOnly(timeStr: string): string {
+        try {
+            if (timeStr.includes('T') || timeStr.includes('-')) {
+                const date = new Date(timeStr);
+                return date.getHours().toString().padStart(2, '0') + ':' + 
+                       date.getMinutes().toString().padStart(2, '0');
+            }
+            
+            const timeRegex = /^(\d{1,2}):(\d{2})$/;
+            const match = timeStr.match(timeRegex);
+            
+            if (match) {
+                const hours = parseInt(match[1]).toString().padStart(2, '0');
+                const minutes = match[2];
+                return `${hours}:${minutes}`;
+            }
+            
+            return "00:00";
+        } catch {
+            return "00:00";
+        }
+    }
 }

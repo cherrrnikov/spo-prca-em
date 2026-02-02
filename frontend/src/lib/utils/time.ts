@@ -1,7 +1,11 @@
 export class TimeUtils {
-    static timeToMinutes(time: string): number {
-        const [hours, minutes] = time.split(':').map(Number);
-        return hours * 60 + (minutes || 0);
+    static timeToMinutes(timeStr: string): number {
+        try {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + (minutes || 0);
+        } catch {
+            return 0;
+        }
     }
 
     static minutesToTime(minutes: number): string {
@@ -11,11 +15,14 @@ export class TimeUtils {
     }
 
     static calculateEndTime(startTime: string, duration: number): string {
-        const [hours, minutes] = startTime.split(':').map(Number);
-        const totalMinutes = hours * 60 + minutes + Math.floor(duration / 60);
-        const endHours = Math.floor(totalMinutes / 60) % 24;
-        const endMinutes = totalMinutes % 60;
-        return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+        const startMinutes = this.timeToMinutes(startTime);
+        const endMinutes = startMinutes + Math.floor(duration / 60);
+        return this.minutesToTime(endMinutes);
+    }
+
+    static isWithinDayBounds(timeStr: string): boolean {
+        const minutes = this.timeToMinutes(timeStr);
+        return minutes >= 0 && minutes < 24 * 60;
     }
 
     static formatDate(dateString: string): string {

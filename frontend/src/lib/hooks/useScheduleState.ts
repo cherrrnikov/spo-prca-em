@@ -13,6 +13,7 @@ import type {
     ZasvetkaInterval
 } from '$lib/types/schedule';
 import { IntervalUtils } from '$lib/utils/interval';
+import { IntervalValidationService } from '$lib/utils/intervalValidation';
 import { ModeUtils } from '$lib/utils/mode';
 import { TimeUtils } from '$lib/utils/time';
 import { get, writable } from 'svelte/store';
@@ -102,6 +103,17 @@ export function useScheduleState() {
         const currentEditingInterval = get(editingInterval);
         if (!currentEditingInterval) return;
 
+        // ВАЛИДАЦИЯ: Проверяем, не выходит ли интервал за границы суток
+        const validation = IntervalValidationService.validateTimeInput(
+            formData.startTime, 
+            formData.duration
+        );
+        
+        if (!validation.isValid) {
+            alert(validation.message);
+            return;
+        }
+
         const currentIntervals = get(intervals);
         
         const sameModeOverlap = IntervalUtils.checkIntervalOverlap(
@@ -119,7 +131,11 @@ export function useScheduleState() {
             return;
         }
         
-        const updatedInterval = createUpdatedInterval(currentEditingInterval, formData);
+        // Обрезаем конечное время, если нужно
+        const endTime = validation.correctedEndTime || 
+                       TimeUtils.calculateEndTime(formData.startTime, formData.duration);
+        
+        const updatedInterval = createUpdatedInterval(currentEditingInterval, formData, endTime);
         
         intervals.update(current => 
             current.map(interval => 
@@ -159,6 +175,17 @@ export function useScheduleState() {
             return;
         }
 
+        // ВАЛИДАЦИЯ: Проверяем, не выходит ли интервал за границы суток
+        const validation = IntervalValidationService.validateTimeInput(
+            formData.startTime, 
+            formData.duration
+        );
+        
+        if (!validation.isValid) {
+            alert(validation.message);
+            return;
+        }
+
         const currentIntervals = get(intervals);
         
         const sameModeOverlap = IntervalUtils.checkIntervalOverlap(
@@ -176,8 +203,10 @@ export function useScheduleState() {
         }
         
         const tempId = generateTempId();
+        const endTime = validation.correctedEndTime || 
+                       TimeUtils.calculateEndTime(formData.startTime, formData.duration);
         const modeData = createProgramModeData(formData, tempId);
-        const timeInterval = createTimeInterval(formData, tempId);
+        const timeInterval = createTimeInterval(formData, tempId, endTime);
 
         createdPrograms.update(current => [...current, {
             tempId,
@@ -197,12 +226,15 @@ export function useScheduleState() {
         selectedIntervalId.set(null);
     }
 
-    // Вспомогательные методы
-    function createUpdatedInterval(editingInterval: TimeInterval, formData: ModeCreationForm): TimeInterval {
+    function createUpdatedInterval(
+        editingInterval: TimeInterval, 
+        formData: ModeCreationForm, 
+        endTime: string
+    ): TimeInterval {
         const updatedInterval: TimeInterval = {
             ...editingInterval,
             startTime: formData.startTime,
-            endTime: TimeUtils.calculateEndTime(formData.startTime, formData.duration),
+            endTime: endTime, // Используем скорректированное время
             ppi: formData.ppiNum,
             dlit: formData.duration,
             city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
@@ -221,14 +253,16 @@ export function useScheduleState() {
         return updatedInterval;
     }
 
-    function createTimeInterval(formData: ModeCreationForm, tempId: string): TimeInterval {
-        const endTime = TimeUtils.calculateEndTime(formData.startTime, formData.duration);
-        
+    function createTimeInterval(
+        formData: ModeCreationForm, 
+        tempId: string, 
+        endTime: string
+    ): TimeInterval {
         const interval: TimeInterval = {
             id: tempId,
             mode: formData.modeType!,
             startTime: formData.startTime,
-            endTime,
+            endTime: endTime, // Используем скорректированное время
             city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
             color: ScheduleCreationService.getColorByPpi(formData.ppiNum),
             title: ModeUtils.getModeTitle(formData.modeType!),

@@ -6,6 +6,8 @@
     	ZG_OPTIONS
     } from "$lib/constants/schedule";
     import type { ModeCreationForm, TimeInterval, TsMsuConfig } from "$lib/types/schedule";
+    import { IntervalValidationService } from "$lib/utils/intervalValidation";
+    import { TimeUtils } from "$lib/utils/time";
     import { onMount } from "svelte";
     import { ScheduleConverterService } from "../../services/data/scheduleConverter.service";
     import { ModeDurationService } from "../../services/utils/modeDuration.service";
@@ -52,7 +54,6 @@
         }
     });
 
-    // Методы
     function getInitialFormData(): ModeCreationForm {
         return {
             modeType: null,
@@ -121,7 +122,58 @@
             alert('Укажите время начала и длительность');
             return false;
         }
+
+        // ВАЛИДАЦИЯ: Проверяем, не выходит ли интервал за границы суток
+        const validation = IntervalValidationService.validateTimeInput(
+            localFormData.startTime, 
+            localFormData.duration
+        );
+        
+        if (!validation.isValid) {
+            alert(validation.message);
+            
+            // Если есть скорректированное время, предлагаем его
+            if (validation.correctedEndTime) {
+                const useCorrected = confirm(
+                    `${validation.message}\n\n` +
+                    `Использовать максимальное время окончания 23:59?`
+                );
+                
+                if (useCorrected && validation.correctedEndTime) {
+                    // Обновляем длительность
+                    const startMinutes = TimeUtils.timeToMinutes(localFormData.startTime);
+                    const endMinutes = TimeUtils.timeToMinutes(validation.correctedEndTime);
+                    localFormData.duration = (endMinutes - startMinutes) * 60;
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
         return true;
+    }
+
+    function handleDurationChange() {
+        // При изменении длительности автоматически проверяем границы
+        if (localFormData.startTime && localFormData.duration > 0) {
+            const validation = IntervalValidationService.validateTimeInput(
+                localFormData.startTime, 
+                localFormData.duration
+            );
+            
+            if (!validation.isValid) {
+                // Автоматически обрезаем до 23:59
+                if (validation.correctedEndTime) {
+                    const startMinutes = TimeUtils.timeToMinutes(localFormData.startTime);
+                    const endMinutes = TimeUtils.timeToMinutes(validation.correctedEndTime);
+                    localFormData.duration = (endMinutes - startMinutes) * 60;
+                    
+                    // Можно показать уведомление
+                    console.warn('Длительность скорректирована до границ суток');
+                }
+            }
+        }
     }
 
     function prepareSubmitData(): ModeCreationForm {
@@ -290,6 +342,7 @@
                         min="60"
                         step="60"
                         disabled={selectedMode === 8}
+                        on:change={handleDurationChange}
                     />
                 </div>
             </div>
