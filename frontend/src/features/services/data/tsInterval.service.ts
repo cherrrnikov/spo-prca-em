@@ -61,11 +61,9 @@ export class TsIntervalService {
             
             subIntervals.push(subInterval);
             
-            // Переходим к следующему временному слоту
             currentTime.setMinutes(currentTime.getMinutes() + stepMinutes);
         }
         
-        console.log(`ТС запись ${tsRecord.id} разбита на ${subIntervals.length} подынтервалов (шаг: ${stepMinutes} мин)`);
         return subIntervals;
     }
 

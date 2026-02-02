@@ -1,6 +1,13 @@
 <script lang="ts">
-    import type { ShadowInterval, TimeInterval, WorkMode, ZasvetkaInterval } from '$lib/types/schedule';
-    
+    import type {
+    	ShadowInterval,
+    	TimeInterval,
+    	WorkMode,
+    	ZasvetkaInterval
+    } from '$lib/types/schedule';
+    import { GridPositionUtils } from "../utils/gridPosition";
+
+    // Props
     let {
         intervals,
         shadowIntervals = [],
@@ -9,8 +16,8 @@
         onModeSelect,
         getIntervalColor,
         getIntervalTitle,
-        onIntervalClick, 
-        onIntervalDelete, 
+        onIntervalClick,
+        onIntervalDelete,
         selectedIntervalId = null
     } = $props<{
         intervals: TimeInterval[];
@@ -20,34 +27,99 @@
         onModeSelect?: (modeId: number) => void;
         getIntervalColor?: (interval: TimeInterval) => string;
         getIntervalTitle?: (interval: TimeInterval) => string;
-        onIntervalClick?: (interval: TimeInterval) => void; 
-        onIntervalDelete?: (intervalId: string) => void; 
+        onIntervalClick?: (interval: TimeInterval) => void;
+        onIntervalDelete?: (intervalId: string) => void;
         selectedIntervalId?: string | null;
     }>();
 
-    const HOURS = Array.from({length: 24}, (_, i) => i);
-    const MIN_CELL_WIDTH = 40;
-    const MAX_CELL_WIDTH = 69;
-    const ROW_HEIGHT = 40;
-    const TIME_HEIGHT = 40;
-    
     let containerWidth = $state(0);
-    let cellWidth = $derived(0);
+    let cellWidth = $derived(GridPositionUtils.calculateCellWidth(containerWidth));
     let gridContainer = $state<HTMLDivElement>();
-    
     let selectedMode = $state<number | null>(null);
-
-    let contextMenu = $state<{
-        show: boolean;
-        x: number;
-        y: number;
-        intervalId: string;
-    }>({
+    let contextMenu = $state<ContextMenuState>({
         show: false,
         x: 0,
         y: 0,
         intervalId: ''
     });
+
+    // Типы
+    type ContextMenuState = {
+        show: boolean;
+        x: number;
+        y: number;
+        intervalId: string;
+    };
+
+    type PositionedInterval = {
+        type: 'schedule';
+        id: string;
+        modeIndex: number;
+        color: string;
+        position: any;
+        className: string;
+        title: string;
+        opacity?: number;
+        zIndex?: number;
+        data: TimeInterval;
+    };
+
+    type PositionedForecastInterval = {
+        type: 'shadow' | 'zasvetka';
+        id: string;
+        modeIndex: -1;
+        color: string;
+        position: any;
+        title: string;
+        opacity: number;
+        zIndex: number;
+        data: ShadowInterval | ZasvetkaInterval;
+    };
+
+    type PositionedItem = PositionedInterval | PositionedForecastInterval;
+
+    // Жизненный цикл
+    $effect(() => {
+        if (gridContainer) {
+            updateContainerWidth();
+            
+            const resizeObserver = new ResizeObserver(() => {
+                updateContainerWidth();
+            });
+            
+            resizeObserver.observe(gridContainer);
+            
+            return () => {
+                resizeObserver.disconnect();
+            };
+        }
+    });
+
+    $effect(() => {
+        if (contextMenu.show) {
+            const handleClickOutside = () => closeContextMenu();
+            document.addEventListener('click', handleClickOutside);
+            return () => document.removeEventListener('click', handleClickOutside);
+        }
+    });
+
+    // Вычисляемые значения
+    const filteredIntervals = $derived(
+        selectedMode 
+            ? intervals.filter(interval => interval.mode === selectedMode)
+            : []
+    );
+
+    const positionedIntervals = $derived(() => 
+        getPositionedIntervals()
+    );
+
+    // Методы
+    function updateContainerWidth() {
+        if (gridContainer) {
+            containerWidth = gridContainer.offsetWidth;
+        }
+    }
 
     function closeContextMenu() {
         contextMenu.show = false;
@@ -56,10 +128,9 @@
     function handleIntervalClick(event: MouseEvent, interval: TimeInterval) {
         event.preventDefault();
         
-        if (event.button === 0) { // Левая кнопка мыши
-            // Передаем данные интервала родительскому компоненту
+        if (event.button === 0) {
             onIntervalClick?.(interval);
-        } else if (event.button === 2) { // Правая кнопка мыши
+        } else if (event.button === 2) {
             contextMenu = {
                 show: true,
                 x: event.clientX,
@@ -77,87 +148,22 @@
         }
     }
 
-    function updateContainerWidth() {
-        if (gridContainer) {
-            containerWidth = gridContainer.offsetWidth;
-        }
-    }
-    
-    $effect(() => {
-        if (gridContainer) {
-            updateContainerWidth();
-            
-            const resizeObserver = new ResizeObserver(() => {
-                updateContainerWidth();
-            });
-            
-            resizeObserver.observe(gridContainer);
-            
-            return () => {
-                resizeObserver.disconnect();
-            };
-        }
-    });
-    
-    $effect(() => {
-        if (containerWidth > 0) {
-            const availableWidth = containerWidth;
-            const calculatedWidth = availableWidth / 24;
-            
-            cellWidth = Math.max(MIN_CELL_WIDTH, Math.min(calculatedWidth, MAX_CELL_WIDTH));
-        }
-    });
-
-    $effect(() => {
-        if (contextMenu.show) {
-            const handleClickOutside = () => closeContextMenu();
-            document.addEventListener('click', handleClickOutside);
-            return () => document.removeEventListener('click', handleClickOutside);
-        }
-    });
-
-    const filteredIntervals = $derived(
-        selectedMode 
-            ? intervals.filter((interval: { mode: number | null; }) => interval.mode === selectedMode)
-            : []
-    );
-
-    function timeToMinutes(time: string): number {
-        const [hours, minutes] = time.split(':').map(Number);
-        return hours * 60 + (minutes || 0);
+    function selectMode(modeId: number) {
+        selectedMode = selectedMode === modeId ? null : modeId;
+        onModeSelect?.(selectedMode || modeId);
     }
 
-    function minutesToPixels(minutes: number): number {
-        return (minutes / 60) * cellWidth;
-    }
-
-    function getPositionForInterval(
-        startTime: string, 
-        endTime: string, 
-        modeIndex: number
-    ) {
-        const startMinutes = timeToMinutes(startTime);
-        const endMinutes = timeToMinutes(endTime);
-        const durationMinutes = endMinutes - startMinutes;
-
-        return {
-            left: `${minutesToPixels(startMinutes)}px`,
-            width: `${minutesToPixels(durationMinutes)}px`,
-            top: `${TIME_HEIGHT + modeIndex * ROW_HEIGHT - 15}px`,
-            height: `${ROW_HEIGHT - 10}px`
-        };
-    }
-
-    function getPositionedIntervals() {
+    function getPositionedIntervals(): PositionedItem[] {
         if (!workModes || workModes.length === 0) {
             console.warn('workModes пуст или не определен');
             return [];
         }
 
-        const allPositionedIntervals: any[] = [];
+        const allPositionedIntervals: PositionedItem[] = [];
         
+        // Добавляем интервалы расписания
         intervals.forEach((interval: TimeInterval) => {
-            const modeIndex = workModes.findIndex((m: { id: any; }) => m.id === interval.mode);
+            const modeIndex = workModes.findIndex((m: { id: number; }) => m.id === interval.mode);
             
             if (modeIndex === -1) {
                 console.warn(`Mode ${interval.mode} not found for interval ${interval.id}`);
@@ -167,73 +173,93 @@
             const color = getIntervalColor?.(interval) || interval.color;
             const title = getIntervalTitle?.(interval) || interval.title || '';
             
-            allPositionedIntervals.push({
-                ...interval,
+            const positionedInterval: PositionedInterval = {
                 type: 'schedule',
+                id: interval.id,
                 modeIndex,
-                color, 
-                position: getPositionForInterval(interval.startTime, interval.endTime, modeIndex),
-                className: `${
-                    interval.zasvetkaConflict || interval.nearZasvetka 
-                        ? 'zasvetka-conflict-interval' 
-                        : interval.hasConflict 
-                            ? 'conflict-interval' 
-                            : ''
-                } ${
-                    interval.id === selectedIntervalId ? 'selected-interval' : ''
-                }`.trim(),
-                title: `${title} ${interval.startTime}-${interval.endTime}`
-            });
+                color,
+                position: GridPositionUtils.getPositionForInterval(
+                    interval.startTime,
+                    interval.endTime,
+                    modeIndex,
+                    cellWidth
+                ),
+                className: getIntervalClassName(interval),
+                title: `${title} ${interval.startTime}-${interval.endTime}`,
+                data: interval
+            };
+            
+            allPositionedIntervals.push(positionedInterval);
         });
         
-        if (shadowIntervals.length > 0) {
-            shadowIntervals.forEach((shadow: { startTime: string; endTime: string; }) => {
-                allPositionedIntervals.push({
-                    ...shadow,
-                    type: 'shadow',
-                    modeIndex: -1, // Специальный индекс для полных полос
-                    position: {
-                        left: getPositionForInterval(shadow.startTime, shadow.endTime, 0).left,
-                        width: getPositionForInterval(shadow.startTime, shadow.endTime, 0).width,
-                        top: `0px`, // Начинается сразу после шкалы времени
-                        height: `${ROW_HEIGHT * (workModes.length + 1)}px` // На всю высоту всех режимов
-                    }
-                });
-            });
-        }
-        
-        if (zasvetkaIntervals.length > 0) {
-            zasvetkaIntervals.forEach((zasvetka: { startTime: string; endTime: string; }) => {
-                allPositionedIntervals.push({
-                    ...zasvetka,
-                    type: 'zasvetka',
-                    modeIndex: -1,
-                    position: {
-                        left: getPositionForInterval(zasvetka.startTime, zasvetka.endTime, 0).left,
-                        width: getPositionForInterval(zasvetka.startTime, zasvetka.endTime, 0).width,
-                        top: `0px`,
-                        height: `${ROW_HEIGHT * (workModes.length + 1)}px`
-                    }
-                });
-            });
-        }
+        // Добавляем тени и засветки
+        addForecastIntervals(allPositionedIntervals, shadowIntervals, 'shadow');
+        addForecastIntervals(allPositionedIntervals, zasvetkaIntervals, 'zasvetka');
         
         return allPositionedIntervals;
     }
-    
-    function selectMode(modeId: number) {
-        selectedMode = selectedMode === modeId ? null : modeId;
-        const modeToSend = selectedMode || modeId;
+
+    function addForecastIntervals(
+        targetArray: PositionedItem[],
+        intervalsArray: (ShadowInterval | ZasvetkaInterval)[],
+        type: 'shadow' | 'zasvetka'
+    ) {
+        intervalsArray.forEach(interval => {
+            const positionedForecastInterval: PositionedForecastInterval = {
+                type,
+                id: interval.id,
+                modeIndex: -1,
+                color: interval.color,
+                position: {
+                    left: GridPositionUtils.getPositionForInterval(
+                        interval.startTime,
+                        interval.endTime,
+                        0,
+                        cellWidth
+                    ).left,
+                    width: GridPositionUtils.getPositionForInterval(
+                        interval.startTime,
+                        interval.endTime,
+                        0,
+                        cellWidth
+                    ).width,
+                    top: `0px`,
+                    height: `${GridPositionUtils.ROW_HEIGHT * (workModes.length + 1)}px`
+                },
+                title: interval.title,
+                opacity: interval.opacity,
+                zIndex: interval.zIndex,
+                data: interval
+            };
+            
+            targetArray.push(positionedForecastInterval);
+        });
+    }
+
+    function getIntervalClassName(interval: TimeInterval): string {
+        const classes = [];
         
-        onModeSelect?.(modeToSend);
+        if (interval.zasvetkaConflict || interval.nearZasvetka) {
+            classes.push('zasvetka-conflict-interval');
+        } else if (interval.hasConflict) {
+            classes.push('conflict-interval');
+        }
+        
+        if (interval.id === selectedIntervalId) {
+            classes.push('selected-interval');
+        }
+        
+        return classes.join(' ');
     }
 </script>
 
 <div class="schedule-grid">
+    <!-- Список режимов -->
     {#if workModes && workModes.length > 0}
         <div class="modes-container">
             {#each workModes as mode, i}
-                <div class="mode-label-container" style="top: {1.4 * TIME_HEIGHT + i * ROW_HEIGHT}px">
+                <div class="mode-label-container" 
+                     style="top: {1.4 * GridPositionUtils.TIME_HEIGHT + i * GridPositionUtils.ROW_HEIGHT}px">
                     <label class="mode-checkbox">
                         <input 
                             type="radio" 
@@ -249,16 +275,13 @@
         </div>
     {/if}
     
-    <div 
-        class="schedule-grid_container"
-        bind:this={gridContainer}
-    >
+    <!-- Контейнер сетки -->
+    <div class="schedule-grid_container" bind:this={gridContainer}>
+        <!-- Верхняя временная шкала -->
         <div class="time-scale top-scale">
-            {#each HOURS as hour}
-                <div 
-                    class="hour-marker" 
-                    style="left: {(hour * cellWidth)}px; width: {cellWidth}px"
-                >
+            {#each GridPositionUtils.HOURS as hour}
+                <div class="hour-marker" 
+                     style="left: {(hour * cellWidth)}px; width: {cellWidth}px">
                     <div class="hour-label">
                         {hour.toString().padStart(2, '0')}:00
                     </div>
@@ -266,12 +289,11 @@
             {/each}
         </div>
         
+        <!-- Нижняя временная шкала -->
         <div class="time-scale bottom-scale">
-            {#each HOURS as hour}
-                <div 
-                    class="hour-marker" 
-                    style="left: {(hour * cellWidth)}px; width: {cellWidth}px"
-                >
+            {#each GridPositionUtils.HOURS as hour}
+                <div class="hour-marker" 
+                     style="left: {(hour * cellWidth)}px; width: {cellWidth}px">
                     <div class="hour-label">
                         {hour.toString().padStart(2, '0')}:00
                     </div>
@@ -279,18 +301,16 @@
             {/each}
         </div>
 
-        <div 
-            class="grid-area"
-            style="
+        <!-- Область интервалов -->
+        <div class="grid-area"
+             style="
                 grid-template-columns: repeat(24, {cellWidth}px); 
                 width: {cellWidth * 24 + 5}px;
                 --cell-width: {cellWidth}px;
-            "
-        >
-            {#each getPositionedIntervals() as item}
-                <div 
-                    class="interval interval-{item.type} {item.className}" 
-                    style="
+             ">
+            {#each positionedIntervals() as item (item.id)}
+                <div class="interval interval-{item.type} {item.type === 'schedule' ? item.className : ''}"
+                     style="
                         left: {item.position.left}; 
                         width: {item.position.width}; 
                         top: {item.position.top}; 
@@ -298,11 +318,10 @@
                         background: {item.color};
                         opacity: {item.opacity || 1};
                         z-index: {item.zIndex || 10};
-                    "
-                    title="{item.title}"
-                    on:click={(e) => handleIntervalClick(e, item)}
-                    on:contextmenu|preventDefault={(e) => handleIntervalClick(e, item)}
-                >
+                     "
+                     title="{item.title}"
+                     on:click={(e) => item.type === 'schedule' && handleIntervalClick(e, item.data)}
+                     on:contextmenu|preventDefault={(e) => item.type === 'schedule' && handleIntervalClick(e, item.data)}>
                     {#if item.type === 'schedule'}
                         <div class="interval-content" style="background: {item.color};">
                         </div>
@@ -312,12 +331,11 @@
         </div>
     </div>
 
+    <!-- Контекстное меню -->
     {#if contextMenu.show}
-        <div 
-            class="context-menu"
-            style="position: fixed; left: {contextMenu.x}px; top: {contextMenu.y}px;"
-            on:click|stopPropagation
-        >
+        <div class="context-menu"
+             style="position: fixed; left: {contextMenu.x}px; top: {contextMenu.y}px;"
+             on:click|stopPropagation>
             <button class="delete-btn" on:click={handleDeleteInterval}>
                 Удалить
             </button>

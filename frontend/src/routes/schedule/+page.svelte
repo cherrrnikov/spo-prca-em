@@ -1,27 +1,16 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    
     import CityLegend from '$lib/components/CityLegend.svelte';
     import FileMenu from '$lib/components/FileMenu.svelte';
     import ScheduleGrid from '$lib/components/ScheduleGrid.svelte';
     import {
     	CITIES,
     	CUSTOMER_CODES,
-    	MODE_ID_TO_CODE,
     	WORK_MODES
     } from '$lib/constants/schedule';
-    import type { UserResponse } from '$lib/types/auth';
-    import type {
-    	CreatedProgramData,
-    	ForecastData,
-    	ModeCreationForm,
-    	OperatorData,
-    	PpiAssignment,
-    	ProgramModeData,
-    	ShadowInterval,
-    	TimeInterval,
-    	ZasvetkaInterval
-    } from '$lib/types/schedule';
+    import { useScheduleState } from '$lib/hooks/useScheduleState';
+    import type { OperatorData, PpiAssignment } from '$lib/types/schedule';
+    import { TimeUtils } from '$lib/utils/time';
+    import { onMount } from 'svelte';
     import CreationHeader from '../../features/schedule-creation/components/CreationHeader.svelte';
     import ModeCreationFormComponent from '../../features/schedule-creation/components/ModeCreationForm.svelte';
     import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
@@ -29,395 +18,61 @@
     const cities = CITIES;
     const workModes = WORK_MODES;
     const customerCodes = CUSTOMER_CODES;
-    const modeIdToCode = MODE_ID_TO_CODE;
 
-    let userData = $state<UserResponse | null>(null);
-    let creationMode = $state<'operator' | 'reference' | null>(null);
-    let intervals = $state<TimeInterval[]>([]);
-    let operatorData = $state<OperatorData | null>(null);
-    let ppiAssignments = $state<PpiAssignment[]>([]);
-    let operatorDataLoaded = $state(false); 
-    let selectedProgramDate = $state<string>('');
+    const {
+        userData,
+        creationMode,
+        intervals,
+        operatorData,
+        ppiAssignments,
+        operatorDataLoaded,
+        selectedProgramDate,
+        forecastData,
+        shadowIntervals,
+        zasvetkaIntervals,
+        forecastDataLoaded,
+        selectedMode,
+        createdPrograms,
+        editingInterval,
+        selectedIntervalId,
+        
+        loadUserData,
+        handleIntervalClick,
+        handleIntervalDelete,
+        handleIntervalUpdate,
+        handleModeSelect,
+        handleModeFormSubmit,
+        handleModeFormCancel,
+        
+        getIntervalColor,
+        getIntervalTitle
+    } = useScheduleState();
 
-    let forecastData = $state<ForecastData | null>(null);
-    let shadowIntervals = $state<ShadowInterval[]>([]);
-    let zasvetkaIntervals = $state<ZasvetkaInterval[]>([]);
-    let forecastDataLoaded = $state(false);
-    
-
-    let selectedMode = $state<number | null>(null);
-    let createdPrograms = $state<CreatedProgramData[]>([]);
-    let currentFormData = $state<ModeCreationForm>({
-        modeType: null,
-        ppiNum: 1,
-        duration: 300,
-        customerCode: 5,
-        startTime: '10:00',
-        kvdConfig: {
-            prMsu: 0, // 0-МСУ1, 1-МСУ2
-            prBssd: 0, // 0-БССД1, 1-БССД2  
-            prZg: 0
-        },
-        // msu1Vd: [],
-        // msu2Vd: [],
-        msu1Config: {
-            prMsu: 0,
-            prVdMsu: 0,
-            prIkMsu: 0,
-            vd1: 0,
-            vd2: 0,
-            vd3: 0,
-            ik4: 0,
-            ik5: 0,
-            ik6: 0,
-            ik7: 0,
-            ik8: 0,
-            ik9: 0,
-            ik10: 0
-        },
-        msu2Config: {
-            prMsu: 0,
-            prVdMsu: 0,
-            prIkMsu: 0,
-            vd1: 0,
-            vd2: 0,
-            vd3: 0,
-            ik4: 0,
-            ik5: 0,
-            ik6: 0,
-            ik7: 0,
-            ik8: 0,
-            ik9: 0,
-            ik10: 0
-        }
-    });
-    
     onMount(() => {
         loadUserData();
     });
 
-    let editingInterval = $state<TimeInterval | null>(null);
-    let selectedIntervalId = $state<string | null>(null);
-    
-    function loadUserData() {
-        try {
-            const userDataCookie = document.cookie
-                .split('; ')
-                .find(row => row.startsWith('user_data='));
-            
-            if (userDataCookie) {
-                const userDataStr = userDataCookie.split('=')[1];
-                const parsedData = JSON.parse(decodeURIComponent(userDataStr));
-                
-                userData = {
-                    username: parsedData.username,
-                    firstName: parsedData.firstName,
-                    lastName: parsedData.lastName,
-                    enabled: parsedData.enabled !== undefined ? parsedData.enabled : true,
-                    accountLocked: parsedData.accountLocked !== undefined ? parsedData.accountLocked : false,
-                    failedAttempts: parsedData.failedAttempts || 0,
-                    lastLoginAt: parsedData.lastLoginAt,
-                    lastLogoutAt: parsedData.lastLogoutAt || '',
-                    roles: parsedData.roles || []
-                };
-                
-                console.log('User data loaded:', userData);
-            }
-        } catch (error) {
-            console.error('Error parsing user data:', error);
-            userData = null;
-        }
-    }
-
-    function handleIntervalClick(interval: TimeInterval) {
-        editingInterval = { 
-            ...interval,
-            // Добавляем дефолтные значения для отсутствующих полей
-            // msu1Vd: interval.msu1Vd || [],
-            // msu2Vd: interval.msu2Vd || [],
-            msu1Config: interval.msu1Config || {
-                prMsu: 0,
-                prVdMsu: 0,
-                prIkMsu: 0,
-                vd1: 0,
-                vd2: 0,
-                vd3: 0,
-                ik4: 0,
-                ik5: 0,
-                ik6: 0,
-                ik7: 0,
-                ik8: 0,
-                ik9: 0,
-                ik10: 0
-            },
-            msu2Config: interval.msu2Config || {
-                prMsu: 0,
-                prVdMsu: 0,
-                prIkMsu: 0,
-                vd1: 0,
-                vd2: 0,
-                vd3: 0,
-                ik4: 0,
-                ik5: 0,
-                ik6: 0,
-                ik7: 0,
-                ik8: 0,
-                ik9: 0,
-                ik10: 0
-            },
-            customerCode: interval.customerCode || 1 // дефолтный код
-        };
-        selectedIntervalId = interval.id;
-        selectedMode = interval.mode;
-    }
-
-    function handleIntervalDelete(intervalId: string) {
-        console.log(`Удаление интервала: ${intervalId}`);
-
-        const intervalToDelete = intervals.find(interval => interval.id === intervalId);
-        if (intervalToDelete) {
-            console.log(`   Удаляемый интервал: ${intervalToDelete.startTime} - ${intervalToDelete.endTime}, Режим: ${intervalToDelete.mode}`);
-        }
-        intervals = intervals.filter(interval => interval.id !== intervalId);
-        
-        createdPrograms = createdPrograms.filter(program => program.tempId !== intervalId);
-        
-        if (editingInterval?.id === intervalId) {
-            editingInterval = null;
-            selectedIntervalId = null;
-            selectedMode = null;
-        }
-        
-        updateAllConflicts();
-
-        logAllIntervals('После удаления');
-    }
-
-    function handleIntervalUpdate(formData: ModeCreationForm) {
-        if (!editingInterval) return;
-
-        console.log(`Редактирование интервала: ${editingInterval.id}`);
-        console.log(`   Старые значения: ${editingInterval.startTime} - ${editingInterval.endTime}`);
-        console.log(`   Новые значения: ${formData.startTime}, длительность ${formData.duration} сек`);
-        
-        const sameModeOverlap = checkIntervalOverlapForUpdate(
-            formData.startTime, 
-            formData.duration, 
-            editingInterval.mode,
-            editingInterval.id
-        );
-        
-        if (sameModeOverlap.overlaps) {
-            const conflicting = sameModeOverlap.conflictingInterval;
-            alert(`Ошибка: интервал пересекается с существующим интервалом\n` +
-                  `Время конфликта: ${conflicting?.startTime} - ${conflicting?.endTime}\n` +
-                  `Попробуйте выбрать другое время или уменьшить длительность.`);
-            return;
-        }
-        
-        const updatedInterval: TimeInterval = {
-            ...editingInterval,
-            startTime: formData.startTime,
-            endTime: calculateEndTime(formData.startTime, formData.duration),
-            ppi: formData.ppiNum,
-            dlit: formData.duration,
-            city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
-            color: ScheduleCreationService.getColorByPpi(formData.ppiNum),
-        };
-        
-        if (formData.modeType === 7 && formData.kvdConfig) {
-            updatedInterval.kvdConfig = { ...formData.kvdConfig };
-            // updatedInterval.msu1Vd = formData.kvdConfig.prMsu === 0 ? [1] : [];
-            // updatedInterval.msu2Vd = formData.kvdConfig.prMsu === 1 ? [1] : [];
-        }
-        
-        if (formData.modeType === 8) {
-            updatedInterval.msu1Config = { ...formData.msu1Config };
-            updatedInterval.msu2Config = { ...formData.msu2Config };
-        }
-
-        intervals = intervals.map(interval => 
-            interval.id === editingInterval!.id ? updatedInterval : interval
-        );
-        
-        createdPrograms = createdPrograms.map(program => {
-            if (program.tempId === editingInterval!.id) {
-                const modeData = createProgramModeData(formData, editingInterval!.id);
-                return {
-                    ...program,
-                    modeData,
-                    timeInterval: updatedInterval
-                };
-            }
-            return program;
-        });
-        
-        updateAllConflicts();
-        
-        editingInterval = null;
-        selectedIntervalId = null;
-        resetCurrentFormData();
-
-        logAllIntervals('После редактирования интервала');
-    }
-
-    function checkIntervalOverlapForUpdate(
-        newStartTime: string,
-        newDuration: number,
-        modeId: number,
-        excludeIntervalId: string
-    ): { overlaps: boolean; conflictingInterval?: TimeInterval } {
-        const newEndTime = calculateEndTime(newStartTime, newDuration);
-        const newStartMinutes = timeToMinutes(newStartTime);
-        const newEndMinutes = timeToMinutes(newEndTime);
-        
-        for (const interval of intervals) {
-            if (interval.id === excludeIntervalId || interval.mode !== modeId) {
-                continue;
-            }
-            
-            const existingStartMinutes = timeToMinutes(interval.startTime);
-            const existingEndMinutes = timeToMinutes(interval.endTime);
-            
-            const overlaps = (
-                (newStartMinutes >= existingStartMinutes && newStartMinutes < existingEndMinutes) ||
-                (newEndMinutes > existingStartMinutes && newEndMinutes <= existingEndMinutes) ||
-                (newStartMinutes <= existingStartMinutes && newEndMinutes >= existingEndMinutes)
-            );
-            
-            if (overlaps) {
-                return { 
-                    overlaps: true, 
-                    conflictingInterval: interval 
-                };
-            }
-        }
-        
-        return { overlaps: false };
-    }
-
-    function checkIntervalOverlap(
-        newStartTime: string,
-        newDuration: number,
-        modeId: number
-    ): { overlaps: boolean; conflictingInterval?: TimeInterval } {
-        const newEndTime = calculateEndTime(newStartTime, newDuration);
-        const newStartMinutes = timeToMinutes(newStartTime);
-        const newEndMinutes = timeToMinutes(newEndTime);
-        
-        for (const interval of intervals) {
-            if (interval.mode !== modeId) {
-                continue;
-            }
-            
-            const existingStartMinutes = timeToMinutes(interval.startTime);
-            const existingEndMinutes = timeToMinutes(interval.endTime);
-            
-            const overlaps = (
-                (newStartMinutes >= existingStartMinutes && newStartMinutes < existingEndMinutes) ||
-                (newEndMinutes > existingStartMinutes && newEndMinutes <= existingEndMinutes) ||
-                (newStartMinutes <= existingStartMinutes && newEndMinutes >= existingEndMinutes)
-            );
-            
-            if (overlaps) {
-                return { 
-                    overlaps: true, 
-                    conflictingInterval: interval 
-                };
-            }
-        }
-        
-        return { overlaps: false };
-    }
-        
-    function timeToMinutes(time: string): number {
-        const [hours, minutes] = time.split(':').map(Number);
-        return hours * 60 + minutes;
-    }
-    
-    function findAvailableTimeSlot(
-        duration: number,
-        modeId: number
-    ): { startTime: string; available: boolean } | null {
-        const dayStart = 0; // 00:00
-        const dayEnd = 24 * 60; // 24:00
-
-        // Используем только текущие интервалы
-        const modeIntervals = intervals.filter(interval => interval.mode === modeId);
-        
-        if (modeIntervals.length === 0) {
-            return {
-                startTime: '00:00',
-                available: true
-            };
-        }
-        
-        const sortedIntervals = [...modeIntervals].sort((a, b) => 
-            timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
-        );
-        
-        const firstIntervalStart = timeToMinutes(sortedIntervals[0].startTime);
-        if (firstIntervalStart >= duration) {
-            return {
-                startTime: minutesToTime(0),
-                available: true
-            };
-        }
-        
-        // Проверяем окна между интервалами
-        for (let i = 0; i < sortedIntervals.length - 1; i++) {
-            const currentEnd = timeToMinutes(sortedIntervals[i].endTime);
-            const nextStart = timeToMinutes(sortedIntervals[i + 1].startTime);
-            const gap = nextStart - currentEnd;
-            
-            if (gap >= duration) {
-                return {
-                    startTime: sortedIntervals[i].endTime,
-                    available: true
-                };
-            }
-        }
-        
-        // Проверяем окно после последнего интервала
-        const lastIntervalEnd = timeToMinutes(sortedIntervals[sortedIntervals.length - 1].endTime);
-        if (dayEnd - lastIntervalEnd >= duration) {
-            return {
-                startTime: sortedIntervals[sortedIntervals.length - 1].endTime,
-                available: true
-            };
-        }
-        
-        return null;
-    }
-    
-    function minutesToTime(minutes: number): string {
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
-    }
-    
     function startOperatorCreation() {
-        creationMode = 'operator';
+        creationMode.set('operator');
     }
     
     function startReferenceCreation() {
-        creationMode = 'reference';
+        creationMode.set('reference');
         alert('Создание по опорной ПРЦА (в разработке)');
     }
     
     function handleCreationCancel() {
-        creationMode = null;
+        creationMode.set(null);
     }
     
-    function updateIntervalsFromOperatorData(
+    async function updateIntervalsFromOperatorData(
         newOperatorData: OperatorData,
         newPpiAssignments: PpiAssignment[]
     ) {
-        operatorData = newOperatorData;
-        ppiAssignments = newPpiAssignments;
-
-        creationMode = 'operator';
-        operatorDataLoaded = true;
+        operatorData.set(newOperatorData);
+        ppiAssignments.set(newPpiAssignments);
+        creationMode.set('operator');
+        operatorDataLoaded.set(true);
 
         const newIntervals = ScheduleCreationService.convertToTimeIntervals(
             newOperatorData,
@@ -425,700 +80,101 @@
             workModes
         );
         
-        intervals = newIntervals;
+        intervals.set(newIntervals);
 
         if (newOperatorData.main?.dNp) {
             const date = newOperatorData.main.dNp.split('T')[0];
-            selectedProgramDate = date;
-            loadForecastData(date);
+            selectedProgramDate.set(date);
+            await loadForecastData(date);
         }
 
         logAllIntervals('После загрузки данных оператора');
     }
 
-    function formatDate(dateString: string): string {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    }
-
     async function loadForecastData(date: string) {
         try {
             const data = await ScheduleCreationService.loadForecastData(date);
-            forecastData = data;
-            forecastDataLoaded = true;
+            forecastData.set(data);
+            forecastDataLoaded.set(true);
             
             const forecastIntervals = ScheduleCreationService.convertForecastToIntervals(data);
-            shadowIntervals = forecastIntervals.shadows;
-            zasvetkaIntervals = forecastIntervals.zasvetki;
+            shadowIntervals.set(forecastIntervals.shadows);
+            zasvetkaIntervals.set(forecastIntervals.zasvetki);
             
             console.log('Прогнозные данные загружены:', {
-                shadows: shadowIntervals,
-                zasvetki: zasvetkaIntervals
+                shadows: forecastIntervals.shadows,
+                zasvetki: forecastIntervals.zasvetki
             });
         } catch (error) {
-            console.error('Ошибка загрузки прогнозных данных:', error);
-            shadowIntervals = [];
-            zasvetkaIntervals = [];
+            console.warn('Ошибка загрузки прогнозных данных:', error);
+            shadowIntervals.set([]);
+            zasvetkaIntervals.set([]);
         }
     }
 
-    function handleModeSelect(modeId: number) {
-        if (!operatorDataLoaded) {
-            console.log("Данные оператора не загружены");
-            return;
-        }
-
-        if (creationMode !== 'operator') {
-            return;
-        }
-        
-        selectedMode = modeId;
-        
-        currentFormData.modeType = modeId;
-        currentFormData.duration = 300;
-        currentFormData.ppiNum = 1;
-        currentFormData.customerCode = 5;
-        currentFormData.startTime = '10:00';
-        // currentFormData.msu1Vd = [];
-        // currentFormData.msu2Vd = [];
-        
-        currentFormData.msu1Config = {
-            prMsu: 0,
-            prVdMsu: 0,
-            prIkMsu: 0,
-            vd1: 0,
-            vd2: 0,
-            vd3: 0,
-            ik4: 0,
-            ik5: 0,
-            ik6: 0,
-            ik7: 0,
-            ik8: 0,
-            ik9: 0,
-            ik10: 0
-        };
-        currentFormData.msu2Config = {
-            prMsu: 0,
-            prVdMsu: 0,
-            prIkMsu: 0,
-            vd1: 0,
-            vd2: 0,
-            vd3: 0,
-            ik4: 0,
-            ik5: 0,
-            ik6: 0,
-            ik7: 0,
-            ik8: 0,
-            ik9: 0,
-            ik10: 0
-        };
-    }
-
-    function checkZasvetkaProximity(
-        intervalStart: string,
-        intervalEnd: string,
-        zasvetkaIntervals: ZasvetkaInterval[]
-    ): {
-        nearZasvetka: boolean;
-        zasvetkaConflict: boolean;
-        minDistance: number;
-    } {
-        const intervalStartMinutes = timeToMinutes(intervalStart);
-        const intervalEndMinutes = timeToMinutes(intervalEnd);
-        const SAFETY_BUFFER = 1; // 60 секунд = 1 минута
-        
-        let minDistance = Infinity;
-        let nearZasvetka = false;
-        let zasvetkaConflict = false;
-
-        for (const zasvetka of zasvetkaIntervals) {
-            const zasvetkaStart = timeToMinutes(zasvetka.startTime);
-            const zasvetkaEnd = timeToMinutes(zasvetka.endTime);
-            
-            const overlaps = (
-                (intervalStartMinutes >= zasvetkaStart && intervalStartMinutes < zasvetkaEnd) ||
-                (intervalEndMinutes > zasvetkaStart && intervalEndMinutes <= zasvetkaEnd) ||
-                (intervalStartMinutes <= zasvetkaStart && intervalEndMinutes >= zasvetkaEnd)
-            );
-            
-            if (overlaps) {
-                zasvetkaConflict = true;
-                minDistance = 0;
-                break; // Если пересекается, дальше не проверяем
-            }
-            
-            if (intervalEndMinutes <= zasvetkaStart) {
-                const distance = zasvetkaStart - intervalEndMinutes;
-                if (distance < SAFETY_BUFFER) {
-                    nearZasvetka = true;
-                    minDistance = Math.min(minDistance, distance);
-                }
-            }
-            
-            if (intervalStartMinutes >= zasvetkaEnd) {
-                const distance = intervalStartMinutes - zasvetkaEnd;
-                if (distance < SAFETY_BUFFER) {
-                    nearZasvetka = true;
-                    minDistance = Math.min(minDistance, distance);
-                }
-            }
-        }
-        
-        return {
-            nearZasvetka,
-            zasvetkaConflict,
-            minDistance: minDistance === Infinity ? 0 : minDistance
-        };
-    }
-    
-    function checkAllConflicts(): TimeInterval[] {
-        const updatedIntervals = intervals.map(interval => ({
-            ...interval,
-            hasConflict: false,
-            conflictWith: [],
-            nearZasvetka: false,
-            zasvetkaConflict: false,
-            zasvetkaDistance: 0,
-            willBeSaved: true
-        }));
-        
-        for (let i = 0; i < updatedIntervals.length; i++) {
-            for (let j = i + 1; j < updatedIntervals.length; j++) {
-                const intervalA = updatedIntervals[i];
-                const intervalB = updatedIntervals[j];
-                
-                if (intervalA.mode === intervalB.mode) {
-                    continue;
-                }
-                
-                const overlap = checkTwoIntervalsOverlap(
-                    intervalA.startTime,
-                    intervalA.endTime,
-                    intervalB.startTime,
-                    intervalB.endTime
-                );
-                
-                if (overlap) {
-                    intervalA.hasConflict = true;
-                    intervalB.hasConflict = true;
-                    
-                    if (!intervalA.conflictWith?.includes(intervalB.mode)) {
-                        intervalA.conflictWith = [...(intervalA.conflictWith || []), intervalB.mode];
-                    }
-                    if (!intervalB.conflictWith?.includes(intervalA.mode)) {
-                        intervalB.conflictWith = [...(intervalB.conflictWith || []), intervalA.mode];
-                    }
-                    
-                    intervalA.willBeSaved = false;
-                    intervalB.willBeSaved = false;
-                }
-            }
-        }
-        
-        updatedIntervals.forEach(interval => {
-            const zasvetkaCheck = checkZasvetkaProximity(
-                interval.startTime,
-                interval.endTime,
-                zasvetkaIntervals
-            );
-            
-            interval.nearZasvetka = zasvetkaCheck.nearZasvetka;
-            interval.zasvetkaConflict = zasvetkaCheck.zasvetkaConflict;
-            interval.zasvetkaDistance = zasvetkaCheck.minDistance;
-            
-            if (zasvetkaCheck.zasvetkaConflict || zasvetkaCheck.nearZasvetka) {
-                interval.willBeSaved = false;
-            }
-        });
-        
-        return updatedIntervals;
-    }
-    
-    function checkTwoIntervalsOverlap(
-        startA: string,
-        endA: string,
-        startB: string,
-        endB: string
-    ): boolean {
-        const startMinutesA = timeToMinutes(startA);
-        const endMinutesA = timeToMinutes(endA);
-        const startMinutesB = timeToMinutes(startB);
-        const endMinutesB = timeToMinutes(endB);
-        
-        return (
-            (startMinutesA >= startMinutesB && startMinutesA < endMinutesB) ||
-            (endMinutesA > startMinutesB && endMinutesA <= endMinutesB) ||
-            (startMinutesA <= startMinutesB && endMinutesA >= endMinutesB)
-        );
-    }
-    
-    function createTimeInterval(formData: ModeCreationForm, tempId: string): TimeInterval {
-        console.log('createTimeInterval с formData:', formData);
-        console.log('msu1Config в createTimeInterval:', formData.msu1Config);
-        console.log('msu2Config в createTimeInterval:', formData.msu2Config);
-        
-        const endTime = calculateEndTime(formData.startTime, formData.duration);
-        
-        const interval: TimeInterval = {
-            id: tempId,
-            mode: formData.modeType!,
-            startTime: formData.startTime,
-            endTime,
-            city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
-            color: ScheduleCreationService.getColorByPpi(formData.ppiNum),
-            title: getModeTitle(formData.modeType!),
-            ppi: formData.ppiNum, 
-            dlit: formData.duration,
-            customerCode: formData.customerCode,
-            hasConflict: false,
-            conflictWith: [],
-            nearZasvetka: false,
-            zasvetkaConflict: false,
-            zasvetkaDistance: 0,
-            willBeSaved: true,
-        };
-
-        if (formData.modeType === 7 && formData.kvdConfig) {
-            interval.kvdConfig = { ...formData.kvdConfig };
-            // interval.msu1Vd = formData.kvdConfig.prMsu === 0 ? [1] : [];
-            // interval.msu2Vd = formData.kvdConfig.prMsu === 1 ? [1] : [];
-        }
-        
-        if (formData.modeType === 8) {
-            interval.msu1Config = { ...formData.msu1Config };
-            interval.msu2Config = { ...formData.msu2Config };
-        }
-
-        checkAndUpdateAllConflictsForNewInterval(interval);
-        
-        return interval;
-    }
-
-    function getDefaultMsuConfig() {
-        return {
-            prMsu: 0,
-            prVdMsu: 0,
-            prIkMsu: 0,
-            vd1: 0,
-            vd2: 0,
-            vd3: 0,
-            ik4: 0,
-            ik5: 0,
-            ik6: 0,
-            ik7: 0,
-            ik8: 0,
-            ik9: 0,
-            ik10: 0
-        };
-    }
-
-    function checkAndUpdateAllConflictsForNewInterval(newInterval: TimeInterval) {
-        const allIntervals = [
-            ...intervals,
-            ...(operatorData ? 
-                ScheduleCreationService.convertToTimeIntervals(operatorData, ppiAssignments, workModes) : 
-                [])
-        ];
-        
-        let hasConflict = false;
-        const conflictWith: number[] = [];
-        
-        for (const existingInterval of allIntervals) {
-            if (existingInterval.mode === newInterval.mode) {
-                continue;
-            }
-            
-            const overlap = checkTwoIntervalsOverlap(
-                newInterval.startTime,
-                newInterval.endTime,
-                existingInterval.startTime,
-                existingInterval.endTime
-            );
-            
-            if (overlap) {
-                hasConflict = true;
-                if (!conflictWith.includes(existingInterval.mode)) {
-                    conflictWith.push(existingInterval.mode);
-                }
-            }
-        }
-        
-        newInterval.hasConflict = hasConflict;
-        newInterval.conflictWith = conflictWith;
-        
-        const zasvetkaCheck = checkZasvetkaProximity(
-            newInterval.startTime,
-            newInterval.endTime,
-            zasvetkaIntervals
-        );
-        
-        newInterval.nearZasvetka = zasvetkaCheck.nearZasvetka;
-        newInterval.zasvetkaConflict = zasvetkaCheck.zasvetkaConflict;
-        newInterval.zasvetkaDistance = zasvetkaCheck.minDistance;
-        
-        newInterval.willBeSaved = !hasConflict && !zasvetkaCheck.zasvetkaConflict && !zasvetkaCheck.nearZasvetka;
-    }
-    
-    function updateAllConflicts() {
-        const intervalsWithConflicts = checkAllConflicts();
-        
-        intervals = intervals.map(interval => {
-            const updatedInterval = intervalsWithConflicts.find(i => i.id === interval.id);
-            if (updatedInterval) {
-                return {
-                    ...interval,
-                    hasConflict: updatedInterval.hasConflict,
-                    conflictWith: updatedInterval.conflictWith,
-                    nearZasvetka: updatedInterval.nearZasvetka,
-                    zasvetkaConflict: updatedInterval.zasvetkaConflict,
-                    zasvetkaDistance: updatedInterval.zasvetkaDistance,
-                    willBeSaved: updatedInterval.willBeSaved
-                };
-            }
-            return interval;
-        });
-    }
-    
-    function handleModeFormSubmit(formData: ModeCreationForm) {
-        if (!operatorDataLoaded) {
-            console.log("Данные оператора не загружены");
-            return;
-        }
-
-        if (creationMode !== 'operator') {
-            return;
-        }
-
-        const modeId = formData.modeType!;
-
-        console.log(`Создание нового интервала: Режим ${modeId}, время ${formData.startTime}, длительность ${formData.duration} сек`);
-        
-        const sameModeOverlap = checkIntervalOverlap(
-            formData.startTime, 
-            formData.duration, 
-            modeId
-        );
-        
-        if (sameModeOverlap.overlaps) {
-            const conflicting = sameModeOverlap.conflictingInterval;
-            alert(`Ошибка: интервал пересекается с существующим интервалом\n` +
-                `Время конфликта: ${conflicting?.startTime} - ${conflicting?.endTime}\n` +
-                `Попробуйте выбрать другое время или уменьшить длительность.`);
-            return;
-        }
-        
-        const tempId = `created_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        const modeData = createProgramModeData(formData, tempId);
-        const timeInterval = createTimeInterval(formData, tempId);
-
-        console.log(`   Создан интервал: ${timeInterval.startTime} - ${timeInterval.endTime}, ППИ: ${timeInterval.ppi}`);
-        
-        createdPrograms = [...createdPrograms, {
-            tempId,
-            modeData,
-            timeInterval
-        }];
-        
-        intervals = [...intervals, timeInterval];
-        
-        updateAllConflicts();
-        
-        editingInterval = null;
-        selectedIntervalId = null;
-
-        logAllIntervals('После создания нового интервала');
-    }
-    
-    function getIntervalColor(interval: TimeInterval): string {
-        if (interval.zasvetkaConflict || interval.nearZasvetka) {
-            return '#ffffff'; 
-        }
-        if (interval.hasConflict) {
-            return '#ff0000';
-        }
-        return interval.color;
-    }
-    
-    function getIntervalTitle(interval: TimeInterval): string {
-        let title = interval.title || '';
-        
-        if (interval.hasConflict) {
-            const conflictModes = interval.conflictWith?.map(modeId => {
-                const mode = workModes.find(m => m.id === modeId);
-                return mode?.label || `Режим ${modeId}`;
-            }).join(', ');
-            
-            title += ` (КОНФЛИКТ: ${conflictModes})`;
-        }
-        
-        if (!interval.willBeSaved) {
-            title += ' [НЕ БУДЕТ СОХРАНЕНО]';
-        }
-        
-        return title;
-    }
-
-    function resetCurrentFormData() {
-        if (editingInterval) return;
-        
-        currentFormData = {
-            modeType: selectedMode, 
-            ppiNum: 1,
-            duration: 300,
-            customerCode: 5,
-            startTime: '10:00', 
-            // msu1Vd: [],
-            // msu2Vd: [],
-            msu1Config: {
-                prMsu: 0,
-                prVdMsu: 0,
-                prIkMsu: 0,
-                vd1: 0,
-                vd2: 0,
-                vd3: 0,
-                ik4: 0,
-                ik5: 0,
-                ik6: 0,
-                ik7: 0,
-                ik8: 0,
-                ik9: 0,
-                ik10: 0
-            },
-            msu2Config: {
-                prMsu: 0,
-                prVdMsu: 0,
-                prIkMsu: 0,
-                vd1: 0,
-                vd2: 0,
-                vd3: 0,
-                ik4: 0,
-                ik5: 0,
-                ik6: 0,
-                ik7: 0,
-                ik8: 0,
-                ik9: 0,
-                ik10: 0
-            }
-        };
-    }
-
-    
-    function createProgramModeData(formData: ModeCreationForm, tempId: string): ProgramModeData {
-        console.log('createProgramModeData для режима', formData.modeType);
-        console.log('formData.msu1Config:', formData.msu1Config);
-        console.log('formData.msu2Config:', formData.msu2Config);
-        
-        const mainId = operatorData?.main.id || 0;
-
-        const baseData = {
-            numRp: 0,
-            numKa: operatorData?.main.nKa || 1,
-            dateOn: calculateDateFromTime(formData.startTime),
-            dateOff: calculateEndDate(formData.startTime, formData.duration),
-            kodMode: formData.modeType!,
-            numPpi: formData.ppiNum,
-            dlit: formData.duration,
-            zakazchik: getCustomerLabel(formData.customerCode)
-        };
-        
-        if (formData.modeType === 7) {
-            const kvdConfig = formData.kvdConfig || {
-                prMsu: 0,
-                prBssd: 0,
-                prZg: 0
-            };
-            
-            return {
-                ...baseData,
-                kvdData: {
-                    id: 0,
-                    idMain: mainId,
-                    dn: baseData.dateOn,
-                    dk: baseData.dateOff,
-                    prMsu: kvdConfig.prMsu,
-                    prBssd: kvdConfig.prBssd,
-                    prZg: kvdConfig.prZg
-                }
-            };
-        } else if (formData.modeType === 8) {
-            console.log('Создание данных для ТС');
-            console.log('msu1Config:', formData.msu1Config);
-            console.log('msu2Config:', formData.msu2Config);
-            
-            // Убедимся что конфиги не undefined
-            const msu1Config = formData.msu1Config || getDefaultMsuConfig();
-            const msu2Config = formData.msu2Config || getDefaultMsuConfig();
-            
-            return {
-                ...baseData,
-                tsData: {
-                    id: 0,
-                    idMain: mainId,
-                    dn: baseData.dateOn,
-                    dk: baseData.dateOff,
-                    tip: 1,
-                    reg: 1,
-                    prMsu1: msu1Config.prMsu || 0,
-                    prVdMsu1: msu1Config.prVdMsu || 0,
-                    prIkMsu1: msu1Config.prIkMsu || 0,
-                    prVd1_1: msu1Config.vd1 || 0,
-                    prVd2_1: msu1Config.vd2 || 0,
-                    prVd3_1: msu1Config.vd3 || 0,
-                    prIk4_1: msu1Config.ik4 || 0,
-                    prIk5_1: msu1Config.ik5 || 0,
-                    prIk6_1: msu1Config.ik6 || 0,
-                    prIk7_1: msu1Config.ik7 || 0,
-                    prIk8_1: msu1Config.ik8 || 0,
-                    prIk9_1: msu1Config.ik9 || 0,
-                    prIk10_1: msu1Config.ik10 || 0,
-                    prMsu2: msu2Config.prMsu || 0,
-                    prVdMsu2: msu2Config.prVdMsu || 0,
-                    prIkMsu2: msu2Config.prIkMsu || 0,
-                    prVd1_2: msu2Config.vd1 || 0,
-                    prVd2_2: msu2Config.vd2 || 0,
-                    prVd3_2: msu2Config.vd3 || 0,
-                    prIk4_2: msu2Config.ik4 || 0,
-                    prIk5_2: msu2Config.ik5 || 0,
-                    prIk6_2: msu2Config.ik6 || 0,
-                    prIk7_2: msu2Config.ik7 || 0,
-                    prIk8_2: msu2Config.ik8 || 0,
-                    prIk9_2: msu2Config.ik9 || 0,
-                    prIk10_2: msu2Config.ik10 || 0,
-                    prOtklZg: 0
-                }
-            };
-        } else if (formData.modeType === 4) {
-            return {
-                ...baseData,
-                tnpData: {
-                    id: 0,
-                    idMain: mainId,
-                    dn: baseData.dateOn,
-                    dk: baseData.dateOff,
-                    dlit: formData.duration
-                }
-            };
-        } else {
-            return baseData;
-        }
-    }
-    
-    function calculateDateFromTime(timeString: string): string {
-        const today = new Date();
-        const [hours, minutes] = timeString.split(':').map(Number);
-        today.setHours(hours, minutes, 0, 0);
-        return today.toISOString();
-    }
-    
-    function calculateEndDate(startTime: string, duration: number): string {
-        const startDate = new Date(calculateDateFromTime(startTime));
-        const endDate = new Date(startDate.getTime() + duration * 1000);
-        return endDate.toISOString();
-    }
-    
-    function calculateEndTime(startTime: string, duration: number): string {
-        const [hours, minutes] = startTime.split(':').map(Number);
-        const totalMinutes = hours * 60 + minutes + Math.floor(duration / 60);
-        const endHours = Math.floor(totalMinutes / 60) % 24;
-        const endMinutes = totalMinutes % 60;
-        return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-    }
-    
-    function getModeTitle(modeType: number): string {
-        switch(modeType) {
-            case 9: return 'Астрокоррекции';
-            case 1: return 'Съемки';
-            case 2: return 'Распр. ОМИ';
-            case 4: return 'Режим ТНП';
-            case 7: return 'Калибровка ВД';
-            case 8: return 'Технологическая съемка';
-            case 6: return 'Юстировки ОНА';
-            default: return 'Режим';
-        }
-    }
-
-    function getCustomerLabel(code: number): string {
-        const customer = customerCodes.find(c => c.value === code);
-        return customer?.label.split(' - ')[1] || '';
-    }
-    
-    function handleModeFormCancel() {
-        selectedMode = null;
-        editingInterval = null;
-        selectedIntervalId = null;
-        
-        resetCurrentFormData()
+    function formatDate(dateString: string): string {
+        return TimeUtils.formatDate(dateString);
     }
 
     function logAllIntervals(action: string) {
-        console.log(`${action} - Все интервалы на сетке:`, intervals);
-        
-        console.log(`Интервалы из createdPrograms (${createdPrograms.length} шт.):`);
-        console.log('Созданные интервалы:', createdPrograms);
-        
-        console.log('Статистика:');
-        console.log(`   Всего интервалов: ${intervals.length}`);
-        console.log(`   Будет сохранено: ${intervals.filter(i => i.willBeSaved).length}`);
-        console.log(`   С конфликтами: ${intervals.filter(i => i.hasConflict).length}`);
-        console.log(`   С засветками: ${intervals.filter(i => i.zasvetkaConflict || i.nearZasvetka).length}`);
+        console.log(`${action} - Все интервалы:`, $intervals);
+        console.log(`Статистика: Всего: ${$intervals.length}, Сохраняемых: ${$intervals.filter(i => i.willBeSaved).length}`);
     }
 </script>
 
 <main class="schedule-page">
+    <!-- Заголовок -->
     <header class="schedule-header">
-        {#if creationMode === 'operator' && !operatorDataLoaded}
+        {#if $creationMode === 'operator' && !$operatorDataLoaded}
             <CreationHeader
                 onCancel={handleCreationCancel}
                 onDataProcessed={updateIntervalsFromOperatorData}
             />
-        {:else if creationMode === 'operator' && operatorDataLoaded}
+        {:else if $creationMode === 'operator' && $operatorDataLoaded}
             <div class="header-content">
                 <FileMenu 
-                    {userData}
+                    userData={$userData}
                     onOperatorCreate={startOperatorCreation}
                     onReferenceCreate={startReferenceCreation}
                 />
                 <div class="program-date-info">
                     <h2 class="program-date-title">
-                        Программа работы БЦА действует с <strong>{formatDate(selectedProgramDate)}</strong> 
-                        по <strong>{formatDate(selectedProgramDate)} 23:59:59</strong>
+                        Программа работы БЦА действует с <strong>{formatDate($selectedProgramDate)}</strong> 
+                        по <strong>{formatDate($selectedProgramDate)} 23:59:59</strong>
                     </h2>
                 </div>
             </div>
         {:else}
             <FileMenu 
-                {userData}
+                userData={$userData}
                 onOperatorCreate={startOperatorCreation}
                 onReferenceCreate={startReferenceCreation}
             />
         {/if}
     </header>
     
+    <!-- Сетка расписания -->
     <div class="grid-container">
         <ScheduleGrid 
-            {intervals}
-            {shadowIntervals}
-            {zasvetkaIntervals}
+            intervals={$intervals}
+            shadowIntervals={$shadowIntervals}
+            zasvetkaIntervals={$zasvetkaIntervals}
             {workModes}
             onModeSelect={handleModeSelect}
             getIntervalColor={getIntervalColor}
             getIntervalTitle={getIntervalTitle}
             onIntervalClick={handleIntervalClick}
             onIntervalDelete={handleIntervalDelete}
-            {selectedIntervalId}
+            selectedIntervalId={$selectedIntervalId}
         />
     </div>
 
-    {#if selectedMode}
+    <!-- Форма создания/редактирования -->
+    {#if $selectedMode}
         <div class="creation-form-container">
             <ModeCreationFormComponent
-                {selectedMode}
-                {editingInterval}
+                selectedMode={$selectedMode}
+                editingInterval={$editingInterval}
                 onSubmit={handleModeFormSubmit}
                 onCancel={handleModeFormCancel}
                 onUpdate={handleIntervalUpdate}
@@ -1126,10 +182,13 @@
         </div>
     {/if}
     
+    <!-- Легенда городов -->
     <footer class="schedule-footer">
         <CityLegend {cities} />
     </footer>
 </main>
+
+<!-- Стили остаются без изменений -->
 
 <style>
     .schedule-page {
