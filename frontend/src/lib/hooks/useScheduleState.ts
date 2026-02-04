@@ -37,6 +37,8 @@ export function useScheduleState() {
     const selectedIntervalId = writable<string | null>(null);
     const contextDate = writable<string>('');
 
+    let isEditing = writable(false);
+
     function loadUserData() {
         try {
             const userDataCookie = document.cookie
@@ -73,6 +75,8 @@ export function useScheduleState() {
     }
 
     function handleIntervalClick(interval: TimeInterval) {
+        isEditing.set(true);
+
         const intervalWithDefaults = {
             ...interval,
             msu1Config: interval.msu1Config || getDefaultMsuConfig(),
@@ -135,7 +139,6 @@ export function useScheduleState() {
             return;
         }
         
-        // Обрезаем конечное время, если нужно
         const endTime =  TimeUtils.calculateEndTime(formData.startTime, formData.duration);
         
         const updatedInterval = createUpdatedInterval(currentEditingInterval, formData, endTime);
@@ -163,6 +166,7 @@ export function useScheduleState() {
         updateAllConflicts();
         editingInterval.set(null);
         selectedIntervalId.set(null);
+        isEditing.set(false);
     }
 
     function handleModeSelect(modeId: number) {
@@ -178,7 +182,6 @@ export function useScheduleState() {
             return;
         }
 
-        // ВАЛИДАЦИЯ: Проверяем, не выходит ли интервал за границы суток
         const validation = IntervalValidationService.validateTimeInput(
             formData.startTime, 
             formData.duration
@@ -223,12 +226,14 @@ export function useScheduleState() {
         updateAllConflicts();
         editingInterval.set(null);
         selectedIntervalId.set(null);
+        isEditing.set(false);
     }
 
     function handleModeFormCancel() {
         selectedMode.set(null);
         editingInterval.set(null);
         selectedIntervalId.set(null);
+        isEditing.set(false);
     }
 
     function createUpdatedInterval(
@@ -242,7 +247,7 @@ export function useScheduleState() {
             ...editingInterval,
             date: currentContextDate,
             startTime: formData.startTime,
-            endTime: endTime, // Используем скорректированное время
+            endTime: endTime, 
             ppi: formData.ppiNum,
             dlit: formData.duration,
             city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
@@ -523,9 +528,7 @@ export function useScheduleState() {
         return title;
     }
 
-    // Возвращаем сторы и методы
     return {
-        // Сторы
         userData,
         creationMode,
         intervals,
@@ -542,6 +545,7 @@ export function useScheduleState() {
         editingInterval,
         selectedIntervalId,
         contextDate,
+        isEditing,
         
         loadUserData,
         handleIntervalClick,

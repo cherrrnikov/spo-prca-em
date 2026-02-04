@@ -12,13 +12,11 @@
     import { ModeDurationService } from "../../services/utils/modeDuration.service";
     import TsCheckboxGroup from "./TsCheckboxGroup.svelte";
 
-    // Константы
     const customerCodes = CUSTOMER_CODES;
     const zgOptions = ZG_OPTIONS;
     const ppiList = PPI_LIST;
     const modeIdToCode = MODE_ID_TO_CODE;
 
-    // Props
     let {
         selectedMode,
         onSubmit,
@@ -33,14 +31,11 @@
         onUpdate?: (data: ModeCreationForm) => void;
     }>();
 
-    // Состояние
     let modeDurations = $state<Record<string, number>>({});
     let localFormData = $state<ModeCreationForm>(getInitialFormData());
 
-    // Вычисляемые значения
     const isEditMode = $derived(!!editingInterval);
 
-    // Жизненный цикл
     onMount(async () => {
         modeDurations = await ModeDurationService.loadModeDurations();
     });

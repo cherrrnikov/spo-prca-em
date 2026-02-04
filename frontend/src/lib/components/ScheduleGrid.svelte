@@ -7,7 +7,6 @@
     } from '$lib/types/schedule';
     import { GridPositionUtils } from "../utils/gridPosition";
 
-    // Props
     let {
         intervals,
         shadowIntervals = [],
@@ -18,7 +17,8 @@
         getIntervalTitle,
         onIntervalClick,
         onIntervalDelete,
-        selectedIntervalId = null
+        selectedIntervalId = null,
+        isEditing = false
     } = $props<{
         intervals: TimeInterval[];
         shadowIntervals?: ShadowInterval[];
@@ -30,6 +30,7 @@
         onIntervalClick?: (interval: TimeInterval) => void;
         onIntervalDelete?: (intervalId: string) => void;
         selectedIntervalId?: string | null;
+        isEditing: boolean;
     }>();
 
     let containerWidth = $state(0);
@@ -43,7 +44,6 @@
         intervalId: ''
     });
 
-    // Типы
     type ContextMenuState = {
         show: boolean;
         x: number;
@@ -78,7 +78,6 @@
 
     type PositionedItem = PositionedInterval | PositionedForecastInterval;
 
-    // Жизненный цикл
     $effect(() => {
         if (gridContainer) {
             updateContainerWidth();
@@ -103,7 +102,6 @@
         }
     });
 
-    // Вычисляемые значения
     const filteredIntervals = $derived(
         selectedMode 
             ? intervals.filter(interval => interval.mode === selectedMode)
@@ -114,7 +112,6 @@
         getPositionedIntervals()
     );
 
-    // Методы
     function updateContainerWidth() {
         if (gridContainer) {
             containerWidth = gridContainer.offsetWidth;
@@ -129,6 +126,9 @@
         event.preventDefault();
         
         if (event.button === 0) {
+
+            selectedMode = interval.mode;
+            onModeSelect?.(interval.mode);
             onIntervalClick?.(interval);
         } else if (event.button === 2) {
             contextMenu = {
@@ -160,9 +160,7 @@
         }
 
         const allPositionedIntervals: PositionedItem[] = [];
-        
-        // ПРОСТО ОТОБРАЖАЕМ интервалы, без валидации
-        // Валидация уже была при создании/редактировании
+
         intervals.forEach((interval) => {
             const modeIndex = workModes.findIndex((m: { id: number; }) => m.id === interval.mode);
             
@@ -180,8 +178,8 @@
                 modeIndex,
                 color,
                 position: GridPositionUtils.getPositionForInterval(
-                    interval.startTime, // Используем оригинальное время
-                    interval.endTime,   // Используем оригинальное время
+                    interval.startTime, 
+                    interval.endTime,   
                     modeIndex,
                     cellWidth
                 ),
@@ -254,7 +252,6 @@
 </script>
 
 <div class="schedule-grid">
-    <!-- Список режимов -->
     {#if workModes && workModes.length > 0}
         <div class="modes-container">
             {#each workModes as mode, i}
@@ -267,6 +264,7 @@
                             value={mode.id}
                             checked={selectedMode === mode.id}
                             on:change={() => selectMode(mode.id)}
+                            disabled={isEditing}
                         />
                         <span class="mode-text">{mode.label}</span>
                     </label>
@@ -275,9 +273,7 @@
         </div>
     {/if}
     
-    <!-- Контейнер сетки -->
     <div class="schedule-grid_container" bind:this={gridContainer}>
-        <!-- Верхняя временная шкала -->
         <div class="time-scale top-scale">
             {#each GridPositionUtils.HOURS as hour}
                 <div class="hour-marker" 
@@ -289,7 +285,6 @@
             {/each}
         </div>
         
-        <!-- Нижняя временная шкала -->
         <div class="time-scale bottom-scale">
             {#each GridPositionUtils.HOURS as hour}
                 <div class="hour-marker" 
@@ -301,7 +296,6 @@
             {/each}
         </div>
 
-        <!-- Область интервалов -->
         <div class="grid-area"
              style="
                 grid-template-columns: repeat(24, {cellWidth}px); 
@@ -331,7 +325,6 @@
         </div>
     </div>
 
-    <!-- Контекстное меню -->
     {#if contextMenu.show}
         <div class="context-menu"
              style="position: fixed; left: {contextMenu.x}px; top: {contextMenu.y}px;"

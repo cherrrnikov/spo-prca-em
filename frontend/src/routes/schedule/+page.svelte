@@ -36,7 +36,8 @@
         createdPrograms,
         editingInterval,
         selectedIntervalId,
-        contextDate,         
+        contextDate,       
+        isEditing,  
         
         loadUserData,
         handleIntervalClick,
@@ -141,7 +142,6 @@
 </script>
 
 <main class="schedule-page">
-    <!-- Заголовок -->
     <header class="schedule-header">
         {#if $creationMode === 'operator' && !$operatorDataLoaded}
             <CreationHeader
@@ -176,7 +176,6 @@
         {/if}
     </header>
     
-    <!-- Сетка расписания -->
     <div class="grid-container">
         <ScheduleGrid 
             intervals={$intervals}
@@ -189,10 +188,10 @@
             onIntervalClick={handleIntervalClick}
             onIntervalDelete={handleIntervalDelete}
             selectedIntervalId={$selectedIntervalId}
+            isEditing={$isEditing}
         />
     </div>
 
-    <!-- Форма создания/редактирования -->
     {#if $selectedMode}
         <div class="creation-form-container">
             <ModeCreationFormComponent
@@ -205,13 +204,10 @@
         </div>
     {/if}
     
-    <!-- Легенда городов -->
     <footer class="schedule-footer">
         <CityLegend {cities} />
     </footer>
 </main>
-
-<!-- Стили остаются без изменений -->
 
 <style>
     .schedule-page {
