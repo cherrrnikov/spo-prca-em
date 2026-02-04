@@ -25,6 +25,7 @@ import ru.laspace.auth.security.JwtAuthenticationEntryPoint;
 import ru.laspace.auth.security.JwtAuthenticationFilter;
 import ru.laspace.auth.security.UserDetailsServiceImpl;
 
+// Для новой ветки
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
