@@ -4,6 +4,7 @@ import type {
     TsMsuConfig,
     ZasvetkaInterval
 } from '$lib/types/schedule';
+import { TimeUtils } from '$lib/utils/time';
 
 export class ScheduleConverterService {
     static getDefaultMsuConfig(): TsMsuConfig {
@@ -49,15 +50,7 @@ export class ScheduleConverterService {
     }
 
     static formatTimeOnly(dateStr: string): string {
-        try {
-            const date = new Date(dateStr);
-            return date.toLocaleTimeString('ru-RU', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch {
-            return dateStr;
-        }
+        return TimeUtils.extractTimeFromTimestamp(dateStr);
     }
 
     static convertForecastToIntervals(forecastData: ForecastData): {
@@ -68,8 +61,8 @@ export class ScheduleConverterService {
             shadows: forecastData.shadows.map(shadow => ({
                 id: `shadow_${shadow.id}`,
                 type: 'shadow',
-                startTime: this.formatTimeFromISO(shadow.dTIn),
-                endTime: this.formatTimeFromISO(shadow.dTOut),
+                startTime: TimeUtils.extractTimeFromTimestamp(shadow.dTIn),
+                endTime: TimeUtils.extractTimeFromTimestamp(shadow.dTOut),
                 duration: shadow.duration,
                 title: 'Тень',
                 color: 'rgba(83, 83, 83, 1)',
@@ -79,8 +72,8 @@ export class ScheduleConverterService {
             zasvetki: forecastData.zasvetki.map(zasvetka => ({
                 id: `zasvetka_${zasvetka.id}`,
                 type: 'zasvetka',
-                startTime: this.formatTimeFromISO(zasvetka.dTIn),
-                endTime: this.formatTimeFromISO(zasvetka.dTOut),
+                startTime: TimeUtils.extractTimeFromTimestamp(zasvetka.dTIn),
+                endTime: TimeUtils.extractTimeFromTimestamp(zasvetka.dTOut),
                 duration: zasvetka.duration,
                 title: 'Засветка',
                 color: 'rgba(175, 175, 175, 1)',
@@ -93,6 +86,7 @@ export class ScheduleConverterService {
     static createDateWithTime(baseDate: Date, timeStr: string): Date {
         const date = new Date(baseDate);
         
+        // Если timeStr уже полный timestamp
         if (timeStr.includes('T') || timeStr.includes('-')) {
             try {
                 return new Date(timeStr);

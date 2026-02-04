@@ -8,6 +8,7 @@ import type {
     TimeInterval,
     WorkMode
 } from '$lib/types/schedule';
+import { TimeUtils } from '$lib/utils/time';
 import type { ScheduleStatus } from '../schedule-creation/types';
 import { ScheduleApiService } from './api/scheduleApi.service';
 import { ProgramPreparerService } from './data/programPreparer.service';
@@ -173,11 +174,14 @@ export class ScheduleCreationService {
     }
 
     private static createKvdInterval(kvd: any, assignment: PpiAssignment, customerCode?: number): TimeInterval {
+        const date = kvd.dn.split('T')[0];
+
         return {
             id: `kvd_${kvd.id}`,
             mode: 7,
-            startTime: this.formatTimeFromISO(kvd.dn),
-            endTime: this.formatTimeFromISO(kvd.dk),
+            date: date,
+            startTime: TimeUtils.extractTimeFromTimestamp(kvd.dn), 
+            endTime: TimeUtils.extractTimeFromTimestamp(kvd.dk),
             city: this.getCityByPpi(assignment.ppiNum),
             color: this.getColorByPpi(assignment.ppiNum),
             title: `Калибровка ВД (ППИ ${assignment.ppiNum})`,
@@ -195,11 +199,14 @@ export class ScheduleCreationService {
     }
 
     private static createTnpInterval(tnp: any, assignment: PpiAssignment, customerCode?: number): TimeInterval {
+        const date = tnp.dn.split('T')[0];
+
         return {
             id: `tnp_${tnp.id}`,
             mode: 4,
-            startTime: this.formatTimeFromISO(tnp.dn),
-            endTime: this.formatTimeFromISO(tnp.dk),
+            date: date,
+            startTime: TimeUtils.extractTimeFromTimestamp(tnp.dn), 
+            endTime: TimeUtils.extractTimeFromTimestamp(tnp.dk), 
             city: this.getCityByPpi(assignment.ppiNum),
             color: this.getColorByPpi(assignment.ppiNum),
             title: `ТНП (ППИ ${assignment.ppiNum})`,

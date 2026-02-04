@@ -35,6 +35,7 @@
         createdPrograms,
         editingInterval,
         selectedIntervalId,
+        contextDate,         
         
         loadUserData,
         handleIntervalClick,
@@ -45,7 +46,8 @@
         handleModeFormCancel,
         
         getIntervalColor,
-        getIntervalTitle
+        getIntervalTitle,
+        setContextDate
     } = useScheduleState();
 
     onMount(() => {
@@ -74,6 +76,13 @@
         creationMode.set('operator');
         operatorDataLoaded.set(true);
 
+        if (newOperatorData.main?.dNp) {
+            const date = newOperatorData.main.dNp.split('T')[0];
+            setContextDate(date); 
+            selectedProgramDate.set(date);
+            await loadForecastData(date);
+        }
+
         const newIntervals = ScheduleCreationService.convertToTimeIntervals(
             newOperatorData,
             newPpiAssignments,
@@ -81,13 +90,6 @@
         );
         
         intervals.set(newIntervals);
-
-        if (newOperatorData.main?.dNp) {
-            const date = newOperatorData.main.dNp.split('T')[0];
-            selectedProgramDate.set(date);
-            await loadForecastData(date);
-        }
-
         logAllIntervals('После загрузки данных оператора');
     }
 
@@ -136,6 +138,11 @@
                     userData={$userData}
                     onOperatorCreate={startOperatorCreation}
                     onReferenceCreate={startReferenceCreation}
+                    intervals={$intervals}
+                    operatorData={$operatorData}
+                    ppiAssignments={$ppiAssignments}
+                    selectedProgramDate={$selectedProgramDate}
+                    createdPrograms={$createdPrograms}
                 />
                 <div class="program-date-info">
                     <h2 class="program-date-title">

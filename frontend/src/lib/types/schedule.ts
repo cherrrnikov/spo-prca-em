@@ -1,6 +1,7 @@
 export interface TimeInterval {
     id: string;
     mode: number;
+    date: string,
     startTime: string;
     endTime: string;
     city: string;

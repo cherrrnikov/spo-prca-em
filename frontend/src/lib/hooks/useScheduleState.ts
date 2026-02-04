@@ -35,6 +35,7 @@ export function useScheduleState() {
     const createdPrograms = writable<CreatedProgramData[]>([]);
     const editingInterval = writable<TimeInterval | null>(null);
     const selectedIntervalId = writable<string | null>(null);
+    const contextDate = writable<string>('');
 
     function loadUserData() {
         try {
@@ -65,6 +66,10 @@ export function useScheduleState() {
             console.error('Error parsing user data:', error);
             userData.set(null);
         }
+    }
+
+    function setContextDate(date: string) {
+        contextDate.set(date);
     }
 
     function handleIntervalClick(interval: TimeInterval) {
@@ -208,6 +213,9 @@ export function useScheduleState() {
         const modeData = createProgramModeData(formData, tempId);
         const timeInterval = createTimeInterval(formData, tempId, endTime);
 
+        console.log('Создан новый интервал:', timeInterval);
+        console.log('Созданные данные для API:', modeData);
+
         createdPrograms.update(current => [...current, {
             tempId,
             modeData,
@@ -231,8 +239,11 @@ export function useScheduleState() {
         formData: ModeCreationForm, 
         endTime: string
     ): TimeInterval {
+        const currentContextDate = get(contextDate);
+
         const updatedInterval: TimeInterval = {
             ...editingInterval,
+            date: currentContextDate,
             startTime: formData.startTime,
             endTime: endTime, // Используем скорректированное время
             ppi: formData.ppiNum,
@@ -258,11 +269,14 @@ export function useScheduleState() {
         tempId: string, 
         endTime: string
     ): TimeInterval {
+        const currentContextDate = get(contextDate);
+
         const interval: TimeInterval = {
             id: tempId,
             mode: formData.modeType!,
+            date: currentContextDate,
             startTime: formData.startTime,
-            endTime: endTime, // Используем скорректированное время
+            endTime: endTime, 
             city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
             color: ScheduleCreationService.getColorByPpi(formData.ppiNum),
             title: ModeUtils.getModeTitle(formData.modeType!),
@@ -376,13 +390,17 @@ export function useScheduleState() {
 
     function createProgramModeData(formData: ModeCreationForm, tempId: string): ProgramModeData {
         const currentOperatorData = get(operatorData);
+        const currentContextDate = get(contextDate);
         const mainId = currentOperatorData?.main.id || 0;
+        const dateOn = `${currentContextDate}T${formData.startTime}:00`;
+        const endDisplayTime = TimeUtils.calculateEndTime(formData.startTime, formData.duration);
+        const dateOff = `${currentContextDate}T${endDisplayTime}:00`;
 
         const baseData = {
             numRp: 0,
             numKa: currentOperatorData?.main.nKa || 1,
-            dateOn: TimeUtils.calculateDateFromTime(formData.startTime),
-            dateOff: TimeUtils.calculateEndDate(formData.startTime, formData.duration),
+            dateOn: dateOn,
+            dateOff: dateOff,
             kodMode: formData.modeType!,
             numPpi: formData.ppiNum,
             dlit: formData.duration,
@@ -401,8 +419,8 @@ export function useScheduleState() {
                 kvdData: {
                     id: 0,
                     idMain: mainId,
-                    dn: baseData.dateOn,
-                    dk: baseData.dateOff,
+                    dn: dateOn,
+                    dk: dateOff,
                     prMsu: kvdConfig.prMsu,
                     prBssd: kvdConfig.prBssd,
                     prZg: kvdConfig.prZg
@@ -417,8 +435,8 @@ export function useScheduleState() {
                 tsData: {
                     id: 0,
                     idMain: mainId,
-                    dn: baseData.dateOn,
-                    dk: baseData.dateOff,
+                    dn: dateOn,
+                    dk: dateOff,
                     tip: 1,
                     reg: 1,
                     prMsu1: msu1Config.prMsu || 0,
@@ -456,8 +474,8 @@ export function useScheduleState() {
                 tnpData: {
                     id: 0,
                     idMain: mainId,
-                    dn: baseData.dateOn,
-                    dk: baseData.dateOff,
+                    dn: dateOn,
+                    dk: dateOff,
                     dlit: formData.duration
                 }
             };
@@ -526,6 +544,7 @@ export function useScheduleState() {
         createdPrograms,
         editingInterval,
         selectedIntervalId,
+        contextDate,
         
         loadUserData,
         handleIntervalClick,
@@ -536,6 +555,7 @@ export function useScheduleState() {
         handleModeFormCancel,
         
         getIntervalColor,
-        getIntervalTitle
+        getIntervalTitle,
+        setContextDate
     };
 }

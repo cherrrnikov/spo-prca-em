@@ -85,6 +85,8 @@ export class ProgramPreparerService {
         createdPrograms.forEach(created => {
             baseRequest.modes.push(created.modeData);
         });
+
+        console.log("FULL DATA:", baseRequest);
         
         return baseRequest;
     }

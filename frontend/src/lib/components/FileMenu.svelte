@@ -12,11 +12,21 @@
   let {
     userData,
     onOperatorCreate,
-    onReferenceCreate
+    onReferenceCreate,
+    intervals = [],
+    operatorData = null,
+    ppiAssignments = [],
+    selectedProgramDate = '',
+    createdPrograms = []
   } = $props<{
     userData: UserResponse | null;
     onOperatorCreate?: () => void;
     onReferenceCreate?: () => void;
+    intervals?: TimeInterval[];
+    operatorData?: any;
+    ppiAssignments?: any[];
+    selectedProgramDate?: string;
+    createdPrograms?: any[];
   }>();
 
   function handleClickOutside(event: MouseEvent) {
@@ -55,10 +65,137 @@
     isOpen = false;
   }
 
-  function handleSave() {
-    // const intervals = scheduleIntervals;
-    // console.log('Сохранение интервалов:', intervals);
-    alert('ПРЦА сохранен');
+  async function handleSave() {
+    console.log("=== СОХРАНЕНИЕ ПРЦА ===");
+    
+    // 1. Логируем текущее состояние
+    console.log("Intervals (количество):", intervals.length);
+    console.log("Intervals (детали):", intervals);
+    
+    console.log("Operator Data:", operatorData);
+    console.log("PPI Assignments:", ppiAssignments);
+    console.log("Selected Date:", selectedProgramDate);
+    console.log("Created Programs:", createdPrograms);
+    
+    // 2. Проверяем данные
+    if (!operatorData || !selectedProgramDate) {
+      console.error("Недостаточно данных для сохранения!");
+      alert('Ошибка: Нет данных оператора или дата не выбрана');
+      return;
+    }
+    
+    if (intervals.length === 0 && (!operatorData.kvdList && !operatorData.tnpList && !operatorData.tsList)) {
+      console.error("Нет интервалов для сохранения!");
+      alert('Ошибка: Нет интервалов для сохранения');
+      return;
+    }
+    
+    // 3. Импортируем сервис для подготовки данных
+    try {
+      const { ScheduleCreationService } = await import('../../features/services/scheduleCreation.service');
+      
+      console.log("=== ПОДГОТОВКА ДАННЫХ ДЛЯ СОХРАНЕНИЯ ===");
+      
+      // Подготавливаем данные программы
+      const programRequest = ScheduleCreationService.prepareFullProgramData(
+        operatorData,
+        ppiAssignments,
+        createdPrograms,
+        selectedProgramDate,
+        "00:00", // Время по умолчанию
+        'main'   // Статус по умолчанию
+      );
+      
+      // 4. ЛОГИРУЕМ ВСЕ ДАННЫЕ, КОТОРЫЕ БУДУТ ОТПРАВЛЕНЫ
+      console.log("=== СОЗДАННЫЙ ЗАПРОС НА СОХРАНЕНИЕ ===");
+      console.log("Полный запрос (JSON):", JSON.stringify(programRequest, null, 2));
+      
+      console.log("\n=== ДЕТАЛЬНЫЙ АНАЛИЗ ===");
+      console.log("Основные данные программы:");
+      console.log("- Номер ПРЦА:", programRequest.mainData.numRp);
+      console.log("- Номер КА:", programRequest.mainData.numKa);
+      console.log("- Дата начала:", programRequest.mainData.dateOn);
+      console.log("- Дата окончания:", programRequest.mainData.dateOff);
+      console.log("- Тип ПРЦА:", programRequest.mainData.typeRp);
+      
+      console.log("\nРежимы работы (" + programRequest.modes.length + " шт.):");
+      programRequest.modes.forEach((mode, index) => {
+        console.log(`\n--- Режим ${index + 1} ---`);
+        console.log("- Код режима:", mode.kodMode);
+        console.log("- Дата начала:", mode.dateOn);
+        console.log("- Дата окончания:", mode.dateOff);
+        console.log("- Номер ППИ:", mode.numPpi);
+        console.log("- Длительность:", mode.dlit, "сек");
+        console.log("- Заказчик:", mode.zakazchik || "не указан");
+        
+        if (mode.kvdData) {
+          console.log("- Тип: КВД");
+          console.log("  Время КВД:", mode.kvdData.dn, "-", mode.kvdData.dk);
+          console.log("  МСУ:", mode.kvdData.prMsu === 0 ? "МСУ-1" : "МСУ-2");
+          console.log("  БССД:", mode.kvdData.prBssd === 0 ? "БССД1" : "БССД2");
+          console.log("  ЗГ:", mode.kvdData.prZg);
+        }
+        
+        if (mode.tsData) {
+          console.log("- Тип: ТС");
+          console.log("  Время ТС:", mode.tsData.dn, "-", mode.tsData.dk);
+          console.log("  Тип съемки:", mode.tsData.tip);
+          console.log("  Режим:", mode.tsData.reg);
+        }
+        
+        if (mode.tnpData) {
+          console.log("- Тип: ТНП");
+          console.log("  Время ТНП:", mode.tnpData.dn, "-", mode.tnpData.dk);
+          console.log("  Длительность:", mode.tnpData.dlit, "сек");
+        }
+      });
+      
+      console.log("\n=== СВОДКА ===");
+      const kvdCount = programRequest.modes.filter(m => m.kodMode === 7).length;
+      const tnpCount = programRequest.modes.filter(m => m.kodMode === 4).length;
+      const tsCount = programRequest.modes.filter(m => m.kodMode === 8).length;
+      
+      console.log(`Всего режимов: ${programRequest.modes.length}`);
+      console.log(`КВД: ${kvdCount}`);
+      console.log(`ТНП: ${tnpCount}`);
+      console.log(`ТС: ${tsCount}`);
+      
+      // 5. Проверка времени интервалов
+      console.log("\n=== ПРОВЕРКА ВРЕМЕНИ ИНТЕРВАЛОВ ===");
+      let hasCrossDayIntervals = false;
+      programRequest.modes.forEach((mode, index) => {
+        const startDate = new Date(mode.dateOn);
+        const endDate = new Date(mode.dateOff);
+        
+        if (startDate.getDate() !== endDate.getDate()) {
+          console.warn(`Режим ${index + 1} пересекает границу суток!`);
+          console.warn(`  Начало: ${mode.dateOn}`);
+          console.warn(`  Конец: ${mode.dateOff}`);
+          hasCrossDayIntervals = true;
+        }
+      });
+      
+      if (hasCrossDayIntervals) {
+        console.error("ВНИМАНИЕ: Найдены интервалы, пересекающие границу суток!");
+      }
+      
+      // 6. Показываем сообщение
+      alert(`Данные подготовлены к сохранению!\n\n` +
+            `Всего режимов: ${programRequest.modes.length}\n` +
+            `КВД: ${kvdCount}, ТНП: ${tnpCount}, ТС: ${tsCount}\n\n` +
+            `Проверьте консоль браузера (F12 → Console) для деталей.`);
+            
+      console.log("=== КОНЕЦ ЛОГИРОВАНИЯ ===");
+      
+      // 7. Здесь будет реальное сохранение
+      // const result = await ScheduleCreationService.saveProgram(programRequest);
+      // console.log("Результат сохранения:", result);
+      // alert('ПРЦА успешно сохранен!');
+      
+    } catch (error) {
+      console.error("Ошибка при подготовке данных:", error);
+      alert('Ошибка при подготовке данных для сохранения: ' + error.message);
+    }
   }
 
   function handleExport() {

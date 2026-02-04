@@ -34,10 +34,13 @@ export class TsIntervalService {
                 const minutes = date.getMinutes().toString().padStart(2, '0');
                 return `${hours}:${minutes}`;
             };
+
+            const date = tsRecord.dn.split('T')[0];
             
             const subInterval: TimeInterval = {
                 id: `ts_${tsRecord.id}_${formatTime(subStartTime)}`,
                 mode: 8, 
+                date: date,
                 startTime: formatTime(subStartTime),
                 endTime: formatTime(subEndTime),
                 city,

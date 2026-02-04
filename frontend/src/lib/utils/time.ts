@@ -34,16 +34,22 @@ export class TimeUtils {
         });
     }
 
-    static calculateDateFromTime(timeString: string): string {
-        const today = new Date();
-        const [hours, minutes] = timeString.split(':').map(Number);
-        today.setHours(hours, minutes, 0, 0);
-        return today.toISOString();
+    static extractTimeFromTimestamp(timestamp: string): string {
+        try {
+            const date = new Date(timestamp);
+            return date.getHours().toString().padStart(2, '0') + ':' + 
+                   date.getMinutes().toString().padStart(2, '0');
+        } catch {
+            return '00:00';
+        }
     }
 
-    static calculateEndDate(startTime: string, duration: number): string {
-        const startDate = new Date(this.calculateDateFromTime(startTime));
-        const endDate = new Date(startDate.getTime() + duration * 1000);
-        return endDate.toISOString();
+    static extractDateFromTimestamp(timestamp: string): string {
+        try {
+            return timestamp.split('T')[0];
+        } catch {
+            const today = new Date();
+            return today.toISOString().split('T')[0];
+        }
     }
 }
