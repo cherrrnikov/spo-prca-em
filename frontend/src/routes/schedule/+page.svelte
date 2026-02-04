@@ -9,6 +9,7 @@
     } from '$lib/constants/schedule';
     import { useScheduleState } from '$lib/hooks/useScheduleState';
     import type { OperatorData, PpiAssignment } from '$lib/types/schedule';
+    import { IntervalUtils } from '$lib/utils/interval';
     import { TimeUtils } from '$lib/utils/time';
     import { onMount } from 'svelte';
     import CreationHeader from '../../features/schedule-creation/components/CreationHeader.svelte';
@@ -89,7 +90,13 @@
             workModes
         );
         
-        intervals.set(newIntervals);
+        const currentZasvetkaIntervals = $zasvetkaIntervals;
+        if (currentZasvetkaIntervals.length > 0) {
+            const intervalsWithConflicts = IntervalUtils.checkAllConflicts(newIntervals, currentZasvetkaIntervals);
+            intervals.set(intervalsWithConflicts);
+        } else {
+            intervals.set(newIntervals);
+        }
         logAllIntervals('После загрузки данных оператора');
     }
 
@@ -107,6 +114,15 @@
                 shadows: forecastIntervals.shadows,
                 zasvetki: forecastIntervals.zasvetki
             });
+
+            const currentIntervals = $intervals;
+            if (currentIntervals.length > 0) {
+                const intervalsWithConflicts = IntervalUtils.checkAllConflicts(
+                    currentIntervals, 
+                    forecastIntervals.zasvetki
+                );
+                intervals.set(intervalsWithConflicts);
+            }
         } catch (error) {
             console.warn('Ошибка загрузки прогнозных данных:', error);
             shadowIntervals.set([]);
