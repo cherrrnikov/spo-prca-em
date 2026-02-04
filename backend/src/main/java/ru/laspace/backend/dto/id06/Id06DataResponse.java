@@ -27,6 +27,9 @@ public class Id06DataResponse {
     @Schema(description = "Список заявок на технологические съемки")
     private List<Id06TsDto> tsList;
 
+    @Schema(description = "Список заявок на юстировки ОНА")
+    private List<Id06OnaDto> onaList;
+
     @Schema(description = "Общее количество интервалов", hidden = true)
     public int getTotalIntervals() {
         int total = 0;
@@ -36,6 +39,8 @@ public class Id06DataResponse {
             total += tnpList.size();
         if (tsList != null)
             total += tsList.size();
+        if (onaList != null) 
+            total += onaList.size();
         return total;
     }
 

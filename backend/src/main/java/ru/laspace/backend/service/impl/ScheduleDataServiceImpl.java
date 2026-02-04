@@ -13,6 +13,8 @@ import ru.laspace.backend.dto.id06.Id06KvdDto;
 import ru.laspace.backend.dto.id06.Id06MainDto;
 import ru.laspace.backend.dto.id06.Id06TnpDto;
 import ru.laspace.backend.dto.id06.Id06TsDto;
+import ru.laspace.backend.dto.id06.Id06OnaDto;
+
 import ru.laspace.backend.repository.Id06Repository;
 import ru.laspace.backend.service.ScheduleDataService;
 
@@ -39,15 +41,17 @@ public class ScheduleDataServiceImpl implements ScheduleDataService {
         List<Id06KvdDto> kvdRecords = id06repository.findKvdByMainId(mainRecord.getId());
         List<Id06TnpDto> tnpRecords = id06repository.findTnpByMainId(mainRecord.getId());
         List<Id06TsDto> tsRecords = id06repository.findTsByMainId(mainRecord.getId());
+        List<Id06OnaDto> onaRecords = id06repository.findOnaByMainId(mainRecord.getId());
 
-        log.info("Найдено записей: KVD={}, TNP={}, TS={}",
-                kvdRecords.size(), tnpRecords.size(), tsRecords.size());
+        log.info("Найдено записей: KVD={}, TNP={}, TS={}, ONA={}",
+                kvdRecords.size(), tnpRecords.size(), tsRecords.size(), onaRecords.size());
 
         return Id06DataResponse.builder()
                 .main(mainRecord)
                 .kvdList(kvdRecords)
                 .tnpList(tnpRecords)
                 .tsList(tsRecords)
+                .onaList(onaRecords)
                 .build();
     }
 }

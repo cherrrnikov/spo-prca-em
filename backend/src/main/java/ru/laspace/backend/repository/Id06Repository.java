@@ -16,6 +16,7 @@ import ru.laspace.backend.dto.id06.Id06KvdDto;
 import ru.laspace.backend.dto.id06.Id06MainDto;
 import ru.laspace.backend.dto.id06.Id06TnpDto;
 import ru.laspace.backend.dto.id06.Id06TsDto;
+import ru.laspace.backend.dto.id06.Id06OnaDto;
 
 @Repository
 @Slf4j
@@ -82,6 +83,18 @@ public class Id06Repository {
                 """;
 
         return jdbcTemplate.query(sql, new Id06TsRowMapper(), idMain);
+    }
+
+    public List<Id06OnaDto> findOnaByMainId(Long idMain) {
+        String sql = """
+                SELECT id, id_zap, dn, dk, n_ona, 
+                    EXTRACT(EPOCH FROM (dk - dn)) / 60 as dlit
+                FROM id06_ona
+                WHERE id_zap = ?
+                ORDER BY dn
+                """;
+
+        return jdbcTemplate.query(sql, new Id06OnaRowMapper(), idMain);
     }
 
     private static class Id06MainRowMapper implements RowMapper<Id06MainDto> {
@@ -167,6 +180,20 @@ public class Id06Repository {
                     .prIk9_2(rs.getInt("pr_ik9_2"))
                     .prIk10_2(rs.getInt("pr_ik10_2"))
                     .prOtklZg(rs.getInt("pr_otkl_zg"))
+                    .build();
+        }
+    }
+
+    private static class Id06OnaRowMapper implements RowMapper<Id06OnaDto> {
+        @Override
+        public Id06OnaDto mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return Id06OnaDto.builder()
+                    .id(rs.getLong("id"))
+                    .idZap(rs.getLong("id_zap"))
+                    .dn(rs.getTimestamp("dn").toLocalDateTime())
+                    .dk(rs.getTimestamp("dk").toLocalDateTime())
+                    .nOna(rs.getInt("n_ona"))
+                    .dlit(rs.getInt("dlit"))
                     .build();
         }
     }
