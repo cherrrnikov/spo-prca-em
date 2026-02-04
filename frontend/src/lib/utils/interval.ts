@@ -9,23 +9,18 @@ export class IntervalUtils {
         startB: string,
         endB: string
     ): boolean {
-        if (!IntervalValidationService.isTimeValid(startA) || 
-            !IntervalValidationService.isTimeValid(endA) ||
-            !IntervalValidationService.isTimeValid(startB) || 
-            !IntervalValidationService.isTimeValid(endB)) {
-            console.warn('Некорректное время в интервале');
-            return false;
+        const validationA = IntervalValidationService.validateInterval(startA, endA);
+        const validationB = IntervalValidationService.validateInterval(startB, endB);
+        
+        if (!validationA.isValid || !validationB.isValid) {
+            console.warn('Некорректный интервал в проверке конфликтов');
+            return false; 
         }
-
+        
         const startMinutesA = TimeUtils.timeToMinutes(startA);
         const endMinutesA = TimeUtils.timeToMinutes(endA);
         const startMinutesB = TimeUtils.timeToMinutes(startB);
         const endMinutesB = TimeUtils.timeToMinutes(endB);
-        
-        if (endMinutesA >= 24 * 60 || endMinutesB >= 24 * 60) {
-            console.warn('Интервал выходит за границы суток');
-            return true; // Возвращаем конфликт, так как интервал некорректен
-        }
         
         return (
             (startMinutesA >= startMinutesB && startMinutesA < endMinutesB) ||

@@ -108,7 +108,6 @@ export function useScheduleState() {
         const currentEditingInterval = get(editingInterval);
         if (!currentEditingInterval) return;
 
-        // ВАЛИДАЦИЯ: Проверяем, не выходит ли интервал за границы суток
         const validation = IntervalValidationService.validateTimeInput(
             formData.startTime, 
             formData.duration
@@ -137,8 +136,7 @@ export function useScheduleState() {
         }
         
         // Обрезаем конечное время, если нужно
-        const endTime = validation.correctedEndTime || 
-                       TimeUtils.calculateEndTime(formData.startTime, formData.duration);
+        const endTime =  TimeUtils.calculateEndTime(formData.startTime, formData.duration);
         
         const updatedInterval = createUpdatedInterval(currentEditingInterval, formData, endTime);
         
@@ -208,8 +206,7 @@ export function useScheduleState() {
         }
         
         const tempId = generateTempId();
-        const endTime = validation.correctedEndTime || 
-                       TimeUtils.calculateEndTime(formData.startTime, formData.duration);
+        const endTime = TimeUtils.calculateEndTime(formData.startTime, formData.duration);
         const modeData = createProgramModeData(formData, tempId);
         const timeInterval = createTimeInterval(formData, tempId, endTime);
 

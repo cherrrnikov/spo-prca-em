@@ -5,7 +5,6 @@
     	WorkMode,
     	ZasvetkaInterval
     } from '$lib/types/schedule';
-    import { IntervalValidationService } from '$lib/utils/intervalValidation';
     import { GridPositionUtils } from "../utils/gridPosition";
 
     // Props
@@ -161,32 +160,10 @@
         }
 
         const allPositionedIntervals: PositionedItem[] = [];
-        const baseDate = new Date(); // Используем текущую дату для валидации
         
-        // ВАЛИДАЦИЯ: Проверяем все интервалы перед отображением
-        const validatedIntervals = intervals.map(interval => {
-            const validation = IntervalValidationService.validateAndFixInterval(
-                interval.startTime,
-                interval.endTime,
-                baseDate
-            );
-            
-            if (validation.wasTruncated) {
-                console.warn(`Интервал ${interval.id} обрезан до 23:59`, {
-                    original: interval.endTime,
-                    corrected: validation.endTime
-                });
-            }
-            
-            return {
-                ...interval,
-                // Для отображения используем только время
-                displayStartTime: validation.startTime,
-                displayEndTime: validation.endTime
-            };
-        });
-        
-        validatedIntervals.forEach((interval: TimeInterval & { displayStartTime: string, displayEndTime: string }) => {
+        // ПРОСТО ОТОБРАЖАЕМ интервалы, без валидации
+        // Валидация уже была при создании/редактировании
+        intervals.forEach((interval) => {
             const modeIndex = workModes.findIndex((m: { id: number; }) => m.id === interval.mode);
             
             if (modeIndex === -1) {
@@ -203,20 +180,19 @@
                 modeIndex,
                 color,
                 position: GridPositionUtils.getPositionForInterval(
-                    interval.displayStartTime,
-                    interval.displayEndTime,
+                    interval.startTime, // Используем оригинальное время
+                    interval.endTime,   // Используем оригинальное время
                     modeIndex,
                     cellWidth
                 ),
                 className: getIntervalClassName(interval),
-                title: `${title} ${interval.displayStartTime}-${interval.displayEndTime}`,
+                title: `${title} ${interval.startTime}-${interval.endTime}`,
                 data: interval
             };
             
             allPositionedIntervals.push(positionedInterval);
         });
         
-        // Добавляем тени и засветки
         addForecastIntervals(allPositionedIntervals, shadowIntervals, 'shadow');
         addForecastIntervals(allPositionedIntervals, zasvetkaIntervals, 'zasvetka');
         
