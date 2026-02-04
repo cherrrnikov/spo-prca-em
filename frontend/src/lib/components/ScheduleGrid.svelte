@@ -242,6 +242,14 @@
         } else if (interval.hasConflict) {
             classes.push('conflict-interval');
         }
+
+        if (interval.inShadow) {
+            if (interval.willBeSavedInShadow) {
+                classes.push('shadow-winner-interval');
+            } else {
+                classes.push('shadow-interval');
+            }
+        }
         
         if (interval.id === selectedIntervalId) {
             classes.push('selected-interval');
@@ -548,4 +556,5 @@
         background: #ff0000;
         color: white;
     }
+
 </style>

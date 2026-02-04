@@ -92,8 +92,10 @@
         );
         
         const currentZasvetkaIntervals = $zasvetkaIntervals;
-        if (currentZasvetkaIntervals.length > 0) {
-            const intervalsWithConflicts = IntervalUtils.checkAllConflicts(newIntervals, currentZasvetkaIntervals);
+        const currentShadowIntervals = $shadowIntervals;
+
+        if (currentZasvetkaIntervals.length > 0 || currentShadowIntervals.length > 0) {
+            const intervalsWithConflicts = IntervalUtils.checkAllConflicts(newIntervals, currentZasvetkaIntervals, currentShadowIntervals);
             intervals.set(intervalsWithConflicts);
         } else {
             intervals.set(newIntervals);

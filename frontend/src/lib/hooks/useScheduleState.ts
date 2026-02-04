@@ -363,11 +363,13 @@ export function useScheduleState() {
 
     function updateAllConflicts() {
         const currentIntervals = get(intervals);
-        const currentZasvetkaIntervals = get(zasvetkaIntervals);
+        const currentZasvetkaIntervals = get(zasvetkaIntervals) || [];
+        const currentShadowIntervals = get(shadowIntervals) || [];
         
         const intervalsWithConflicts = IntervalUtils.checkAllConflicts(
             currentIntervals, 
-            currentZasvetkaIntervals
+            currentZasvetkaIntervals,
+            currentShadowIntervals
         );
         
         intervals.set(
@@ -381,6 +383,9 @@ export function useScheduleState() {
                         nearZasvetka: updatedInterval.nearZasvetka,
                         zasvetkaConflict: updatedInterval.zasvetkaConflict,
                         zasvetkaDistance: updatedInterval.zasvetkaDistance,
+                        inShadow: updatedInterval.inShadow,
+                        willBeSavedInShadow: updatedInterval.willBeSavedInShadow,
+                        shadowPriority: updatedInterval.shadowPriority,
                         willBeSaved: updatedInterval.willBeSaved
                     };
                 }
@@ -499,12 +504,16 @@ export function useScheduleState() {
     }
 
     function getIntervalColor(interval: TimeInterval): string {
+        if (interval.inShadow && interval.willBeSavedInShadow) {
+            return '#ff69b4'; 
+        }
         if (interval.zasvetkaConflict || interval.nearZasvetka) {
             return '#ffffff';
         }
         if (interval.hasConflict) {
             return '#ff0000';
         }
+
         return interval.color;
     }
 
@@ -518,6 +527,14 @@ export function useScheduleState() {
             }).join(', ');
             
             title += ` (КОНФЛИКТ: ${conflictModes})`;
+        }
+
+        if (interval.inShadow) {
+            if (interval.willBeSavedInShadow) {
+                title += ' [В ТЕНИ - БУДЕТ СОХРАНЕНО]';
+            } else {
+                title += ' [В ТЕНИ - НЕ БУДЕТ СОХРАНЕНО]';
+            }
         }
         
         if (!interval.willBeSaved) {

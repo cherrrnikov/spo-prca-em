@@ -1,4 +1,4 @@
-import type { TimeInterval, ZasvetkaInterval } from '$lib/types/schedule';
+import type { ShadowInterval, TimeInterval, ZasvetkaInterval } from '$lib/types/schedule';
 import { IntervalValidationService } from './intervalValidation';
 import { TimeUtils } from './time';
 
@@ -62,10 +62,85 @@ export class IntervalUtils {
         return { overlaps: false };
     }
 
+    static checkShadowPriority(
+        intervals: TimeInterval[],
+        shadowIntervals: ShadowInterval[] = []
+    ): TimeInterval[] {
+        if (!shadowIntervals || shadowIntervals.length === 0) {
+            return intervals.map(interval => ({
+                ...interval,
+                inShadow: false,
+                shadowPriority: 0, 
+                willBeSavedInShadow: false 
+            }));
+        }
+
+        const updatedIntervals = intervals.map(interval => ({
+            ...interval,
+            inShadow: false,
+            shadowPriority: 0, 
+            willBeSavedInShadow: false 
+        }));
+
+        console.log('Обработка теней. Всего теней:', shadowIntervals.length);
+
+        for (const shadow of shadowIntervals) {
+            const shadowStart = TimeUtils.timeToMinutes(shadow.startTime);
+            const shadowEnd = TimeUtils.timeToMinutes(shadow.endTime);
+            const shadowCenter = shadowStart + (shadowEnd - shadowStart) / 2;
+
+            console.log(`Тень: ${shadow.startTime}-${shadow.endTime}, центр: ${shadowCenter} минут`);
+
+            const intervalsInThisShadow = updatedIntervals.filter(interval => {
+                const intervalStart = TimeUtils.timeToMinutes(interval.startTime);
+                const intervalEnd = TimeUtils.timeToMinutes(interval.endTime);
+                
+                return intervalStart >= shadowStart && intervalEnd <= shadowEnd;
+            });
+
+            if (intervalsInThisShadow.length === 0) {
+                continue;
+            }
+
+            intervalsInThisShadow.forEach(interval => {
+                interval.inShadow = true;
+                
+                const intervalCenter = TimeUtils.timeToMinutes(interval.startTime) + 
+                                     (TimeUtils.timeToMinutes(interval.endTime) - TimeUtils.timeToMinutes(interval.startTime)) / 2;
+                interval.shadowPriority = Math.abs(intervalCenter - shadowCenter);
+            });
+
+            // Находим интервал с наименьшим расстоянием до центра тени
+            if (intervalsInThisShadow.length > 0) {
+                const sortedIntervals = [...intervalsInThisShadow].sort((a, b) => 
+                    a.shadowPriority - b.shadowPriority
+                );
+
+                const bestPriority = sortedIntervals[0].shadowPriority;
+                const bestIntervals = sortedIntervals.filter(i => 
+                    Math.abs(i.shadowPriority - bestPriority) < 0.1 // Небольшой допуск для равенства
+                );
+
+                bestIntervals.forEach(interval => {
+                    interval.willBeSavedInShadow = true;
+                });
+
+                // Все остальные интервалы в этой тени не будут сохранены
+                intervalsInThisShadow
+                    .filter(i => !bestIntervals.includes(i))
+                    .forEach(interval => {
+                        interval.willBeSaved = false;
+                    });
+            }
+        }
+
+        return updatedIntervals;
+    }
+
     static checkZasvetkaProximity(
         intervalStart: string,
         intervalEnd: string,
-        zasvetkaIntervals: ZasvetkaInterval[]
+        zasvetkaIntervals: ZasvetkaInterval[] = []
     ): {
         nearZasvetka: boolean;
         zasvetkaConflict: boolean;
@@ -122,16 +197,19 @@ export class IntervalUtils {
 
     static checkAllConflicts(
         intervals: TimeInterval[],
-        zasvetkaIntervals: ZasvetkaInterval[]
+        zasvetkaIntervals: ZasvetkaInterval[] = [],
+        shadowIntervals: ShadowInterval[] = []
     ): TimeInterval[] {
-        const updatedIntervals = intervals.map(interval => ({
+        const shadowProcessedIntervals = this.checkShadowPriority(intervals, shadowIntervals || []);
+
+        const updatedIntervals = shadowProcessedIntervals.map(interval => ({
             ...interval,
             hasConflict: false,
             conflictWith: [],
             nearZasvetka: false,
             zasvetkaConflict: false,
             zasvetkaDistance: 0,
-            willBeSaved: true
+            willBeSaved: true 
         }));
         
         for (let i = 0; i < updatedIntervals.length; i++) {
@@ -167,22 +245,41 @@ export class IntervalUtils {
             }
         }
         
+        const zasvetkaArray = zasvetkaIntervals || [];
         updatedIntervals.forEach(interval => {
             const zasvetkaCheck = this.checkZasvetkaProximity(
                 interval.startTime,
                 interval.endTime,
-                zasvetkaIntervals
+                zasvetkaArray
             );
             
             interval.nearZasvetka = zasvetkaCheck.nearZasvetka;
             interval.zasvetkaConflict = zasvetkaCheck.zasvetkaConflict;
             interval.zasvetkaDistance = zasvetkaCheck.minDistance;
             
-            if (zasvetkaCheck.zasvetkaConflict || zasvetkaCheck.nearZasvetka) {
+            if (interval.inShadow && interval.willBeSavedInShadow) {
+                interval.willBeSaved = true;
+                
+                console.log(`Интервал ${interval.id} в тени будет сохранен:`, {
+                    time: `${interval.startTime}-${interval.endTime}`,
+                    willBeSavedInShadow: interval.willBeSavedInShadow,
+                    willBeSaved: interval.willBeSaved,
+                    hasConflict: interval.hasConflict,
+                    zasvetkaConflict: interval.zasvetkaConflict,
+                    shadowPriority: interval.shadowPriority
+                });
+            } 
+            else if (interval.inShadow) {
                 interval.willBeSaved = false;
             }
+            else {
+                if (interval.hasConflict || interval.zasvetkaConflict || interval.nearZasvetka) {
+                    interval.willBeSaved = false;
+                }
+            }
         });
-        
+
+        console.log('Проверка конфликтов завершена');
         return updatedIntervals;
     }
 }
