@@ -98,6 +98,8 @@
         } else {
             intervals.set(newIntervals);
         }
+
+        isEditing.set(false);
         logAllIntervals('После загрузки данных оператора');
     }
 

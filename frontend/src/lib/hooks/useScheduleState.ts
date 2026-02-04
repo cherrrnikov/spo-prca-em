@@ -37,7 +37,7 @@ export function useScheduleState() {
     const selectedIntervalId = writable<string | null>(null);
     const contextDate = writable<string>('');
 
-    let isEditing = writable(false);
+    let isEditing = writable(true);
 
     function loadUserData() {
         try {
@@ -230,7 +230,6 @@ export function useScheduleState() {
     }
 
     function handleModeFormCancel() {
-        selectedMode.set(null);
         editingInterval.set(null);
         selectedIntervalId.set(null);
         isEditing.set(false);
