@@ -38,7 +38,7 @@ public class Id06Repository {
         try {
             return jdbcTemplate.queryForObject(sql, new Id06MainRowMapper(), date);
         } catch (EmptyResultDataAccessException e) {
-            log.debug("Запись не найдена для даты: {}", date);
+            log.debug("Запись ИД06 не найдена для даты: {}", date);
             return null;
         }
     }

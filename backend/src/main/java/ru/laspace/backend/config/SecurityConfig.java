@@ -60,6 +60,8 @@ public class SecurityConfig {
                                                 .requestMatchers(
                                                                 "/api/schedule/**",
                                                                 "/api/forecast/**",
+                                                                "/api/vki/**",
+                                                                "/api/rotation/**",
                                                                 "/api/test/**",
                                                                 "/swagger-ui/**",
                                                                 "/v3/api-docs/**",
