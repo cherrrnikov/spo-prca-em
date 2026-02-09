@@ -2,6 +2,7 @@ import type {
     CreatedProgramData,
     CreateProgramRequest,
     ForecastData,
+    Id06OnaDto,
     Id06TsDto,
     OperatorData,
     PpiAssignment,
@@ -105,6 +106,19 @@ export class ScheduleCreationService {
             operatorData.tsList.forEach(ts => {
                 const tsSubIntervals = TsIntervalService.convertTsToSubIntervals(ts, ppiAssignments);
                 intervals.push(...tsSubIntervals);
+            });
+        }
+
+        // Обработка ОНА
+        if (operatorData.onaList?.length) {
+            operatorData.onaList.forEach(ona => {
+                const assignment = ppiAssignments.find(a => 
+                    a.recordId === ona.id && a.recordType === 'ona'
+                );
+                
+                if (assignment) {
+                    intervals.push(this.createOnaInterval(ona, assignment, operatorData.main?.kZajv));
+                }
             });
         }
         
@@ -223,12 +237,43 @@ export class ScheduleCreationService {
         };
     }
 
+    private static createOnaInterval(
+        ona: Id06OnaDto,
+        assignment: PpiAssignment,
+        customerCode?: number
+    ): TimeInterval {
+        const date = ona.dn.split('T')[0];
+
+        return {
+            id: `ona_${ona.id}`,
+            mode: 6,  
+            date: date,
+            startTime: TimeUtils.extractTimeFromTimestamp(ona.dn),
+            endTime: TimeUtils.extractTimeFromTimestamp(ona.dk),
+            city: this.getCityByPpi(assignment.ppiNum),
+            color: this.getColorByPpi(assignment.ppiNum),
+            title: `Юстировка ОНА (Антенна ${ona.nOna})`,
+            description: `Юстировка ОНА, длительность: ${ona.dlit} сек`,
+            ppi: assignment.ppiNum,
+            dlit: ona.dlit,
+            nOna: ona.nOna,  
+            customerCode: customerCode || 5,
+            hasConflict: false,
+            conflictWith: [],
+            nearZasvetka: false,
+            zasvetkaConflict: false,
+            zasvetkaDistance: 0,
+            willBeSaved: true
+        };
+    }
+
     private static applyDefaultIntervalValues(interval: TimeInterval, customerCode?: number): TimeInterval {
         return {
             ...interval,
             msu1Config: interval.msu1Config || this.getDefaultMsuConfig(),
             msu2Config: interval.msu2Config || this.getDefaultMsuConfig(),
             customerCode: interval.customerCode || customerCode || 1,
+            nOna: interval.nOna || (interval.mode === 6 ? 1 : undefined),
             hasConflict: false,
             conflictWith: [],
             nearZasvetka: false,

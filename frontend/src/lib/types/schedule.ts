@@ -11,6 +11,7 @@ export interface TimeInterval {
     ppi?: number;
     dlit?: number;
     customerCode?: number;
+    nOna?: number;
 
     kvdConfig?: {
         prMsu: number; // 0-МСУ1, 1-МСУ2
@@ -130,18 +131,28 @@ export interface Id06TsDto {
     prOtklZg: number;
 }
 
+export interface Id06OnaDto {
+    id: number;
+    idMain: number;
+    dn: string;
+    dk: string;
+    nOna: number;
+    dlit: number;
+}
+
 export interface OperatorData {
     main: Id06MainDto;
     kvdList: Id06KvdDto[];
     tnpList: Id06TnpDto[];
     tsList: Id06TsDto[];
+    onaList: Id06OnaDto[];
     totalIntervals: number;
 }
 
 export interface PpiSelectionModal {
     isOpen: boolean;
-    currentRecord: Id06KvdDto | Id06TnpDto | Id06TsDto | null;
-    recordType: 'kvd' | 'tnp' | 'ts' | null;
+    currentRecord: Id06KvdDto | Id06TnpDto | Id06TsDto | Id06OnaDto | null;
+    recordType: 'kvd' | 'tnp' | 'ts' | 'ona' | null;
     recordIndex: number;
     totalRecords: number;
     selectedPpi: Ppi | null;
@@ -224,11 +235,20 @@ export interface ProgramModeData {
         prIk10_2: number;
         prOtklZg: number;
     };
+
+    onaData?: {  
+        id: number;
+        idMain: number;
+        dn: string;
+        dk: string;
+        nOna: number;
+        dlit: number;
+    };
 }
 
 export interface PpiAssignment {
     recordId: number;
-    recordType: 'kvd' | 'tnp' | 'ts';
+    recordType: 'kvd' | 'tnp' | 'ts' | 'ona';
     ppiId: number;
     ppiNum: number;
 }
@@ -256,6 +276,7 @@ export interface ModeCreationForm {
     // msu2Vd: number[];
     msu1Config: TsMsuConfig;
     msu2Config: TsMsuConfig;
+    nOna?: number;
 }
 
 export interface TsMsuConfig {
@@ -282,7 +303,7 @@ export interface CreatedProgramData {
 
 export interface ScheduleCreationState {
     step: 'form' | 'ppi_selection' | 'review' | 'saving';
-    currentRecordType: 'kvd' | 'tnp' | 'ts' | null;
+    currentRecordType: 'kvd' | 'tnp' | 'ts' | 'ona' | null;
     currentRecordIndex: number;
     processedRecords: number;
     totalRecords: number;

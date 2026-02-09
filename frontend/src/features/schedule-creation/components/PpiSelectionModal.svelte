@@ -1,6 +1,7 @@
 <script lang="ts">
     import type {
     	Id06KvdDto,
+    	Id06OnaDto,
     	Id06TnpDto,
     	Id06TsDto,
     	Ppi,
@@ -18,7 +19,7 @@
         ppiList?: Ppi[];
         closeModal: () => void;
         applyPpi: (
-            record: Id06KvdDto | Id06TnpDto | Id06TsDto, 
+            record: Id06KvdDto | Id06TnpDto | Id06TsDto | Id06OnaDto, 
             ppi: Ppi, 
             applyToAll: boolean
         ) => void;

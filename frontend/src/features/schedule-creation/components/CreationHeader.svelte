@@ -86,6 +86,10 @@
         if (operatorData.tsList && operatorData.tsList.length > 0) {
             await processRecordBatch(operatorData.tsList, 'ts', 'Технологическая съемка');
         }
+
+        if (operatorData.onaList && operatorData.onaList.length > 0) {
+            await processRecordBatch(operatorData.onaList, 'ona', 'Юстировка ОНА');
+        }
         
         
         const stats = ScheduleCreationService.getAssignmentStatistics(operatorData, ppiAssignments);
@@ -103,7 +107,7 @@
     
     async function processRecordBatch(
         records: any[],
-        recordType: 'kvd' | 'tnp' | 'ts',
+        recordType: 'kvd' | 'tnp' | 'ts' | 'ona',
         recordTitle: string
     ) {
         for (let i = 0; i < records.length; i++) {
@@ -123,7 +127,7 @@
     
     async function showPpiModal(
         record: any,
-        recordType: 'kvd' | 'tnp' | 'ts',
+        recordType: 'kvd' | 'tnp' | 'ts' | 'ona',
         index: number,
         total: number,
         title: string
@@ -164,6 +168,8 @@
                 case 'ts':
                     records = operatorData.tsList || [];
                     break;
+                case 'ona':
+                    records = operatorData.onaList || [];
             }
             
             records.forEach(rec => {
@@ -179,7 +185,7 @@
     
     function addPpiAssignment(
         recordId: number,
-        recordType: 'kvd' | 'tnp' | 'ts',
+        recordType: 'kvd' | 'tnp' | 'ts' | 'ona',
         ppi: Ppi
     ) {
         ppiAssignments = ppiAssignments.filter(a => 

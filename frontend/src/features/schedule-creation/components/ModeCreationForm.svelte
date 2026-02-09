@@ -61,7 +61,8 @@
                 prMsu: 0,
                 prBssd: 0,
                 prZg: 0
-            }
+            },
+            nOna: 1
         };
     }
 
@@ -80,6 +81,8 @@
             localFormData.kvdConfig = interval.kvdConfig 
                 ? { ...interval.kvdConfig }
                 : { prMsu: 0, prBssd: 0, prZg: 0 };
+        } else if (interval.mode === 6) {
+            localFormData.nOna = interval.nOna || 1;
         } else if (interval.mode === 8) {
             localFormData.msu1Config = interval.msu1Config || getDefaultMsuConfig();
             localFormData.msu2Config = interval.msu2Config || getDefaultMsuConfig();
@@ -91,6 +94,10 @@
         newFormData.modeType = modeId;
         newFormData.duration = ModeDurationService.getDurationForMode(modeId, modeDurations, modeIdToCode);
         
+        if (modeId === 6) {
+            newFormData.nOna = 1;
+        }
+
         localFormData = newFormData;
         console.log('Новая запись:', localFormData);
     }
@@ -144,7 +151,7 @@
     }
 
     function prepareSubmitData(): ModeCreationForm {
-        return {
+        const submitData: ModeCreationForm = {
             ...localFormData,
             msu1Config: { ...localFormData.msu1Config },
             msu2Config: { ...localFormData.msu2Config },
@@ -154,6 +161,12 @@
                 prZg: 0
             }
         };
+        
+        if (localFormData.modeType === 6) {
+            submitData.nOna = localFormData.nOna || 1;
+        }
+        
+        return submitData;
     }
 
     function resetForm() {
@@ -166,6 +179,10 @@
                 modeDurations, 
                 modeIdToCode
             );
+
+            if (selectedMode === 6) {
+                localFormData.nOna = 1;
+            }
         }
     }
 
@@ -278,6 +295,36 @@
                     config={localFormData.msu2Config}
                     onUpdate={(config) => handleMsuConfigUpdate('msu2', config)}
                 />
+            </div>
+        {:else if selectedMode === 6}
+            <div class="form-section">
+                <div class="kvd-config-grid">
+                    <div class="form-group">
+                        <label>Номер антенны:</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input 
+                                    type="radio"
+                                    name="ona-antenna"
+                                    value="1"
+                                    checked={localFormData.nOna === 1}
+                                    on:change={() => localFormData.nOna = 1}
+                                />
+                                <span>ОНА1</span>
+                            </label>
+                            <label class="radio-label">
+                                <input 
+                                    type="radio"
+                                    name="ona-antenna"
+                                    value="2"
+                                    checked={localFormData.nOna === 2}
+                                    on:change={() => localFormData.nOna = 2}
+                                />
+                                <span>ОНА2</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
         {/if}
 

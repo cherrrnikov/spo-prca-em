@@ -14,9 +14,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.laspace.backend.dto.id06.Id06KvdDto;
 import ru.laspace.backend.dto.id06.Id06MainDto;
+import ru.laspace.backend.dto.id06.Id06OnaDto;
 import ru.laspace.backend.dto.id06.Id06TnpDto;
 import ru.laspace.backend.dto.id06.Id06TsDto;
-import ru.laspace.backend.dto.id06.Id06OnaDto;
 
 @Repository
 @Slf4j
@@ -87,10 +87,9 @@ public class Id06Repository {
 
     public List<Id06OnaDto> findOnaByMainId(Long idMain) {
         String sql = """
-                SELECT id, id_zap, dn, dk, n_ona, 
-                    EXTRACT(EPOCH FROM (dk - dn)) / 60 as dlit
+                SELECT id, id_main, dn, dk, n_ona, dlit
                 FROM id06_ona
-                WHERE id_zap = ?
+                WHERE id_main = ?
                 ORDER BY dn
                 """;
 
@@ -189,7 +188,7 @@ public class Id06Repository {
         public Id06OnaDto mapRow(ResultSet rs, int rowNum) throws SQLException {
             return Id06OnaDto.builder()
                     .id(rs.getLong("id"))
-                    .idZap(rs.getLong("id_zap"))
+                    .idMain(rs.getLong("id_main"))
                     .dn(rs.getTimestamp("dn").toLocalDateTime())
                     .dk(rs.getTimestamp("dk").toLocalDateTime())
                     .nOna(rs.getInt("n_ona"))

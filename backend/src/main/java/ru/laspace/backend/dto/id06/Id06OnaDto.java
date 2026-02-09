@@ -21,7 +21,7 @@ public class Id06OnaDto {
     private Long id;
 
     @Schema(description = "Ссылка на основную запись (id06.id)", example = "1")
-    private Long idZap;
+    private Long idMain;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Schema(description = "Дата и время начала интервала калибровки", example = "2026-01-14T09:00:00")

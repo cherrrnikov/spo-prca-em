@@ -1,6 +1,7 @@
 import type {
     CreatedProgramData,
     CreateProgramRequest,
+    Id06OnaDto,
     OperatorData,
     PpiAssignment,
     ProgramModeData,
@@ -56,6 +57,18 @@ export class ProgramPreparerService {
                 const assignment = ppiAssignments.find(a => a.recordId === ts.id && a.recordType === 'ts');
                 if (assignment) {
                     modes.push(this.createTsModeData(numRp, numKa, ts, assignment, operatorData.main?.kZajv));
+                }
+            });
+        }
+
+        // Добавляем режимы ОНА
+        if (operatorData.onaList?.length) {
+            operatorData.onaList.forEach(ona => {
+                const assignment = ppiAssignments.find(a => 
+                    a.recordId === ona.id && a.recordType === 'ona'
+                );
+                if (assignment) {
+                    modes.push(this.createOnaModeData(numRp, numKa, ona, assignment));
                 }
             });
         }
@@ -179,6 +192,31 @@ export class ProgramPreparerService {
         };
     }
 
+    private static createOnaModeData(
+        numRp: number, 
+        numKa: number, 
+        ona: Id06OnaDto, 
+        assignment: PpiAssignment
+    ): ProgramModeData {
+        return {
+            numRp,
+            numKa,
+            dateOn: ona.dn,
+            dateOff: ona.dk,
+            kodMode: 6,  
+            numPpi: assignment.ppiNum,
+            dlit: ona.dlit,
+            onaData: {  
+                id: ona.id,
+                idMain: ona.idMain,  
+                dn: ona.dn,
+                dk: ona.dk,
+                nOna: ona.nOna,
+                dlit: ona.dlit
+            }
+        };
+    }
+
     public static calculateDateOff(
         operatorData: OperatorData,
         selectedDate: string,
@@ -189,7 +227,8 @@ export class ProgramPreparerService {
         const allRecords = [
             ...(operatorData.kvdList || []),
             ...(operatorData.tnpList || []),
-            ...(operatorData.tsList || [])
+            ...(operatorData.tsList || []),
+            ...(operatorData.onaList || [])
         ];
 
         allRecords.forEach(record => {

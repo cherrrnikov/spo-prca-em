@@ -262,6 +262,10 @@ export function useScheduleState() {
             updatedInterval.msu2Config = { ...formData.msu2Config };
         }
 
+        if (formData.modeType === 6) {
+            updatedInterval.nOna = formData.nOna || editingInterval.nOna || 1;
+        }
+
         return updatedInterval;
     }
 
@@ -299,6 +303,10 @@ export function useScheduleState() {
         if (formData.modeType === 8) {
             interval.msu1Config = { ...formData.msu1Config };
             interval.msu2Config = { ...formData.msu2Config };
+        }
+
+        if (formData.modeType === 6) {
+            interval.nOna = formData.nOna || 1;
         }
 
         checkAndUpdateAllConflictsForNewInterval(interval);
@@ -482,6 +490,18 @@ export function useScheduleState() {
                     idMain: mainId,
                     dn: dateOn,
                     dk: dateOff,
+                    dlit: formData.duration
+                }
+            };
+        } else if (formData.modeType === 6) {
+            return {
+                ...baseData,
+                onaData: {
+                    id: 0,
+                    idMain: mainId,
+                    dn: dateOn,
+                    dk: dateOff,
+                    nOna: formData.nOna || 1,
                     dlit: formData.duration
                 }
             };
