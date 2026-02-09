@@ -4,7 +4,7 @@ export interface TimeInterval {
     date: string,
     startTime: string;
     endTime: string;
-    city: string;
+    city?: string;
     color: string;
     title?: string;
     description?: string;
@@ -34,6 +34,7 @@ export interface TimeInterval {
     shadowPriority?: number,
     zasvetkaConflict?: boolean;      // true если пересекается с засветкой
     zasvetkaDistance?: number;       // расстояние до ближайшей засветки в секундах
+    isAstrocorrection?: boolean;
 }
 
 export interface CustomerCode {
@@ -369,4 +370,52 @@ export interface ZasvetkaInterval {
     color: string;
     opacity: number;
     zIndex: number;
+}
+
+export interface Kr01ImpulseDto {
+    id: number;
+    idMain: number;
+    nVit: number;
+    dateIm: string;
+    dlit: number;
+    prOr: number;
+    uglV: number;
+    massa: number;
+    nDu: number;
+    prVar: number;
+}
+
+export interface Kr01MainDto {
+    id: number;
+    rnf: number;
+    nKa: number;
+    dsf: string;
+    nBc: number;
+    nZad: number;
+    kImp: number;
+    dtZap: string;
+    nFormId: number;
+    used: number;
+}
+
+export interface Kr01DataResponse {
+    main: Kr01MainDto;
+    impulses: Kr01ImpulseDto[];
+    totalImpulses: number;
+}
+
+export interface Ro02Dto {
+    id: number;
+    rnf: number; 
+    nKa: number;    
+    dsf: string;   
+    dataN: string;  
+    dataRazv: string; 
+    dataK: string | null;
+    nFormId: number; 
+}
+
+export interface Ro02DataResponse {
+    rotations: Ro02Dto[];
+    totalRotations: number;
 }
