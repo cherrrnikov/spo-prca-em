@@ -8,8 +8,10 @@ import type {
     OperatorData,
     PpiAssignment,
     ProgramModeData,
+    RotationInterval,
     ShadowInterval,
     TimeInterval,
+    VkiInterval,
     ZasvetkaInterval
 } from '$lib/types/schedule';
 import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
@@ -39,6 +41,8 @@ export function useScheduleState() {
     const selectedIntervalId = writable<string | null>(null);
     const contextDate = writable<string>('');
     const hasAstrocorrectionData = writable<boolean>(false);
+    const vkiIntervals = writable<VkiInterval[]>([]);
+    const rotationIntervals = writable<RotationInterval[]>([]);
 
     let isEditing = writable(true);
 
@@ -423,6 +427,25 @@ export function useScheduleState() {
             !zasvetkaCheck.nearZasvetka;
     }
 
+    async function loadAstroEvents(date: string) {
+        try {
+            const [vkiData, rotationData] = await Promise.all([
+                ScheduleCreationService.loadVkiData(date),
+                ScheduleCreationService.loadRotationData(date)
+            ]);
+            
+            const vkiList = ScheduleCreationService.convertVkiToIntervals(vkiData);
+            const rotationList = ScheduleCreationService.convertRotationToIntervals(rotationData, date);
+            
+            vkiIntervals.set(vkiList);
+            rotationIntervals.set(rotationList);
+        } catch (error) {
+            console.error("Ошибка загрузки событий астрокоррекции: ", error);
+            vkiIntervals.set([]);
+            rotationIntervals.set([]);
+        }
+    }
+
     async function checkAndAddAstrocorrection(date: string): Promise<boolean> {
         try {
             const hasAstro = await ScheduleApiService.hasAstrocorrectionData(date);
@@ -436,7 +459,6 @@ export function useScheduleState() {
                 );
 
                 intervals.set(intervalsWithAstro);
-            
                 updateAllConflicts();
             }
 
@@ -671,6 +693,8 @@ export function useScheduleState() {
         selectedIntervalId,
         contextDate,
         hasAstrocorrectionData,
+        vkiIntervals,
+        rotationIntervals,
         isEditing,
         
         loadUserData,
@@ -680,6 +704,7 @@ export function useScheduleState() {
         handleModeSelect,
         handleModeFormSubmit,
         handleModeFormCancel,
+        loadAstroEvents,
         checkAndAddAstrocorrection,
         
         getIntervalColor,

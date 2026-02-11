@@ -421,3 +421,27 @@ export interface Ro02DataResponse {
     rotations: Ro02Dto[];
     totalRotations: number;
 }
+
+export interface VkiInterval {
+    id: string;
+    type: 'vki';
+    startTime: string;
+    endTime: string;
+    duration: number;
+    title: string;
+    color: string;
+    opacity: number;
+    zIndex: number;
+}
+
+export interface RotationInterval {
+    id: string;
+    type: 'rotation';
+    startTime: string;
+    endTime: string;
+    duration: number;
+    title: string;
+    color: string;
+    opacity: number;
+    zIndex: number;
+}

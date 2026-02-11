@@ -40,6 +40,8 @@
         selectedIntervalId,
         contextDate,   
         hasAstrocorrectionData,    
+        vkiIntervals,
+        rotationIntervals,
         isEditing,  
         
         loadUserData,
@@ -49,6 +51,7 @@
         handleModeSelect,
         handleModeFormSubmit,
         handleModeFormCancel,
+        loadAstroEvents,
         checkAndAddAstrocorrection,
         
         getIntervalColor,
@@ -87,6 +90,7 @@
             setContextDate(date); 
             selectedProgramDate.set(date);
             await loadForecastData(date);
+            await loadAstroEvents(date);
             await checkAndAddAstrocorrection(date);
         }
 
@@ -206,6 +210,8 @@
             shadowIntervals={$shadowIntervals}
             zasvetkaIntervals={$zasvetkaIntervals}
             {workModes}
+            vkiIntervals={$vkiIntervals}
+            rotationIntervals={$rotationIntervals}
             onModeSelect={handleModeSelect}
             getIntervalColor={getIntervalColor}
             getIntervalTitle={getIntervalTitle}

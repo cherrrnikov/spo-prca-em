@@ -1,7 +1,13 @@
 import type {
     ForecastData,
+    Kr01DataResponse,
+    Kr01ImpulseDto,
+    Ro02DataResponse,
+    Ro02Dto,
+    RotationInterval,
     ShadowInterval,
     TsMsuConfig,
+    VkiInterval,
     ZasvetkaInterval
 } from '$lib/types/schedule';
 import { TimeUtils } from '$lib/utils/time';
@@ -81,6 +87,71 @@ export class ScheduleConverterService {
                 zIndex: 1
             }))
         };
+    }
+
+    static convertVkiToIntervals(vkiData: Kr01DataResponse | null): VkiInterval[] {
+        if (!vkiData?.impulses || vkiData.impulses.length === 0) {
+            return [];
+        }
+
+        return vkiData.impulses.map((impulse: Kr01ImpulseDto, index: number) => {
+            const time = this.extractTimeOnly(impulse.dateIm);
+            const date = impulse.dateIm.split('T')[0];
+            
+            // Длительность 5 минут (300 секунд) фиксированная для отображения
+            const duration = 300;
+            const endTime = TimeUtils.calculateEndTime(time, duration / 60);
+            
+            return {
+                id: `vki-${date}-${index + 1}`,
+                type: 'vki',
+                startTime: time,
+                endTime: endTime,
+                duration: duration,
+                title: `ВКИ: виток ${impulse.nVit || ''}, ДУ-${impulse.nDu || ''}`.trim(),
+                color: '#000000',
+                opacity: 0.8,
+                zIndex: 25,
+                impulseNumber: index + 1,
+                mass: impulse.massa,
+                angle: impulse.uglV,
+                nVit: impulse.nVit,
+                nDu: impulse.nDu
+            };
+        });
+    }
+
+    static convertRotationToIntervals(rotationData: Ro02DataResponse | null, targetDate: string): RotationInterval[] {
+        if (!rotationData?.rotations || rotationData.rotations.length === 0) {
+            return [];
+        }
+
+        return rotationData.rotations
+            .filter((rotation: Ro02Dto) => {
+                // Рисуем разворот ТОЛЬКО если дата запроса совпадает с dataRazv
+                const rotationDate = rotation.dataRazv.split('T')[0];
+                return rotationDate === targetDate;
+            })
+            .map((rotation: Ro02Dto, index: number) => {
+                const time = this.extractTimeOnly(rotation.dataRazv);
+                const date = rotation.dataRazv.split('T')[0];
+                
+                const duration = 300;
+                const endTime = TimeUtils.calculateEndTime(time, duration / 60);
+                
+                return {
+                    id: `rotation-${date}-${index + 1}`,
+                    type: 'rotation',
+                    startTime: time,
+                    endTime: endTime,
+                    duration: duration,
+                    title: `Сезонный разворот`,
+                    color: '#000000',
+                    opacity: 0.8,
+                    zIndex: 25,
+                    rotationNumber: index + 1
+                };
+            });
     }
 
     static createDateWithTime(baseDate: Date, timeStr: string): Date {

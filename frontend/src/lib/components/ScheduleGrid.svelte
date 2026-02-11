@@ -1,7 +1,9 @@
 <script lang="ts">
     import type {
+    	RotationInterval,
     	ShadowInterval,
     	TimeInterval,
+    	VkiInterval,
     	WorkMode,
     	ZasvetkaInterval
     } from '$lib/types/schedule';
@@ -11,6 +13,8 @@
         intervals,
         shadowIntervals = [],
         zasvetkaIntervals = [],
+        vkiIntervals = [],
+        rotationIntervals = [],
         workModes = [],
         onModeSelect,
         getIntervalColor,
@@ -23,6 +27,8 @@
         intervals: TimeInterval[];
         shadowIntervals?: ShadowInterval[];
         zasvetkaIntervals?: ZasvetkaInterval[];
+        vkiIntervals?: VkiInterval[];
+        rotationIntervals?: RotationInterval[],
         workModes?: WorkMode[];
         onModeSelect?: (modeId: number) => void;
         getIntervalColor?: (interval: TimeInterval) => string;
@@ -76,7 +82,19 @@
         data: ShadowInterval | ZasvetkaInterval;
     };
 
-    type PositionedItem = PositionedInterval | PositionedForecastInterval;
+    type PositionedAstroInterval = {
+        type: 'vki' | 'rotation';
+        id: string;
+        modeIndex: -1;
+        color: string;
+        position: any;
+        title: string;
+        opacity: number;
+        zIndex: number;
+        data: VkiInterval | RotationInterval;
+    };
+
+    type PositionedItem = PositionedInterval | PositionedForecastInterval | PositionedAstroInterval;
 
     $effect(() => {
         if (gridContainer) {
@@ -201,6 +219,8 @@
         
         addForecastIntervals(allPositionedIntervals, shadowIntervals, 'shadow');
         addForecastIntervals(allPositionedIntervals, zasvetkaIntervals, 'zasvetka');
+        addAstroIntervals(allPositionedIntervals, vkiIntervals, 'vki');
+        addAstroIntervals(allPositionedIntervals, rotationIntervals, 'rotation');
         
         return allPositionedIntervals;
     }
@@ -241,6 +261,43 @@
             };
             
             targetArray.push(positionedForecastInterval);
+        });
+    }
+
+    function addAstroIntervals(
+        targetArray: PositionedItem[],
+        intervalsArray: (VkiInterval | RotationInterval)[],
+        type: 'vki' | 'rotation'
+    ) {
+        intervalsArray.forEach(interval => {
+            const positionedAstroInterval: PositionedAstroInterval = {
+                type,
+                id: interval.id,
+                modeIndex: -1,
+                color: interval.color,
+                position: {
+                    left: GridPositionUtils.getPositionForInterval(
+                        interval.startTime,
+                        interval.endTime,
+                        0,
+                        cellWidth
+                    ).left,
+                    width: GridPositionUtils.getPositionForInterval(
+                        interval.startTime,
+                        interval.endTime,
+                        0,
+                        cellWidth
+                    ).width,
+                    top: `0px`,
+                    height: `${GridPositionUtils.ROW_HEIGHT * (workModes.length + 1)}px`
+                },
+                title: interval.title,
+                opacity: interval.opacity,
+                zIndex: interval.zIndex,
+                data: interval
+            };
+            
+            targetArray.push(positionedAstroInterval);
         });
     }
 
@@ -340,8 +397,6 @@
                             z-index: {item.zIndex || 5};
                         "
                         title="{item.title}">
-                        <div class="interval-content" style="background: {item.color};">
-                        </div>
                     </div>
                 {:else if item.type === 'schedule'}
                     <div class="interval interval-schedule {item.className}"
@@ -361,6 +416,19 @@
                         </div>
                     </div>
                 {:else if item.type === 'shadow' || item.type === 'zasvetka'}
+                    <div class="interval interval-{item.type}"
+                        style="
+                            left: {item.position.left}; 
+                            width: {item.position.width}; 
+                            top: {item.position.top}; 
+                            height: {item.position.height};
+                            background: {item.color};
+                            opacity: {item.opacity || 1};
+                            z-index: {item.zIndex || 10};
+                        "
+                        title="{item.title}">
+                    </div>
+                {:else if item.type === 'vki' || item.type === 'rotation'}
                     <div class="interval interval-{item.type}"
                         style="
                             left: {item.position.left}; 
@@ -491,6 +559,20 @@
         margin: 0;
         
         font-size: clamp(0.65rem, 0.8vw, 0.8rem);
+    }
+
+    .interval-vki, .interval-rotation {
+        cursor: default !important;
+        border-left: 2px solid #333;
+        border-right: 2px solid #333;
+        border-radius: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 12px;
+        text-shadow: 0 0 2px rgba(0,0,0,0.5);
     }
     
     .interval-shadow {

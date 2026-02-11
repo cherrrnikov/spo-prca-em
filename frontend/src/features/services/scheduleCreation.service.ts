@@ -4,9 +4,13 @@ import type {
     ForecastData,
     Id06OnaDto,
     Id06TsDto,
+    Kr01DataResponse,
     OperatorData,
     PpiAssignment,
+    Ro02DataResponse,
+    RotationInterval,
     TimeInterval,
+    VkiInterval,
     WorkMode
 } from '$lib/types/schedule';
 import { TimeUtils } from '$lib/utils/time';
@@ -185,6 +189,22 @@ export class ScheduleCreationService {
 
     static convertForecastToIntervals(forecastData: ForecastData) {
         return ScheduleConverterService.convertForecastToIntervals(forecastData);
+    }
+
+    static async loadVkiData(date: string): Promise<Kr01DataResponse | null> {
+        return ScheduleApiService.loadVkiData(date);
+    }
+
+    static async loadRotationData(date: string): Promise<Ro02DataResponse | null> {
+        return ScheduleApiService.loadRotationData(date);
+    }
+
+    static convertVkiToIntervals(vkiData: Kr01DataResponse | null): VkiInterval[] {
+        return ScheduleConverterService.convertVkiToIntervals(vkiData);
+    }
+
+    static convertRotationToIntervals(rotationData: Ro02DataResponse | null, targetDate: string): RotationInterval[] {
+        return ScheduleConverterService.convertRotationToIntervals(rotationData, targetDate);
     }
 
     private static createKvdInterval(kvd: any, assignment: PpiAssignment, customerCode?: number): TimeInterval {
