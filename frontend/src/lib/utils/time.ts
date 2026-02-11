@@ -1,28 +1,39 @@
 export class TimeUtils {
-    static timeToMinutes(timeStr: string): number {
+    static timeToSeconds(timeStr: string): number {
         try {
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            return hours * 60 + (minutes || 0);
+            const parts = timeStr.split(':');
+            const hours = parseInt(parts[0]) || 0;
+            const minutes = parseInt(parts[1]) || 0;
+            const seconds = parts[2] ? parseFloat(parts[2]) : 0;
+            
+            return hours * 3600 + minutes * 60 + seconds;
         } catch {
             return 0;
         }
     }
 
-    static minutesToTime(minutes: number): string {
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    static secondsToTime(seconds: number): string {
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        
+        return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
-    static calculateEndTime(startTime: string, duration: number): string {
-        const startMinutes = this.timeToMinutes(startTime);
-        const endMinutes = startMinutes + Math.floor(duration / 60);
-        return this.minutesToTime(endMinutes);
+    static calculateEndTimeSeconds(startTime: string, durationSeconds: number): string {
+        const startSeconds = this.timeToSeconds(startTime);
+        let endSeconds = startSeconds + durationSeconds;
+
+        return this.secondsToTime(endSeconds);
+    }
+
+    static calculateEndTime(startTime: string, durationMinutes: number): string {
+        return this.calculateEndTimeSeconds(startTime, durationMinutes * 60);
     }
 
     static isWithinDayBounds(timeStr: string): boolean {
-        const minutes = this.timeToMinutes(timeStr);
-        return minutes >= 0 && minutes < 24 * 60;
+        const seconds = this.timeToSeconds(timeStr);
+        return seconds >= 0 && seconds < 24 * 3600;
     }
 
     static formatDate(dateString: string): string {
@@ -37,10 +48,9 @@ export class TimeUtils {
     static extractTimeFromTimestamp(timestamp: string): string {
         try {
             const date = new Date(timestamp);
-            return date.getHours().toString().padStart(2, '0') + ':' + 
-                   date.getMinutes().toString().padStart(2, '0');
+            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
         } catch {
-            return '00:00';
+            return '00:00:00';
         }
     }
 

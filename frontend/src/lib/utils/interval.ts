@@ -17,15 +17,15 @@ export class IntervalUtils {
             return false; 
         }
         
-        const startMinutesA = TimeUtils.timeToMinutes(startA);
-        const endMinutesA = TimeUtils.timeToMinutes(endA);
-        const startMinutesB = TimeUtils.timeToMinutes(startB);
-        const endMinutesB = TimeUtils.timeToMinutes(endB);
+        const startSecondsA = TimeUtils.timeToSeconds(startA);
+        const endSecondsA = TimeUtils.timeToSeconds(endA);
+        const startSecondsB = TimeUtils.timeToSeconds(startB);
+        const endSecondsB = TimeUtils.timeToSeconds(endB);
         
         return (
-            (startMinutesA >= startMinutesB && startMinutesA < endMinutesB) ||
-            (endMinutesA > startMinutesB && endMinutesA <= endMinutesB) ||
-            (startMinutesA <= startMinutesB && endMinutesA >= endMinutesB)
+            (startSecondsA >= startSecondsB && startSecondsA < endSecondsB) ||
+            (endSecondsA > startSecondsB && endSecondsA <= endSecondsB) ||
+            (startSecondsA <= startSecondsB && endSecondsA >= endSecondsB)
         );
     }
 
@@ -36,7 +36,7 @@ export class IntervalUtils {
         modeId: number,
         excludeIntervalId?: string
     ): { overlaps: boolean; conflictingInterval?: TimeInterval } {
-        const newEndTime = TimeUtils.calculateEndTime(newStartTime, newDuration);
+        const newEndTime = TimeUtils.calculateEndTimeSeconds(newStartTime, newDuration);
         
         for (const interval of intervals) {
             if (excludeIntervalId && interval.id === excludeIntervalId) {
@@ -89,15 +89,15 @@ export class IntervalUtils {
         console.log('Обработка теней. Всего теней:', shadowIntervals.length);
 
         for (const shadow of shadowIntervals) {
-            const shadowStart = TimeUtils.timeToMinutes(shadow.startTime);
-            const shadowEnd = TimeUtils.timeToMinutes(shadow.endTime);
+            const shadowStart = TimeUtils.timeToSeconds(shadow.startTime);
+            const shadowEnd = TimeUtils.timeToSeconds(shadow.endTime);
             const shadowCenter = shadowStart + (shadowEnd - shadowStart) / 2;
 
             console.log(`Тень: ${shadow.startTime}-${shadow.endTime}, центр: ${shadowCenter} минут`);
 
             const intervalsInThisShadow = updatedIntervals.filter(interval => {
-                const intervalStart = TimeUtils.timeToMinutes(interval.startTime);
-                const intervalEnd = TimeUtils.timeToMinutes(interval.endTime);
+                const intervalStart = TimeUtils.timeToSeconds(interval.startTime);
+                const intervalEnd = TimeUtils.timeToSeconds(interval.endTime);
                 
                 return intervalStart >= shadowStart && intervalEnd <= shadowEnd;
             });
@@ -109,8 +109,8 @@ export class IntervalUtils {
             intervalsInThisShadow.forEach(interval => {
                 interval.inShadow = true;
                 
-                const intervalCenter = TimeUtils.timeToMinutes(interval.startTime) + 
-                                     (TimeUtils.timeToMinutes(interval.endTime) - TimeUtils.timeToMinutes(interval.startTime)) / 2;
+                const intervalCenter = TimeUtils.timeToSeconds(interval.startTime) + 
+                                     (TimeUtils.timeToSeconds(interval.endTime) - TimeUtils.timeToSeconds(interval.startTime)) / 2;
                 interval.shadowPriority = Math.abs(intervalCenter - shadowCenter);
             });
 
@@ -150,17 +150,17 @@ export class IntervalUtils {
         zasvetkaConflict: boolean;
         minDistance: number;
     } {
-        const intervalStartMinutes = TimeUtils.timeToMinutes(intervalStart);
-        const intervalEndMinutes = TimeUtils.timeToMinutes(intervalEnd);
-        const SAFETY_BUFFER = 1;
+        const intervalStartSeconds = TimeUtils.timeToSeconds(intervalStart);
+        const intervalEndSeconds = TimeUtils.timeToSeconds(intervalEnd);
+        const SAFETY_BUFFER = 60;
         
         let minDistance = Infinity;
         let nearZasvetka = false;
         let zasvetkaConflict = false;
 
         for (const zasvetka of zasvetkaIntervals) {
-            const zasvetkaStart = TimeUtils.timeToMinutes(zasvetka.startTime);
-            const zasvetkaEnd = TimeUtils.timeToMinutes(zasvetka.endTime);
+            const zasvetkaStart = TimeUtils.timeToSeconds(zasvetka.startTime);
+            const zasvetkaEnd = TimeUtils.timeToSeconds(zasvetka.endTime);
             
             const overlaps = this.checkTwoIntervalsOverlap(
                 intervalStart,
@@ -175,16 +175,16 @@ export class IntervalUtils {
                 break;
             }
             
-            if (intervalEndMinutes <= zasvetkaStart) {
-                const distance = zasvetkaStart - intervalEndMinutes;
+            if (intervalEndSeconds <= zasvetkaStart) {
+                const distance = zasvetkaStart - intervalEndSeconds;
                 if (distance < SAFETY_BUFFER) {
                     nearZasvetka = true;
                     minDistance = Math.min(minDistance, distance);
                 }
             }
             
-            if (intervalStartMinutes >= zasvetkaEnd) {
-                const distance = intervalStartMinutes - zasvetkaEnd;
+            if (intervalStartSeconds >= zasvetkaEnd) {
+                const distance = intervalStartSeconds - zasvetkaEnd;
                 if (distance < SAFETY_BUFFER) {
                     nearZasvetka = true;
                     minDistance = Math.min(minDistance, distance);

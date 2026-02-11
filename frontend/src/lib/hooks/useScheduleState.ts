@@ -161,7 +161,7 @@ export function useScheduleState() {
             return;
         }
         
-        const endTime =  TimeUtils.calculateEndTime(formData.startTime, formData.duration);
+        const endTime =  TimeUtils.calculateEndTimeSeconds(formData.startTime, formData.duration);
         
         const updatedInterval = createUpdatedInterval(currentEditingInterval, formData, endTime);
         
@@ -231,7 +231,7 @@ export function useScheduleState() {
         }
         
         const tempId = generateTempId();
-        const endTime = TimeUtils.calculateEndTime(formData.startTime, formData.duration);
+        const endTime = TimeUtils.calculateEndTimeSeconds(formData.startTime, formData.duration);
         const modeData = createProgramModeData(formData, tempId);
         const timeInterval = createTimeInterval(formData, tempId, endTime);
 
@@ -509,9 +509,9 @@ export function useScheduleState() {
         const currentOperatorData = get(operatorData);
         const currentContextDate = get(contextDate);
         const mainId = currentOperatorData?.main.id || 0;
-        const dateOn = `${currentContextDate}T${formData.startTime}:00`;
-        const endDisplayTime = TimeUtils.calculateEndTime(formData.startTime, formData.duration);
-        const dateOff = `${currentContextDate}T${endDisplayTime}:00`;
+        const endDisplayTime = TimeUtils.calculateEndTimeSeconds(formData.startTime, formData.duration);
+        const dateOff = `${currentContextDate}T${endDisplayTime}`;
+        const dateOn = `${currentContextDate}T${formData.startTime}`; 
 
         const baseData = {
             numRp: 0,

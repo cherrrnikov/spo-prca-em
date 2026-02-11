@@ -99,7 +99,7 @@ export class ScheduleConverterService {
             const date = impulse.dateIm.split('T')[0];
             
             // Длительность 5 минут (300 секунд) фиксированная для отображения
-            const duration = 300;
+            const duration = impulse.dlit || 300;
             const endTime = TimeUtils.calculateEndTime(time, duration / 60);
             
             return {
@@ -176,22 +176,22 @@ export class ScheduleConverterService {
         try {
             if (timeStr.includes('T') || timeStr.includes('-')) {
                 const date = new Date(timeStr);
-                return date.getHours().toString().padStart(2, '0') + ':' + 
-                       date.getMinutes().toString().padStart(2, '0');
+                return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
             }
             
-            const timeRegex = /^(\d{1,2}):(\d{2})$/;
+            const timeRegex = /^(\d{1,2}):(\d{2})(:(\d{2}))?$/;
             const match = timeStr.match(timeRegex);
             
             if (match) {
                 const hours = parseInt(match[1]).toString().padStart(2, '0');
                 const minutes = match[2];
-                return `${hours}:${minutes}`;
+                const seconds = match[4] ? match[4].padStart(2, '0') : '00';
+                return `${hours}:${minutes}:${seconds}`;
             }
             
-            return "00:00";
+            return "00:00:00";
         } catch {
-            return "00:00";
+            return "00:00:00";
         }
     }
 }

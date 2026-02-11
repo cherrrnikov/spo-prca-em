@@ -7,7 +7,8 @@ export class DateFormatterService {
                 month: '2-digit',
                 year: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                second: '2-digit'
             });
         } catch {
             return dateStr;
@@ -19,7 +20,8 @@ export class DateFormatterService {
             const date = new Date(dateStr);
             return date.toLocaleTimeString('ru-RU', {
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                second: '2-digit'
             });
         } catch {
             return dateStr;
