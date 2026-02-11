@@ -1,8 +1,8 @@
 package ru.laspace.backend.repository;
 
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -24,8 +24,8 @@ public class Ro02Repository {
         String sql = """
                 SELECT id, rnf, n_ka, dsf, data_n, data_razv, data_k, n_form_id
                 FROM ro_02
-                WHERE data_n <= ?
-                    AND (? <= COALESCE(data_k, data_razv))
+                WHERE DATE(data_n) <= DATE(?)
+                    AND (DATE(?) <= COALESCE(DATE(data_k), DATE(data_razv)))
                     ORDER BY data_razv
                 """;
         return jdbcTemplate.query(sql, new Ro02RowMapper(), date, date);
@@ -38,14 +38,14 @@ public class Ro02Repository {
                     .id(rs.getLong("id"))
                     .rnf(rs.getInt("rnf"))
                     .nKa(rs.getInt("n_ka"))
-                    .dsf(rs.getDate("dsf").toLocalDate())
-                    .dataN(rs.getDate("data_n").toLocalDate())
-                    .dataRazv(rs.getDate("data_razv").toLocalDate())
+                    .dsf(rs.getTimestamp("dsf").toLocalDateTime())
+                    .dataN(rs.getTimestamp("data_n").toLocalDateTime())
+                    .dataRazv(rs.getTimestamp("data_razv").toLocalDateTime())
                     .nFormId(rs.getInt("n_form_id"));
 
-            Date dataK = rs.getDate("data_k");
+            Timestamp dataK = rs.getTimestamp("data_k");
             if (dataK != null) {
-                builder.dataK(dataK.toLocalDate());
+                builder.dataK(dataK.toLocalDateTime());
             }
 
             return builder.build();

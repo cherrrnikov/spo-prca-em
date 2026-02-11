@@ -1,6 +1,6 @@
 package ru.laspace.backend.dto.ro02;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -26,21 +26,21 @@ public class Ro02Dto {
     @Schema(description = "Машинный номер космического аппарата", example = "1")
     private Integer nKa;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    @Schema(description = "Дата составления формы обмена", example = "2026-01-13")
-    private LocalDate dsf;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @Schema(description = "Дата составления формы обмена", example = "2026-01-14T11:30:00")
+    private LocalDateTime dsf;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    @Schema(description = "Дата начала подготовительных работ к развороту", example = "2026-01-14")
-    private LocalDate dataN;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @Schema(description = "Дата начала подготовительных работ к развороту", example = "2026-01-14T11:30:00")
+    private LocalDateTime dataN;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    @Schema(description = "Дата разворота", example = "2026-01-15")
-    private LocalDate dataRazv;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @Schema(description = "Дата разворота", example = "2026-01-14T11:30:00")
+    private LocalDateTime dataRazv;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    @Schema(description = "Дата окончания работ (опционально)", example = "2026-01-16")
-    private LocalDate dataK;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @Schema(description = "Дата окончания работ (опционально)", example = "2026-01-14T11:30:00")
+    private LocalDateTime dataK;
 
     @Schema(description = "Номер записи в таблице Form Inp", example = "101")
     private Integer nFormId;
