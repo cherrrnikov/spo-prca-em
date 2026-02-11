@@ -351,6 +351,8 @@ export function useScheduleState() {
         ];
         
         let hasConflict = false;
+        let hasAstroConflict = false;
+        const astroConflictWith: number[] = [];
         const conflictWith: number[] = [];
         
         for (const existingInterval of allIntervals) {
@@ -385,9 +387,9 @@ export function useScheduleState() {
                 );
                 
                 if (overlap) {
-                    hasConflict = true;
-                    if (!conflictWith.includes(astroInterval.mode)) {
-                        conflictWith.push(astroInterval.mode);
+                    hasAstroConflict = true;
+                    if (!astroConflictWith.includes(astroInterval.mode)) {
+                        astroConflictWith.push(astroInterval.mode);
                     }
                     
                     console.log('Конфликт с астрокоррекцией:', {
@@ -401,6 +403,8 @@ export function useScheduleState() {
 
         newInterval.hasConflict = hasConflict;
         newInterval.conflictWith = conflictWith;
+        newInterval.hasAstroConflict = hasAstroConflict;
+        newInterval.astroConflictWith = astroConflictWith;
         
         const zasvetkaCheck = IntervalUtils.checkZasvetkaProximity(
             newInterval.startTime,
@@ -412,7 +416,11 @@ export function useScheduleState() {
         newInterval.zasvetkaConflict = zasvetkaCheck.zasvetkaConflict;
         newInterval.zasvetkaDistance = zasvetkaCheck.minDistance;
         
-        newInterval.willBeSaved = !hasConflict && !zasvetkaCheck.zasvetkaConflict && !zasvetkaCheck.nearZasvetka;
+        newInterval.willBeSaved = 
+            !hasConflict && 
+            !hasAstroConflict &&
+            !zasvetkaCheck.zasvetkaConflict && 
+            !zasvetkaCheck.nearZasvetka;
     }
 
     async function checkAndAddAstrocorrection(date: string): Promise<boolean> {
@@ -459,6 +467,8 @@ export function useScheduleState() {
                         ...interval,
                         hasConflict: updatedInterval.hasConflict,
                         conflictWith: updatedInterval.conflictWith,
+                        hasAstroConflict: updatedInterval.hasAstroConflict,
+                        astroConflictWith: updatedInterval.astroConflictWith,
                         nearZasvetka: updatedInterval.nearZasvetka,
                         zasvetkaConflict: updatedInterval.zasvetkaConflict,
                         zasvetkaDistance: updatedInterval.zasvetkaDistance,
@@ -602,7 +612,7 @@ export function useScheduleState() {
         if (interval.inShadow && interval.willBeSavedInShadow) {
             return '#ff69b4'; 
         }
-        if (interval.zasvetkaConflict || interval.nearZasvetka) {
+        if (interval.zasvetkaConflict || interval.nearZasvetka || interval.hasAstroConflict) {
             return '#ffffff';
         }
         if (interval.hasConflict) {
@@ -615,6 +625,10 @@ export function useScheduleState() {
     function getIntervalTitle(interval: TimeInterval): string {
         let title = interval.title || '';
         
+        if (interval.hasAstroConflict) {
+            title += ` (КОНФЛИКТ С АСТРОКОРРЕКЦИЕЙ)`;
+        }
+
         if (interval.hasConflict) {
             const conflictModes = interval.conflictWith?.map(modeId => {
                 const mode = WORK_MODES.find(m => m.id === modeId);

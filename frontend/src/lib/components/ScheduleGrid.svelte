@@ -249,7 +249,11 @@
         
         if (interval.isAstrocorrection) {
             classes.push('astrocorrection-interval');
-        } else if (interval.zasvetkaConflict || interval.nearZasvetka) {
+        } else if (interval.hasAstroConflict) {
+            classes.push('astro-conflict-interval');
+        }
+
+        if (interval.zasvetkaConflict || interval.nearZasvetka) {
             classes.push('zasvetka-conflict-interval');
         } else if (interval.hasConflict) {
             classes.push('conflict-interval');

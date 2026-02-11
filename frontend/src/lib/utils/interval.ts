@@ -213,6 +213,8 @@ export class IntervalUtils {
             ...interval,
             hasConflict: false,
             conflictWith: [],
+            hasAstroConflict: false,
+            astroConflictWith: [],
             nearZasvetka: false,
             zasvetkaConflict: false,
             zasvetkaDistance: 0,
@@ -260,16 +262,14 @@ export class IntervalUtils {
                 );
                 
                 if (overlap) {
-                    updatedIntervals[i].hasConflict = true;
+                    updatedIntervals[i].hasAstroConflict = true;
                     
-                    if (!updatedIntervals[i].conflictWith?.includes(astroInterval.mode)) {
-                        updatedIntervals[i].conflictWith = [
-                            ...(updatedIntervals[i].conflictWith || []), 
+                    if (!updatedIntervals[i].astroConflictWith?.includes(astroInterval.mode)) {
+                        updatedIntervals[i].astroConflictWith = [
+                            ...(updatedIntervals[i].astroConflictWith || []), 
                             astroInterval.mode
                         ];
                     }
-                    
-                    updatedIntervals[i].willBeSaved = false;
                     
                     console.log(`Конфликт с астрокоррекцией: интервал ${updatedIntervals[i].id}`, {
                         interval: `${updatedIntervals[i].startTime}-${updatedIntervals[i].endTime}`,
@@ -299,7 +299,12 @@ export class IntervalUtils {
                 interval.willBeSaved = false;
             }
             else {
-                if (interval.hasConflict || interval.zasvetkaConflict || interval.nearZasvetka) {
+                if (
+                    interval.hasConflict || 
+                    interval.zasvetkaConflict || 
+                    interval.nearZasvetka || 
+                    interval.hasAstroConflict
+                ) {
                     interval.willBeSaved = false;
                 }
             }

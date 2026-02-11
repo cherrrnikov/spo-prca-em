@@ -27,6 +27,8 @@ export interface TimeInterval {
     
     hasConflict?: boolean;  // true если есть пересечение с интервалом другого режима
     conflictWith?: number[]; // массив mode id с которыми есть пересечение
+    hasAstroConflict?: boolean;  // true если есть пересечение с астрокоррекцией
+    astroConflictWith?: number[]; 
     willBeSaved?: boolean;  // true - будет сохранено, false - не будет сохранено
     nearZasvetka?: boolean;          // true если интервал близко к засветке (< 60 секунд)
     inShadow?: boolean,
