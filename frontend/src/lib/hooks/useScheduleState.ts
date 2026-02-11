@@ -12,11 +12,13 @@ import type {
     TimeInterval,
     ZasvetkaInterval
 } from '$lib/types/schedule';
+import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
 import { IntervalUtils } from '$lib/utils/interval';
 import { IntervalValidationService } from '$lib/utils/intervalValidation';
 import { ModeUtils } from '$lib/utils/mode';
 import { TimeUtils } from '$lib/utils/time';
 import { get, writable } from 'svelte/store';
+import { ScheduleApiService } from '../../features/services/api/scheduleApi.service';
 import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
 
 export function useScheduleState() {
@@ -36,6 +38,7 @@ export function useScheduleState() {
     const editingInterval = writable<TimeInterval | null>(null);
     const selectedIntervalId = writable<string | null>(null);
     const contextDate = writable<string>('');
+    const hasAstrocorrectionData = writable<boolean>(false);
 
     let isEditing = writable(true);
 
@@ -75,6 +78,12 @@ export function useScheduleState() {
     }
 
     function handleIntervalClick(interval: TimeInterval) {
+        if (interval.isAstrocorrection) {
+            console.log('Попытка редактировать астрокоррекцию - операция запрещена');
+            alert('Попытка редактировать астрокоррекцию - операция запрещена');
+            return;
+        }
+
         isEditing.set(true);
 
         const intervalWithDefaults = {
@@ -93,9 +102,18 @@ export function useScheduleState() {
         console.log(`Удаление интервала: ${intervalId}`);
         
         const currentIntervals = get(intervals);
+        const intervalToDelete = currentIntervals.find(i => i.id === intervalId);
+
+        if (intervalToDelete?.isAstrocorrection) {
+            console.warn("Попытка удалить астрокоррекцию - операция запрещена");
+            alert("Попытка удалить астрокоррекцию - операция запрещена");
+            return;
+        }
+
+        intervals.set(currentIntervals.filter(interval => interval.id !== intervalId));
+
         const currentPrograms = get(createdPrograms);
         
-        intervals.set(currentIntervals.filter(interval => interval.id !== intervalId));
         createdPrograms.set(currentPrograms.filter(program => program.tempId !== intervalId));
         
         const currentEditingInterval = get(editingInterval);
@@ -319,8 +337,10 @@ export function useScheduleState() {
         const currentPpiAssignments = get(ppiAssignments);
         const currentZasvetkaIntervals = get(zasvetkaIntervals);
 
+        const nonAstroIntervals = currentIntervals.filter(i => !i.isAstrocorrection);
+
         const allIntervals = [
-            ...currentIntervals,
+            ...nonAstroIntervals,
             ...(currentOperatorData ? 
                 ScheduleCreationService.convertToTimeIntervals(
                     currentOperatorData, 
@@ -353,6 +373,32 @@ export function useScheduleState() {
             }
         }
         
+        if (!newInterval.isAstrocorrection) {
+            const astroIntervals = currentIntervals.filter(i => i.isAstrocorrection);
+            
+            for (const astroInterval of astroIntervals) {
+                const overlap = IntervalUtils.checkTwoIntervalsOverlap(
+                    newInterval.startTime,
+                    newInterval.endTime,
+                    astroInterval.startTime,
+                    astroInterval.endTime
+                );
+                
+                if (overlap) {
+                    hasConflict = true;
+                    if (!conflictWith.includes(astroInterval.mode)) {
+                        conflictWith.push(astroInterval.mode);
+                    }
+                    
+                    console.log('Конфликт с астрокоррекцией:', {
+                        newInterval: `${newInterval.startTime}-${newInterval.endTime}`,
+                        astroInterval: `${astroInterval.startTime}-${astroInterval.endTime}`,
+                        mode: newInterval.mode
+                    });
+                }
+            }
+        }
+
         newInterval.hasConflict = hasConflict;
         newInterval.conflictWith = conflictWith;
         
@@ -367,6 +413,31 @@ export function useScheduleState() {
         newInterval.zasvetkaDistance = zasvetkaCheck.minDistance;
         
         newInterval.willBeSaved = !hasConflict && !zasvetkaCheck.zasvetkaConflict && !zasvetkaCheck.nearZasvetka;
+    }
+
+    async function checkAndAddAstrocorrection(date: string): Promise<boolean> {
+        try {
+            const hasAstro = await ScheduleApiService.hasAstrocorrectionData(date);
+            hasAstrocorrectionData.set(hasAstro);
+
+            if (get(intervals).length > 0) {
+                const intervalsWithAstro = AstrocorrectionService.mergeAstrocorrection(
+                    get(intervals),
+                    date,
+                    hasAstro
+                );
+
+                intervals.set(intervalsWithAstro);
+            
+                updateAllConflicts();
+            }
+
+            return hasAstro;
+        } catch (error) {
+            console.error("Ошибка при проверке астрокоррекции: ", error);
+            hasAstrocorrectionData.set(false);
+            return false;
+        }
     }
 
     function updateAllConflicts() {
@@ -524,6 +595,10 @@ export function useScheduleState() {
     }
 
     function getIntervalColor(interval: TimeInterval): string {
+        if (interval.isAstrocorrection) {
+            return '#1e40af'; // Синий цвет для астрокоррекции
+        }
+
         if (interval.inShadow && interval.willBeSavedInShadow) {
             return '#ff69b4'; 
         }
@@ -581,6 +656,7 @@ export function useScheduleState() {
         editingInterval,
         selectedIntervalId,
         contextDate,
+        hasAstrocorrectionData,
         isEditing,
         
         loadUserData,
@@ -590,6 +666,7 @@ export function useScheduleState() {
         handleModeSelect,
         handleModeFormSubmit,
         handleModeFormCancel,
+        checkAndAddAstrocorrection,
         
         getIntervalColor,
         getIntervalTitle,

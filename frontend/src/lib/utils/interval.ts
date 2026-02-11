@@ -47,6 +47,10 @@ export class IntervalUtils {
                 continue;
             }
             
+            if (interval.isAstrocorrection) {
+                continue;
+            }
+            
             const overlaps = this.checkTwoIntervalsOverlap(
                 newStartTime,
                 newEndTime,
@@ -200,7 +204,10 @@ export class IntervalUtils {
         zasvetkaIntervals: ZasvetkaInterval[] = [],
         shadowIntervals: ShadowInterval[] = []
     ): TimeInterval[] {
-        const shadowProcessedIntervals = this.checkShadowPriority(intervals, shadowIntervals || []);
+        const astroIntervals = intervals.filter(i => i.isAstrocorrection);
+        const regularIntervals = intervals.filter(i => !i.isAstrocorrection);
+        
+        const shadowProcessedIntervals = this.checkShadowPriority(regularIntervals, shadowIntervals || []);
 
         const updatedIntervals = shadowProcessedIntervals.map(interval => ({
             ...interval,
@@ -243,6 +250,34 @@ export class IntervalUtils {
                     intervalB.willBeSaved = false;
                 }
             }
+            
+            for (const astroInterval of astroIntervals) {
+                const overlap = this.checkTwoIntervalsOverlap(
+                    updatedIntervals[i].startTime,
+                    updatedIntervals[i].endTime,
+                    astroInterval.startTime,
+                    astroInterval.endTime
+                );
+                
+                if (overlap) {
+                    updatedIntervals[i].hasConflict = true;
+                    
+                    if (!updatedIntervals[i].conflictWith?.includes(astroInterval.mode)) {
+                        updatedIntervals[i].conflictWith = [
+                            ...(updatedIntervals[i].conflictWith || []), 
+                            astroInterval.mode
+                        ];
+                    }
+                    
+                    updatedIntervals[i].willBeSaved = false;
+                    
+                    console.log(`Конфликт с астрокоррекцией: интервал ${updatedIntervals[i].id}`, {
+                        interval: `${updatedIntervals[i].startTime}-${updatedIntervals[i].endTime}`,
+                        astro: `${astroInterval.startTime}-${astroInterval.endTime}`,
+                        mode: updatedIntervals[i].mode
+                    });
+                }
+            }
         }
         
         const zasvetkaArray = zasvetkaIntervals || [];
@@ -259,15 +294,6 @@ export class IntervalUtils {
             
             if (interval.inShadow && interval.willBeSavedInShadow) {
                 interval.willBeSaved = true;
-                
-                console.log(`Интервал ${interval.id} в тени будет сохранен:`, {
-                    time: `${interval.startTime}-${interval.endTime}`,
-                    willBeSavedInShadow: interval.willBeSavedInShadow,
-                    willBeSaved: interval.willBeSaved,
-                    hasConflict: interval.hasConflict,
-                    zasvetkaConflict: interval.zasvetkaConflict,
-                    shadowPriority: interval.shadowPriority
-                });
             } 
             else if (interval.inShadow) {
                 interval.willBeSaved = false;
@@ -279,7 +305,6 @@ export class IntervalUtils {
             }
         });
 
-        console.log('Проверка конфликтов завершена');
-        return updatedIntervals;
+        return [...updatedIntervals, ...astroIntervals];
     }
 }

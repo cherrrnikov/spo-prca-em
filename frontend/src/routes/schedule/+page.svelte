@@ -8,12 +8,14 @@
     	WORK_MODES
     } from '$lib/constants/schedule';
     import { useScheduleState } from '$lib/hooks/useScheduleState';
-    import type { OperatorData, PpiAssignment } from '$lib/types/schedule';
+    import type { OperatorData, PpiAssignment, TimeInterval } from '$lib/types/schedule';
+    import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
     import { IntervalUtils } from '$lib/utils/interval';
     import { TimeUtils } from '$lib/utils/time';
     import { onMount } from 'svelte';
     import CreationHeader from '../../features/schedule-creation/components/CreationHeader.svelte';
     import ModeCreationFormComponent from '../../features/schedule-creation/components/ModeCreationForm.svelte';
+    import { ScheduleApiService } from '../../features/services/api/scheduleApi.service';
     import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
 
     const cities = CITIES;
@@ -36,7 +38,8 @@
         createdPrograms,
         editingInterval,
         selectedIntervalId,
-        contextDate,       
+        contextDate,   
+        hasAstrocorrectionData,    
         isEditing,  
         
         loadUserData,
@@ -46,6 +49,7 @@
         handleModeSelect,
         handleModeFormSubmit,
         handleModeFormCancel,
+        checkAndAddAstrocorrection,
         
         getIntervalColor,
         getIntervalTitle,
@@ -83,6 +87,7 @@
             setContextDate(date); 
             selectedProgramDate.set(date);
             await loadForecastData(date);
+            await checkAndAddAstrocorrection(date);
         }
 
         const newIntervals = ScheduleCreationService.convertToTimeIntervals(
@@ -91,18 +96,33 @@
             workModes
         );
         
+        const intervalsWithAstro = await addAstrocorrectionToIntervals(newIntervals, $contextDate);
         const currentZasvetkaIntervals = $zasvetkaIntervals;
         const currentShadowIntervals = $shadowIntervals;
 
-        if (currentZasvetkaIntervals.length > 0 || currentShadowIntervals.length > 0) {
-            const intervalsWithConflicts = IntervalUtils.checkAllConflicts(newIntervals, currentZasvetkaIntervals, currentShadowIntervals);
-            intervals.set(intervalsWithConflicts);
-        } else {
-            intervals.set(newIntervals);
-        }
+        const intervalsWithConflicts = IntervalUtils.checkAllConflicts(
+            intervalsWithAstro, 
+            currentZasvetkaIntervals, 
+            currentShadowIntervals
+        );
+
+        intervals.set(intervalsWithConflicts);
 
         isEditing.set(false);
         logAllIntervals('После загрузки данных оператора');
+    }
+
+    async function addAstrocorrectionToIntervals(intervals: TimeInterval[], date: string): Promise<TimeInterval[]> {
+        try {
+            const hasAstro = await ScheduleApiService.hasAstrocorrectionData(date);
+            console.log('Астрокоррекция для даты', date, ':', 
+                hasAstro ? 'ПОЛНЫЙ РЕЖИМ (6 интервалов)' : 'ОБЫЧНЫЙ РЕЖИМ (2 интервала)');
+            
+            return AstrocorrectionService.mergeAstrocorrection(intervals, date, hasAstro);
+        } catch (error) {
+            console.warn('Ошибка при добавлении астрокоррекции:', error);
+            return intervals;
+        }
     }
 
     async function loadForecastData(date: string) {

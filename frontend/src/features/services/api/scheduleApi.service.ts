@@ -58,26 +58,46 @@ export class ScheduleApiService {
         return await response.json();
     }
 
-    static async loadVkiData(date: string): Promise<Kr01DataResponse> {
-        const response = await fetch(`${this.BASE_URL}/vki/correction/${date}`);
-        if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error("Нет данных по коррекции орбиты для выбранной даты");
+    static async loadVkiData(date: string): Promise<Kr01DataResponse | null> {
+        try {
+            const response = await fetch(`${this.BASE_URL}/schedule/vki-proxy?date=${date}`);
+            
+            if (!response.ok) {
+                if (response.status === 404) {
+                    console.log(`Данные ВКИ не найдены для даты: ${date}`);
+                    return null;
+                }
+                throw new Error(`Ошибка сервера при загрузке данных ВКИ: ${response.status}`);
             }
-            throw new Error(`Ошибка сервера при загрузке данных ВКИ: ${response.status}`);
+            
+            const data = await response.json();
+            return data;
+            
+        } catch (error) {
+            console.warn(`Ошибка загрузки данных ВКИ для даты ${date}:`, error);
+            return null;
         }
-        return await response.json();
     }
 
-    static async loadRotationData(date: string): Promise<Ro02DataResponse> {
-        const response = await fetch(`${this.BASE_URL}/rotation/seasonal/${date}`);
-        if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error("Нет данных по сезонным разворотам для выбранной даты");
+    static async loadRotationData(date: string): Promise<Ro02DataResponse | null> {
+        try {
+            const response = await fetch(`${this.BASE_URL}/schedule/rotation-proxy?date=${date}`);
+            
+            if (!response.ok) {
+                if (response.status === 404) {
+                    console.log(`Данные разворотов не найдены для даты: ${date}`);
+                    return null;
+                }
+                throw new Error(`Ошибка сервера при загрузке данных разворотов: ${response.status}`);
             }
-            throw new Error(`Ошибка сервера при загрузке данных разворотов: ${response.status}`);
+            
+            const data = await response.json();
+            return data;
+            
+        } catch (error) {
+            console.warn(`Ошибка загрузки данных разворотов для даты ${date}:`, error);
+            return null;
         }
-        return await response.json();
     }
 
     static async hasAstrocorrectionData(date: string): Promise<boolean> {
@@ -87,21 +107,41 @@ export class ScheduleApiService {
                 this.loadRotationData(date)
             ]);
             
-            const hasVkiData = vkiData.status === 'fulfilled' && 
-                !(vkiData.value instanceof Error || vkiData.value === null);
+            let hasVkiData = false;
+            let hasRotationData = false;
             
-            const hasRotationData = rotationData.status === 'fulfilled' && 
-                !(rotationData.value instanceof Error || rotationData.value === null);
+            if (vkiData.status === 'fulfilled') {
+                const data = vkiData.value;
+                hasVkiData = data !== null && 
+                                data.main !== null && 
+                                data.impulses && 
+                                data.impulses.length > 0;
+                console.log('VKI data details:', { 
+                    main: data?.main, 
+                    impulsesCount: data?.impulses?.length,
+                    hasVkiData 
+                });
+            }
             
-            console.log('Проверка астрокоррекции:', {
-                date,
+            if (rotationData.status === 'fulfilled') {
+                const data = rotationData.value;
+                hasRotationData = data !== null && 
+                                    data.rotations && 
+                                    data.rotations.length > 0;
+                console.log('Rotation data details:', {  
+                    rotationsCount: data?.rotations?.length,
+                    hasRotationData 
+                });
+            }
+            console.log('Проверка астрокоррекции для даты', date, ':', {
                 hasVkiData,
                 hasRotationData,
-                vkiData: vkiData.status === 'fulfilled' ? 'успех' : 'ошибка',
-                rotationData: rotationData.status === 'fulfilled' ? 'успех' : 'ошибка'
+                vkiResult: vkiData.status,
+                rotationResult: rotationData.status
             });
             
             return hasVkiData || hasRotationData;
+            
         } catch (error) {
             console.warn('Ошибка при проверке данных астрокоррекции:', error);
             return false;

@@ -52,7 +52,7 @@
     };
 
     type PositionedInterval = {
-        type: 'schedule';
+        type: 'schedule' | 'astrocorrection';
         id: string;
         modeIndex: number;
         color: string;
@@ -124,6 +124,10 @@
 
     function handleIntervalClick(event: MouseEvent, interval: TimeInterval) {
         event.preventDefault();
+
+        if (interval.isAstrocorrection) {
+            return;
+        }
         
         if (event.button === 0) {
 
@@ -172,8 +176,12 @@
             const color = getIntervalColor?.(interval) || interval.color;
             const title = getIntervalTitle?.(interval) || interval.title || '';
             
+            const intervalType: 'schedule' | 'astrocorrection' = interval.isAstrocorrection 
+                ? 'astrocorrection' 
+                : 'schedule';
+            
             const positionedInterval: PositionedInterval = {
-                type: 'schedule',
+                type: intervalType,
                 id: interval.id,
                 modeIndex,
                 color,
@@ -203,6 +211,8 @@
         type: 'shadow' | 'zasvetka'
     ) {
         intervalsArray.forEach(interval => {
+            const title = `${interval.title || (type === 'shadow' ? 'Тень' : 'Засветка')} ${interval.startTime}-${interval.endTime}`;
+
             const positionedForecastInterval: PositionedForecastInterval = {
                 type,
                 id: interval.id,
@@ -224,7 +234,7 @@
                     top: `0px`,
                     height: `${GridPositionUtils.ROW_HEIGHT * (workModes.length + 1)}px`
                 },
-                title: interval.title,
+                title: title,
                 opacity: interval.opacity,
                 zIndex: interval.zIndex,
                 data: interval
@@ -237,7 +247,9 @@
     function getIntervalClassName(interval: TimeInterval): string {
         const classes = [];
         
-        if (interval.zasvetkaConflict || interval.nearZasvetka) {
+        if (interval.isAstrocorrection) {
+            classes.push('astrocorrection-interval');
+        } else if (interval.zasvetkaConflict || interval.nearZasvetka) {
             classes.push('zasvetka-conflict-interval');
         } else if (interval.hasConflict) {
             classes.push('conflict-interval');
@@ -311,24 +323,52 @@
                 --cell-width: {cellWidth}px;
              ">
             {#each positionedIntervals() as item (item.id)}
-                <div class="interval interval-{item.type} {item.type === 'schedule' ? item.className : ''}"
-                     style="
-                        left: {item.position.left}; 
-                        width: {item.position.width}; 
-                        top: {item.position.top}; 
-                        height: {item.position.height};
-                        background: {item.color};
-                        opacity: {item.opacity || 1};
-                        z-index: {item.zIndex || 10};
-                     "
-                     title="{item.title}"
-                     on:click={(e) => item.type === 'schedule' && handleIntervalClick(e, item.data)}
-                     on:contextmenu|preventDefault={(e) => item.type === 'schedule' && handleIntervalClick(e, item.data)}>
-                    {#if item.type === 'schedule'}
+                {#if item.type === 'astrocorrection'}
+                    <div class="interval interval-astrocorrection {item.className}"
+                        style="
+                            left: {item.position.left}; 
+                            width: {item.position.width}; 
+                            top: {item.position.top}; 
+                            height: {item.position.height};
+                            background: {item.color};
+                            opacity: {item.opacity || 0.8};
+                            z-index: {item.zIndex || 5};
+                        "
+                        title="{item.title}">
                         <div class="interval-content" style="background: {item.color};">
                         </div>
-                    {/if}
-                </div>
+                    </div>
+                {:else if item.type === 'schedule'}
+                    <div class="interval interval-schedule {item.className}"
+                        style="
+                            left: {item.position.left}; 
+                            width: {item.position.width}; 
+                            top: {item.position.top}; 
+                            height: {item.position.height};
+                            background: {item.color};
+                            opacity: {item.opacity || 1};
+                            z-index: {item.zIndex || 10};
+                        "
+                        title="{item.title}"
+                        on:click={(e) => handleIntervalClick(e, item.data)}
+                        on:contextmenu|preventDefault={(e) => handleIntervalClick(e, item.data)}>
+                        <div class="interval-content" style="background: {item.color};">
+                        </div>
+                    </div>
+                {:else if item.type === 'shadow' || item.type === 'zasvetka'}
+                    <div class="interval interval-{item.type}"
+                        style="
+                            left: {item.position.left}; 
+                            width: {item.position.width}; 
+                            top: {item.position.top}; 
+                            height: {item.position.height};
+                            background: {item.color};
+                            opacity: {item.opacity || 1};
+                            z-index: {item.zIndex || 10};
+                        "
+                        title="{item.title}">
+                    </div>
+                {/if}
             {/each}
         </div>
     </div>
@@ -448,6 +488,26 @@
         font-size: clamp(0.65rem, 0.8vw, 0.8rem);
     }
     
+    .interval-shadow {
+        z-index: 20;
+        border-left: 1px solid black;
+        border-right: 1px solid black;
+        border-radius: 0; 
+        cursor: default !important;
+    }
+
+    .interval-zasvetka {
+        z-index: 10;
+        border-left: 1px solid black;
+        border-right: 1px solid black;
+        border-radius: 0; 
+        cursor: default !important;
+    }
+    
+    .interval-astrocorrection {
+        cursor: default !important;        
+    }
+
     .interval-schedule {
         cursor: pointer;
         transition: transform 0.2s, box-shadow 0.2s;
@@ -457,20 +517,6 @@
     .interval-schedule:hover {
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 20;
-    }
-    
-    .interval-shadow {
-        z-index: 20;
-        border-left: 1px solid black;
-        border-right: 1px solid black;
-        border-radius: 0; 
-    }
-
-    .interval-zasvetka {
-        z-index: 10;
-        border-left: 1px solid black;
-        border-right: 1px solid black;
-        border-radius: 0; 
     }
     
     .interval-content {
