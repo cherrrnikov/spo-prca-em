@@ -275,6 +275,7 @@
     {#if workModes && workModes.length > 0}
         <div class="modes-container">
             {#each workModes as mode, i}
+            {@const isAstroMode = mode.id === 9}
                 <div class="mode-label-container" 
                      style="top: {1.4 * GridPositionUtils.TIME_HEIGHT + i * GridPositionUtils.ROW_HEIGHT}px">
                     <label class="mode-checkbox">
@@ -284,7 +285,7 @@
                             value={mode.id}
                             checked={selectedMode === mode.id}
                             on:change={() => selectMode(mode.id)}
-                            disabled={isEditing}
+                            disabled={isEditing || isAstroMode}
                         />
                         <span class="mode-text">{mode.label}</span>
                     </label>
