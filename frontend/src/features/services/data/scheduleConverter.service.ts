@@ -67,8 +67,8 @@ export class ScheduleConverterService {
             shadows: forecastData.shadows.map(shadow => ({
                 id: `shadow_${shadow.id}`,
                 type: 'shadow',
-                startTime: TimeUtils.extractTimeFromTimestamp(shadow.dTIn),
-                endTime: TimeUtils.extractTimeFromTimestamp(shadow.dTOut),
+                startTime: TimeUtils.extractTimeFromTimestamp(shadow.d_t_in),
+                endTime: TimeUtils.extractTimeFromTimestamp(shadow.d_t_out),
                 duration: shadow.duration,
                 title: 'Тень',
                 color: 'rgba(83, 83, 83, 1)',
@@ -78,8 +78,8 @@ export class ScheduleConverterService {
             zasvetki: forecastData.zasvetki.map(zasvetka => ({
                 id: `zasvetka_${zasvetka.id}`,
                 type: 'zasvetka',
-                startTime: TimeUtils.extractTimeFromTimestamp(zasvetka.dTIn),
-                endTime: TimeUtils.extractTimeFromTimestamp(zasvetka.dTOut),
+                startTime: TimeUtils.extractTimeFromTimestamp(zasvetka.d_t_in),
+                endTime: TimeUtils.extractTimeFromTimestamp(zasvetka.d_t_out),
                 duration: zasvetka.duration,
                 title: 'Засветка',
                 color: 'rgba(175, 175, 175, 1)',
@@ -95,8 +95,8 @@ export class ScheduleConverterService {
         }
 
         return vkiData.impulses.map((impulse: Kr01ImpulseDto, index: number) => {
-            const time = this.extractTimeOnly(impulse.dateIm);
-            const date = impulse.dateIm.split('T')[0];
+            const time = this.extractTimeOnly(impulse.date_im);
+            const date = impulse.date_im.split('T')[0];
             
             // Длительность 5 минут (300 секунд) фиксированная для отображения
             const duration = impulse.dlit || 300;
@@ -114,9 +114,9 @@ export class ScheduleConverterService {
                 zIndex: 1,
                 impulseNumber: index + 1,
                 mass: impulse.massa,
-                angle: impulse.uglV,
-                nVit: impulse.nVit,
-                nDu: impulse.nDu
+                angle: impulse.ugl_v,
+                nVit: impulse.n_vit,
+                nDu: impulse.n_du
             };
         });
     }
@@ -129,12 +129,12 @@ export class ScheduleConverterService {
         return rotationData.rotations
             .filter((rotation: Ro02Dto) => {
                 // Рисуем разворот ТОЛЬКО если дата запроса совпадает с dataRazv
-                const rotationDate = rotation.dataRazv.split('T')[0];
+                const rotationDate = rotation.data_razv.split('T')[0];
                 return rotationDate === targetDate;
             })
             .map((rotation: Ro02Dto, index: number) => {
-                const time = this.extractTimeOnly(rotation.dataRazv);
-                const date = rotation.dataRazv.split('T')[0];
+                const time = this.extractTimeOnly(rotation.data_razv);
+                const date = rotation.data_razv.split('T')[0];
                 
                 const duration = 300;
                 const endTime = TimeUtils.calculateEndTime(time, duration / 60);

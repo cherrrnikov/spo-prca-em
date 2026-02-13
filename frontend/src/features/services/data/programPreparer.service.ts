@@ -18,7 +18,7 @@ export class ProgramPreparerService {
         scheduleStatus: ScheduleStatus
     ): CreateProgramRequest {
         const numRp = this.generateProgramNumber();
-        const numKa = operatorData.main.nKa;
+        const numKa = operatorData.main.n_ka;
 
         const mainData = {
             numRp,
@@ -32,8 +32,8 @@ export class ProgramPreparerService {
         const modes: ProgramModeData[] = [];
 
         // Добавляем режимы КВД
-        if (operatorData.kvdList?.length) {
-            operatorData.kvdList.forEach(kvd => {
+        if (operatorData.kvd_list?.length) {
+            operatorData.kvd_list.forEach(kvd => {
                 const assignment = ppiAssignments.find(a => a.recordId === kvd.id && a.recordType === 'kvd');
                 if (assignment) {
                     modes.push(this.createKvdModeData(numRp, numKa, kvd, assignment));
@@ -42,8 +42,8 @@ export class ProgramPreparerService {
         }
 
         // Добавляем режимы ТНП
-        if (operatorData.tnpList?.length) {
-            operatorData.tnpList.forEach(tnp => {
+        if (operatorData.tnp_list?.length) {
+            operatorData.tnp_list.forEach(tnp => {
                 const assignment = ppiAssignments.find(a => a.recordId === tnp.id && a.recordType === 'tnp');
                 if (assignment) {
                     modes.push(this.createTnpModeData(numRp, numKa, tnp, assignment));
@@ -52,18 +52,18 @@ export class ProgramPreparerService {
         }
 
         // Добавляем режимы ТС
-        if (operatorData.tsList?.length) {
-            operatorData.tsList.forEach(ts => {
+        if (operatorData.ts_list?.length) {
+            operatorData.ts_list.forEach(ts => {
                 const assignment = ppiAssignments.find(a => a.recordId === ts.id && a.recordType === 'ts');
                 if (assignment) {
-                    modes.push(this.createTsModeData(numRp, numKa, ts, assignment, operatorData.main?.kZajv));
+                    modes.push(this.createTsModeData(numRp, numKa, ts, assignment, operatorData.main?.k_zajv));
                 }
             });
         }
 
         // Добавляем режимы ОНА
-        if (operatorData.onaList?.length) {
-            operatorData.onaList.forEach(ona => {
+        if (operatorData.ona_list?.length) {
+            operatorData.ona_list.forEach(ona => {
                 const assignment = ppiAssignments.find(a => 
                     a.recordId === ona.id && a.recordType === 'ona'
                 );
@@ -208,10 +208,10 @@ export class ProgramPreparerService {
             dlit: ona.dlit,
             onaData: {  
                 id: ona.id,
-                idMain: ona.idMain,  
+                idMain: ona.id_main,  
                 dn: ona.dn,
                 dk: ona.dk,
-                nOna: ona.nOna,
+                nOna: ona.n_ona,
                 dlit: ona.dlit
             }
         };
@@ -225,10 +225,10 @@ export class ProgramPreparerService {
         let latestDate = new Date(`${selectedDate}T${selectedTime}:00`);
 
         const allRecords = [
-            ...(operatorData.kvdList || []),
-            ...(operatorData.tnpList || []),
-            ...(operatorData.tsList || []),
-            ...(operatorData.onaList || [])
+            ...(operatorData.kvd_list || []),
+            ...(operatorData.tnp_list || []),
+            ...(operatorData.ts_list || []),
+            ...(operatorData.ona_list || [])
         ];
 
         allRecords.forEach(record => {

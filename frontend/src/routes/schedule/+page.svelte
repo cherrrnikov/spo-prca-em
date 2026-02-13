@@ -85,8 +85,8 @@
         creationMode.set('operator');
         operatorDataLoaded.set(true);
 
-        if (newOperatorData.main?.dNp) {
-            const date = newOperatorData.main.dNp.split('T')[0];
+        if (newOperatorData.main?.d_np) {
+            const date = newOperatorData.main.d_np.split('T')[0];
             setContextDate(date); 
             selectedProgramDate.set(date);
             await loadForecastData(date);

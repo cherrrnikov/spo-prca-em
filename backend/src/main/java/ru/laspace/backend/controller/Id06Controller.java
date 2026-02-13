@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.laspace.backend.dto.id06.Id06DataResponse;
 import ru.laspace.backend.service.ConstantsService;
-import ru.laspace.backend.service.ScheduleDataService;
+import ru.laspace.backend.service.Id06Service;
 
 @Slf4j
 @RestController
@@ -30,9 +30,9 @@ import ru.laspace.backend.service.ScheduleDataService;
 @RequestMapping("/api/schedule")
 @CrossOrigin
 @Tag(name = "Планирование ПРЦА", description = "API для работы с данными планирования программ работы целевой аппаратуры")
-public class ScheduleDataController {
+public class Id06Controller {
 
-    private final ScheduleDataService scheduleDataService;
+    private final Id06Service id06Service;
     private final ConstantsService constantsService;
 
     @Operation(summary = "Получить данные оператора по дате", description = """
@@ -51,7 +51,7 @@ public class ScheduleDataController {
         log.info("Запрос данных оператора для даты: {}", date);
 
         try {
-            Id06DataResponse data = (Id06DataResponse) scheduleDataService.getOperatorData(date);
+            Id06DataResponse data = (Id06DataResponse) id06Service.getOperatorData(date);
 
             if (data == null) {
                 log.info("Данные не найдены для даты: {}", date);

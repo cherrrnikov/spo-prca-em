@@ -15,12 +15,12 @@ import ru.laspace.backend.dto.id06.Id06OnaDto;
 import ru.laspace.backend.dto.id06.Id06TnpDto;
 import ru.laspace.backend.dto.id06.Id06TsDto;
 import ru.laspace.backend.repository.Id06Repository;
-import ru.laspace.backend.service.ScheduleDataService;
+import ru.laspace.backend.service.Id06Service;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ScheduleDataServiceImpl implements ScheduleDataService {
+public class Id06ServiceImpl implements Id06Service {
     private final Id06Repository id06Repository;
 
     @Override

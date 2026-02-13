@@ -515,7 +515,7 @@ export function useScheduleState() {
 
         const baseData = {
             numRp: 0,
-            numKa: currentOperatorData?.main.nKa || 1,
+            numKa: currentOperatorData?.main.n_ka || 1,
             dateOn: dateOn,
             dateOff: dateOff,
             kodMode: formData.modeType!,

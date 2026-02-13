@@ -73,35 +73,35 @@ export class TsIntervalService {
     private static getMsuConfigFromTsRecord(tsRecord: Id06TsDto, msuNumber: 1 | 2): TsMsuConfig {
         if (msuNumber === 1) {
             return {
-                prMsu: tsRecord.prMsu1 || 0,
-                prVdMsu: tsRecord.prVdMsu1 || 0,
-                prIkMsu: tsRecord.prIkMsu1 || 0,
-                vd1: tsRecord.prVd1_1 || 0,
-                vd2: tsRecord.prVd2_1 || 0,
-                vd3: tsRecord.prVd3_1 || 0,
-                ik4: tsRecord.prIk4_1 || 0,
-                ik5: tsRecord.prIk5_1 || 0,
-                ik6: tsRecord.prIk6_1 || 0,
-                ik7: tsRecord.prIk7_1 || 0,
-                ik8: tsRecord.prIk8_1 || 0,
-                ik9: tsRecord.prIk9_1 || 0,
-                ik10: tsRecord.prIk10_1 || 0
+                prMsu: tsRecord.pr_msu1 || 0,
+                prVdMsu: tsRecord.pr_vd_msu1 || 0,
+                prIkMsu: tsRecord.pr_ik_msu1 || 0,
+                vd1: tsRecord.pr_vd1_1 || 0,
+                vd2: tsRecord.pr_vd2_1 || 0,
+                vd3: tsRecord.pr_vd3_1 || 0,
+                ik4: tsRecord.pr_ik4_1 || 0,
+                ik5: tsRecord.pr_ik5_1 || 0,
+                ik6: tsRecord.pr_ik6_1 || 0,
+                ik7: tsRecord.pr_ik7_1 || 0,
+                ik8: tsRecord.pr_ik8_1 || 0,
+                ik9: tsRecord.pr_ik9_1 || 0,
+                ik10: tsRecord.pr_ik10_1 || 0
             };
         } else {
             return {
-                prMsu: tsRecord.prMsu2 || 0,
-                prVdMsu: tsRecord.prVdMsu2 || 0,
-                prIkMsu: tsRecord.prIkMsu2 || 0,
-                vd1: tsRecord.prVd1_2 || 0,
-                vd2: tsRecord.prVd2_2 || 0,
-                vd3: tsRecord.prVd3_2 || 0,
-                ik4: tsRecord.prIk4_2 || 0,
-                ik5: tsRecord.prIk5_2 || 0,
-                ik6: tsRecord.prIk6_2 || 0,
-                ik7: tsRecord.prIk7_2 || 0,
-                ik8: tsRecord.prIk8_2 || 0,
-                ik9: tsRecord.prIk9_2 || 0,
-                ik10: tsRecord.prIk10_2 || 0
+                prMsu: tsRecord.pr_msu2 || 0,
+                prVdMsu: tsRecord.pr_vd_msu2 || 0,
+                prIkMsu: tsRecord.pr_ik_msu2 || 0,
+                vd1: tsRecord.pr_vd1_2 || 0,
+                vd2: tsRecord.pr_vd2_2 || 0,
+                vd3: tsRecord.pr_vd3_2 || 0,
+                ik4: tsRecord.pr_ik4_2 || 0,
+                ik5: tsRecord.pr_ik5_2 || 0,
+                ik6: tsRecord.pr_ik6_2 || 0,
+                ik7: tsRecord.pr_ik7_2 || 0,
+                ik8: tsRecord.pr_ik8_2 || 0,
+                ik9: tsRecord.pr_ik9_2 || 0,
+                ik10: tsRecord.pr_ik10_2 || 0
             };
         }
     }

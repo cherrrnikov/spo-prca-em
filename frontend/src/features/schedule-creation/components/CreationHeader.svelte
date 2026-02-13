@@ -75,20 +75,20 @@
     async function processAllRecords() {
         if (!operatorData) return;
         
-        if (operatorData.kvdList && operatorData.kvdList.length > 0) {
-            await processRecordBatch(operatorData.kvdList, 'kvd', 'Калибровка ВД');
+        if (operatorData.kvd_list && operatorData.kvd_list.length > 0) {
+            await processRecordBatch(operatorData.kvd_list, 'kvd', 'Калибровка ВД');
         }
         
-        if (operatorData.tnpList && operatorData.tnpList.length > 0) {
-            await processRecordBatch(operatorData.tnpList, 'tnp', 'Режим ТНП');
+        if (operatorData.tnp_list && operatorData.tnp_list.length > 0) {
+            await processRecordBatch(operatorData.tnp_list, 'tnp', 'Режим ТНП');
         }
         
-        if (operatorData.tsList && operatorData.tsList.length > 0) {
-            await processRecordBatch(operatorData.tsList, 'ts', 'Технологическая съемка');
+        if (operatorData.ts_list && operatorData.ts_list.length > 0) {
+            await processRecordBatch(operatorData.ts_list, 'ts', 'Технологическая съемка');
         }
 
-        if (operatorData.onaList && operatorData.onaList.length > 0) {
-            await processRecordBatch(operatorData.onaList, 'ona', 'Юстировка ОНА');
+        if (operatorData.ona_list && operatorData.ona_list.length > 0) {
+            await processRecordBatch(operatorData.ona_list, 'ona', 'Юстировка ОНА');
         }
         
         
@@ -160,16 +160,16 @@
             
             switch (ppiModal.recordType) {
                 case 'kvd':
-                    records = operatorData.kvdList || [];
+                    records = operatorData.kvd_list || [];
                     break;
                 case 'tnp':
-                    records = operatorData.tnpList || [];
+                    records = operatorData.tnp_list || [];
                     break;
                 case 'ts':
-                    records = operatorData.tsList || [];
+                    records = operatorData.ts_list || [];
                     break;
                 case 'ona':
-                    records = operatorData.onaList || [];
+                    records = operatorData.ona_list || [];
             }
             
             records.forEach(rec => {

@@ -34,7 +34,7 @@ export class ScheduleApiService {
             main: responseData.forecast,
             shadows: responseData.shadows,
             zasvetki: responseData.zasvetki,
-            totalIntervals: responseData.shadows.length + responseData.zasvetki.length
+            total_intervals: responseData.shadows.length + responseData.zasvetki.length
         };
     }
 

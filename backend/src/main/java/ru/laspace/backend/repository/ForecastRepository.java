@@ -82,8 +82,8 @@ public class ForecastRepository {
             return ShadowDto.builder()
                     .id(rs.getLong("id"))
                     .nRec(rs.getLong("n_rec"))
-                    .dTIn(rs.getTimestamp("d_t_in").toLocalDateTime())
-                    .dTOut(rs.getTimestamp("d_t_out").toLocalDateTime())
+                    .d_t_in(rs.getTimestamp("d_t_in").toLocalDateTime())
+                    .d_t_out(rs.getTimestamp("d_t_out").toLocalDateTime())
                     .duration(rs.getInt("duration_seconds"))
                     .build();
         }
@@ -95,8 +95,8 @@ public class ForecastRepository {
             return ZasvetkaDto.builder()
                     .id(rs.getLong("id"))
                     .nRec(rs.getLong("n_rec"))
-                    .dTIn(rs.getTimestamp("d_t_in").toLocalDateTime())
-                    .dTOut(rs.getTimestamp("d_t_out").toLocalDateTime())
+                    .d_t_in(rs.getTimestamp("d_t_in").toLocalDateTime())
+                    .d_t_out(rs.getTimestamp("d_t_out").toLocalDateTime())
                     .duration(rs.getInt("duration_seconds"))
                     .build();
         }

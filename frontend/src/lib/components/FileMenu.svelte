@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
   import type { UserResponse } from '$lib/types/auth';
+  import type { TimeInterval } from '$lib/types/schedule';
   import { onMount } from 'svelte';
 //   import { scheduleIntervals } from '$lib/stores/scheduleStore';
   

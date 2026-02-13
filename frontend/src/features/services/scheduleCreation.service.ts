@@ -80,53 +80,53 @@ export class ScheduleCreationService {
         const intervals: TimeInterval[] = [];
         
         // Обработка КВД
-        if (operatorData.kvdList?.length) {
-            operatorData.kvdList.forEach(kvd => {
+        if (operatorData.kvd_list?.length) {
+            operatorData.kvd_list.forEach(kvd => {
                 const assignment = ppiAssignments.find(a => 
                     a.recordId === kvd.id && a.recordType === 'kvd'
                 );
                 
                 if (assignment) {
-                    intervals.push(this.createKvdInterval(kvd, assignment, operatorData.main?.kZajv));
+                    intervals.push(this.createKvdInterval(kvd, assignment, operatorData.main?.k_zajv));
                 }
             });
         }
         
         // Обработка ТНП
-        if (operatorData.tnpList?.length) {
-            operatorData.tnpList.forEach(tnp => {
+        if (operatorData.tnp_list?.length) {
+            operatorData.tnp_list.forEach(tnp => {
                 const assignment = ppiAssignments.find(a => 
                     a.recordId === tnp.id && a.recordType === 'tnp'
                 );
                 
                 if (assignment) {
-                    intervals.push(this.createTnpInterval(tnp, assignment, operatorData.main?.kZajv));
+                    intervals.push(this.createTnpInterval(tnp, assignment, operatorData.main?.k_zajv));
                 }
             });
         }
         
         // Обработка ТС
-        if (operatorData.tsList?.length) {
-            operatorData.tsList.forEach(ts => {
+        if (operatorData.ts_list?.length) {
+            operatorData.ts_list.forEach(ts => {
                 const tsSubIntervals = TsIntervalService.convertTsToSubIntervals(ts, ppiAssignments);
                 intervals.push(...tsSubIntervals);
             });
         }
 
         // Обработка ОНА
-        if (operatorData.onaList?.length) {
-            operatorData.onaList.forEach(ona => {
+        if (operatorData.ona_list?.length) {
+            operatorData.ona_list.forEach(ona => {
                 const assignment = ppiAssignments.find(a => 
                     a.recordId === ona.id && a.recordType === 'ona'
                 );
                 
                 if (assignment) {
-                    intervals.push(this.createOnaInterval(ona, assignment, operatorData.main?.kZajv));
+                    intervals.push(this.createOnaInterval(ona, assignment, operatorData.main?.k_zajv));
                 }
             });
         }
         
-        return intervals.map(interval => this.applyDefaultIntervalValues(interval, operatorData.main?.kZajv));
+        return intervals.map(interval => this.applyDefaultIntervalValues(interval, operatorData.main?.k_zajv));
     }
 
     static getCustomerLabel(code: number): string {
@@ -272,11 +272,11 @@ export class ScheduleCreationService {
             endTime: TimeUtils.extractTimeFromTimestamp(ona.dk),
             city: this.getCityByPpi(assignment.ppiNum),
             color: this.getColorByPpi(assignment.ppiNum),
-            title: `Юстировка ОНА (Антенна ${ona.nOna})`,
+            title: `Юстировка ОНА (Антенна ${ona.n_ona})`,
             description: `Юстировка ОНА, длительность: ${ona.dlit} сек`,
             ppi: assignment.ppiNum,
             dlit: ona.dlit,
-            nOna: ona.nOna,  
+            nOna: ona.n_ona,  
             customerCode: customerCode || 5,
             hasConflict: false,
             conflictWith: [],

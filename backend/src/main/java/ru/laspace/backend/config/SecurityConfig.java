@@ -62,6 +62,7 @@ public class SecurityConfig {
                                                                 "/api/forecast/**",
                                                                 "/api/vki/**",
                                                                 "/api/rotation/**",
+                                                                "/api/bort/**",
                                                                 "/api/test/**",
                                                                 "/swagger-ui/**",
                                                                 "/v3/api-docs/**",

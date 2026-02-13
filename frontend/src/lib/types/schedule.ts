@@ -69,30 +69,39 @@ export interface ZgOption {
 
 export interface Id06MainDto {
     id: number;
-    nKa: number;
-    dNp: string;
-    dataZap: string;
+    n_ka: number;      
+    d_np: string;  
+    data_zap: string;  
     rnf: number;
-    nSp: number;
+    n_sp: number;        
     dsf: string;
-    kZajv: number;
-    nFormId: number;
+    k_zajv: number;      
+    n_form_id: number; 
     used: number;
 }
 
 export interface Id06KvdDto {
     id: number;
-    idMain: number;
+    id_main: number;  
     dn: string;
     dk: string;
-    prMsu: number;
-    prBssd: number;
-    prZg: number;
+    pr_msu: number;    
+    pr_bssd: number;    
+    pr_zg: number;     
+}
+
+export interface Id06OnaDto {
+    id: number;
+    id_main: number;     
+    dn: string;
+    dk: string;
+    n_ona: number;       
+    dlit: number;
 }
 
 export interface Id06TnpDto {
     id: number;
-    idMain: number;
+    id_main: number;     
     dn: string;
     dk: string;
     dlit: number;
@@ -100,56 +109,47 @@ export interface Id06TnpDto {
 
 export interface Id06TsDto {
     id: number;
-    idMain: number;
+    id_main: number;
     dn: string;
     dk: string;
     tip: number;
     reg: number;
-    prMsu1: number;
-    prVdMsu1: number
-    prIkMsu1: number;
-    prVd1_1: number;
-    prVd2_1: number;
-    prVd3_1: number;
-    prIk4_1: number;
-    prIk5_1: number;
-    prIk6_1: number;
-    prIk7_1: number;
-    prIk8_1: number;
-    prIk9_1: number;
-    prIk10_1: number;
-    prMsu2: number;
-    prVdMsu2: number;
-    prIkMsu2: number;
-    prVd1_2: number;
-    prVd2_2: number;
-    prVd3_2: number;
-    prIk4_2: number;
-    prIk5_2: number;
-    prIk6_2: number;
-    prIk7_2: number;
-    prIk8_2: number;
-    prIk9_2: number;
-    prIk10_2: number;
-    prOtklZg: number;
-}
-
-export interface Id06OnaDto {
-    id: number;
-    idMain: number;
-    dn: string;
-    dk: string;
-    nOna: number;
-    dlit: number;
+    pr_msu1: number;
+    pr_vd_msu1: number;
+    pr_ik_msu1: number;
+    pr_vd1_1: number;      // было prVd1_1
+    pr_vd2_1: number;      // было prVd2_1
+    pr_vd3_1: number;      // было prVd3_1
+    pr_ik4_1: number;      // было prIk4_1
+    pr_ik5_1: number;      // было prIk5_1
+    pr_ik6_1: number;      // было prIk6_1
+    pr_ik7_1: number;      // было prIk7_1
+    pr_ik8_1: number;      // было prIk8_1
+    pr_ik9_1: number;      // было prIk9_1
+    pr_ik10_1: number;     // было prIk10_1
+    pr_msu2: number;       // было prMsu2
+    pr_vd_msu2: number;    // было prVdMsu2
+    pr_ik_msu2: number;    // было prIkMsu2
+    pr_vd1_2: number;      // было prVd1_2
+    pr_vd2_2: number;      // было prVd2_2
+    pr_vd3_2: number;      // было prVd3_2
+    pr_ik4_2: number;      // было prIk4_2
+    pr_ik5_2: number;      // было prIk5_2
+    pr_ik6_2: number;      // было prIk6_2
+    pr_ik7_2: number;      // было prIk7_2
+    pr_ik8_2: number;      // было prIk8_2
+    pr_ik9_2: number;      // было prIk9_2
+    pr_ik10_2: number;     // было prIk10_2
+    pr_otkl_zg: number;    // было prOtklZg
 }
 
 export interface OperatorData {
     main: Id06MainDto;
-    kvdList: Id06KvdDto[];
-    tnpList: Id06TnpDto[];
-    tsList: Id06TsDto[];
-    onaList: Id06OnaDto[];
-    totalIntervals: number;
+    kvd_list: Id06KvdDto[];
+    tnp_list: Id06TnpDto[];
+    ts_list: Id06TsDto[];
+    ona_list: Id06OnaDto[];
+    total_intervals: number;
 }
 
 export interface PpiSelectionModal {
@@ -317,23 +317,23 @@ export interface ForecastDto {
     id: number;
     dn: string;
     dk: string;
-    nKa: number;
-    nInit: number;
+    n_ka: number;
+    n_init: number;
 }
 
 export interface ShadowDto {
     id: number;
-    nRec: number;
-    dTIn: string;
-    dTOut: string;
+    n_rec: number;
+    d_t_in: string;
+    d_t_out: string;
     duration: number;
 }
 
 export interface ZasvetkaDto {
     id: number;
-    nRec: number;
-    dTIn: string;
-    dTOut: string;
+    n_rec: number;
+    d_t_in: string;
+    d_t_out: string;
     duration: number;
 }
 
@@ -347,7 +347,7 @@ export interface ForecastData {
     main: ForecastDto;
     shadows: ShadowDto[];
     zasvetki: ZasvetkaDto[];
-    totalIntervals: number; // shadows.length + zasvetki.length
+    total_intervals: number; // shadows.length + zasvetki.length
 }
 
 export interface ShadowInterval {
@@ -376,50 +376,50 @@ export interface ZasvetkaInterval {
 
 export interface Kr01ImpulseDto {
     id: number;
-    idMain: number;
-    nVit: number;
-    dateIm: string;
+    id_main: number;
+    n_vit: number;
+    date_im: string;
     dlit: number;
-    prOr: number;
-    uglV: number;
+    pr_or: number;
+    ugl_v: number;
     massa: number;
-    nDu: number;
-    prVar: number;
+    n_du: number;
+    pr_var: number;
 }
 
 export interface Kr01MainDto {
     id: number;
     rnf: number;
-    nKa: number;
+    n_ka: number;
     dsf: string;
-    nBc: number;
-    nZad: number;
-    kImp: number;
-    dtZap: string;
-    nFormId: number;
+    n_bc: number;
+    n_zad: number;
+    k_imp: number;
+    dt_zap: string;
+    n_form_id: number;
     used: number;
 }
 
 export interface Kr01DataResponse {
     main: Kr01MainDto;
     impulses: Kr01ImpulseDto[];
-    totalImpulses: number;
+    total_impulses: number;
 }
 
 export interface Ro02Dto {
     id: number;
     rnf: number; 
-    nKa: number;    
+    n_ka: number;    
     dsf: string;   
-    dataN: string;  
-    dataRazv: string; 
-    dataK: string | null;
-    nFormId: number; 
+    data_n: string;  
+    data_razv: string; 
+    data_k: string | null;
+    n_form_id: number; 
 }
 
 export interface Ro02DataResponse {
     rotations: Ro02Dto[];
-    totalRotations: number;
+    total_rotations: number;
 }
 
 export interface VkiInterval {
