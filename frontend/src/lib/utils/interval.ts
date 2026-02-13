@@ -127,6 +127,22 @@ export class IntervalUtils {
 
                 bestIntervals.forEach(interval => {
                     interval.willBeSavedInShadow = true;
+
+                    if (interval.mode === 8) {
+                        if (interval.msu1Config) {
+                            interval.msu1Config.prVdMsu = 0;
+                            interval.msu1Config.vd1 = 0;
+                            interval.msu1Config.vd2 = 0;
+                            interval.msu1Config.vd3 = 0;
+                        }
+                        
+                        if (interval.msu2Config) {
+                            interval.msu2Config.prVdMsu = 0;
+                            interval.msu2Config.vd2 = 0;
+                            interval.msu2Config.vd2 = 0;
+                            interval.msu2Config.vd3 = 0;
+                        }
+                    }
                 });
 
                 // Все остальные интервалы в этой тени не будут сохранены

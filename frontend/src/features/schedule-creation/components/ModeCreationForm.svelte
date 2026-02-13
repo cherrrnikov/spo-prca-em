@@ -31,6 +31,13 @@
         onUpdate?: (data: ModeCreationForm) => void;
     }>();
 
+    const isPriorityInShadow = $derived(
+        editingInterval?.inShadow && 
+        editingInterval?.willBeSavedInShadow === true &&
+        editingInterval?.shadowPriority !== undefined &&
+        editingInterval.shadowPriority < 0.1  // минимальный приоритет (ближе всего к центру)
+    );
+
     let modeDurations = $state<Record<string, number>>({});
     let localFormData = $state<ModeCreationForm>(getInitialFormData());
 
@@ -285,6 +292,7 @@
                     msu="msu1"
                     config={localFormData.msu1Config}
                     onUpdate={(config) => handleMsuConfigUpdate('msu1', config)}
+                    disableVd={isPriorityInShadow}
                 />
             </div>
 
@@ -294,6 +302,7 @@
                     msu="msu2"
                     config={localFormData.msu2Config}
                     onUpdate={(config) => handleMsuConfigUpdate('msu2', config)}
+                    disableVd={isPriorityInShadow}
                 />
             </div>
         {:else if selectedMode === 6}

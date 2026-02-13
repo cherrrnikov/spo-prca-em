@@ -4,6 +4,7 @@
     export let msu: 'msu1' | 'msu2';
     export let config: TsMsuConfig;
     export let onUpdate: (config: TsMsuConfig) => void;
+    export let disableVd: boolean = false;
 
     function handleVdChange(this: any, vdNumber: number, checked: boolean) {
         const updatedConfig = { ...config };
