@@ -188,8 +188,6 @@ export interface ProgramModeData {
     kvdData?: {
         id: number;
         idMain: number;
-        dn: string;
-        dk: string;
         prMsu: number;
         prBssd: number;
         prZg: number;
@@ -198,54 +196,52 @@ export interface ProgramModeData {
     tnpData?: {
         id: number;
         idMain: number;
-        dn: string;
-        dk: string;
-        dlit: number;
+        prMsu: number;
+        prBssd: number;
+        prZg: number;
     };
     
     tsData?: {
         id: number;
         idMain: number;
-        dn: string;
-        dk: string;
         tip: number;
         reg: number;
+        dlit: number;
         prMsu1: number;
-        prVdMsu1: number
-        prIkMsu1: number;
-        prVd1_1: number;
-        prVd2_1: number;
-        prVd3_1: number;
-        prIk4_1: number;
-        prIk5_1: number;
-        prIk6_1: number;
-        prIk7_1: number;
-        prIk8_1: number;
-        prIk9_1: number;
-        prIk10_1: number;
+        vd1Msu1: number;
+        vd2Msu1: number;
+        vd3Msu1: number;
+        ik4Msu1: number;
+        ik5Msu1: number;
+        ik6Msu1: number;
+        ik7Msu1: number;
+        ik8Msu1: number;
+        ik9Msu1: number;
+        ik10Msu1: number;
         prMsu2: number;
-        prVdMsu2: number;
-        prIkMsu2: number;
-        prVd1_2: number;
-        prVd2_2: number;
-        prVd3_2: number;
-        prIk4_2: number;
-        prIk5_2: number;
-        prIk6_2: number;
-        prIk7_2: number;
-        prIk8_2: number;
-        prIk9_2: number;
-        prIk10_2: number;
-        prOtklZg: number;
+        vd1Msu2: number;
+        vd2Msu2: number;
+        vd3Msu2: number;
+        ik4Msu2: number;
+        ik5Msu2: number;
+        ik6Msu2: number;
+        ik7Msu2: number;
+        ik8Msu2: number;
+        ik9Msu2: number;
+        ik10Msu2: number;
+        prBssd: number;
+        prZg: number;
+        prOtklZgBssd: number;
     };
 
     onaData?: {  
         id: number;
         idMain: number;
-        dn: string;
-        dk: string;
+        typeOmi: number;
+        dN: string;
+        dK: string;
         nOna: number;
-        dlit: number;
+        nPpi: number;
     };
 }
 
