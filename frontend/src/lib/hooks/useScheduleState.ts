@@ -122,9 +122,14 @@ export function useScheduleState() {
         
         const currentEditingInterval = get(editingInterval);
         if (currentEditingInterval?.id === intervalId) {
+            const deletedMode = currentEditingInterval.mode;
+
             editingInterval.set(null);
             selectedIntervalId.set(null);
-            selectedMode.set(null);
+            selectedMode.set(deletedMode);
+            isEditing.set(false);
+
+            handleModeFormCancel();
         }
         
         updateAllConflicts();

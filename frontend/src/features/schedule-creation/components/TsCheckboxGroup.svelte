@@ -11,8 +11,8 @@
         updatedConfig[vdKey] = checked ? 1 : 0;
         
         // Обновляем флаги
-        updatedConfig.prVdMsu = this.hasAnyVd(updatedConfig) ? 1 : 0;
-        updatedConfig.prMsu = (this.hasAnyVd(updatedConfig) || this.hasAnyIk(updatedConfig)) ? 1 : 0;
+        updatedConfig.prVdMsu = hasAnyVd(updatedConfig) ? 1 : 0;
+        updatedConfig.prMsu = (hasAnyVd(updatedConfig) || hasAnyIk(updatedConfig)) ? 1 : 0;
         
         onUpdate(updatedConfig);
     }
@@ -23,8 +23,8 @@
         updatedConfig[ikKey] = checked ? 1 : 0;
         
         // Обновляем флаги
-        updatedConfig.prIkMsu = this.hasAnyIk(updatedConfig) ? 1 : 0;
-        updatedConfig.prMsu = (this.hasAnyVd(updatedConfig) || this.hasAnyIk(updatedConfig)) ? 1 : 0;
+        updatedConfig.prIkMsu = hasAnyIk(updatedConfig) ? 1 : 0;
+        updatedConfig.prMsu = (hasAnyVd(updatedConfig) || hasAnyIk(updatedConfig)) ? 1 : 0;
         
         onUpdate(updatedConfig);
     }
