@@ -628,7 +628,7 @@ export function useScheduleState() {
 
     function getIntervalColor(interval: TimeInterval): string {
         if (interval.isAstrocorrection) {
-            return '#1e40af'; // Синий цвет для астрокоррекции
+            return '#1e40af'; 
         }
 
         if (interval.inShadow && interval.willBeSavedInShadow) {

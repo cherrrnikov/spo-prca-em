@@ -108,10 +108,10 @@ export class ScheduleConverterService {
                 startTime: time,
                 endTime: endTime,
                 duration: duration,
-                title: `ВКИ: виток ${impulse.nVit || ''}, ДУ-${impulse.nDu || ''}`.trim(),
+                title: `ВКИ`,
                 color: '#000000',
-                opacity: 0.8,
-                zIndex: 25,
+                opacity: 1,
+                zIndex: 1,
                 impulseNumber: index + 1,
                 mass: impulse.massa,
                 angle: impulse.uglV,
@@ -147,8 +147,8 @@ export class ScheduleConverterService {
                     duration: duration,
                     title: `Сезонный разворот`,
                     color: '#000000',
-                    opacity: 0.8,
-                    zIndex: 25,
+                    opacity: 1,
+                    zIndex: 1,
                     rotationNumber: index + 1
                 };
             });

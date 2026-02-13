@@ -24,7 +24,6 @@ export class TsIntervalService {
         
         let currentTime = new Date(startDate);
         
-        // Генерируем подынтервалы до тех пор, пока следующий интервал не выйдет за границы
         while (currentTime.getTime() + (subIntervalDuration * 60000) <= endDate.getTime()) {
             const subStartTime = new Date(currentTime);
             const subEndTime = new Date(subStartTime.getTime() + (subIntervalDuration * 60000));
@@ -32,7 +31,8 @@ export class TsIntervalService {
             const formatTime = (date: Date): string => {
                 const hours = date.getHours().toString().padStart(2, '0');
                 const minutes = date.getMinutes().toString().padStart(2, '0');
-                return `${hours}:${minutes}`;
+                const seconds = date.getSeconds().toString().padStart(2, '0');
+                return `${hours}:${minutes}:${seconds}`;
             };
 
             const date = tsRecord.dn.split('T')[0];

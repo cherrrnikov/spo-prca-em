@@ -7,6 +7,7 @@ export class GridPositionUtils {
     static readonly TIME_HEIGHT = 40;
     static readonly HOURS = Array.from({length: 24}, (_, i) => i);
     static readonly SECONDS_IN_DAY = 86400;
+    static readonly MIN_VISIBLE_DURATION = 300;
 
     static calculateCellWidth(containerWidth: number): number {
         const availableWidth = containerWidth;
@@ -25,15 +26,24 @@ export class GridPositionUtils {
         return (seconds / 3600) * cellWidth;
     }
 
+    static getVisibleDuration(actualDuration: number): number {
+        return Math.max(actualDuration, this.MIN_VISIBLE_DURATION);
+    }
+
     static getPositionForInterval(
         startTime: string,
         endTime: string,
         modeIndex: number,
-        cellWidth: number
+        cellWidth: number,
+        applyMinDuration: boolean = true
     ) {
         const startSeconds = this.timeToSeconds(startTime);
         const endSeconds = this.timeToSeconds(endTime);
-        const durationSeconds = endSeconds - startSeconds;
+        let durationSeconds = endSeconds - startSeconds;
+
+        if (applyMinDuration) {
+            durationSeconds = this.getVisibleDuration(durationSeconds);
+        }
 
         return {
             left: `${this.secondsToPixels(startSeconds, cellWidth)}px`,

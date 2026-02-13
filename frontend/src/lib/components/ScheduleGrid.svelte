@@ -207,7 +207,8 @@
                     interval.startTime, 
                     interval.endTime,   
                     modeIndex,
-                    cellWidth
+                    cellWidth,
+                    true
                 ),
                 className: getIntervalClassName(interval),
                 title: `${title} ${interval.startTime}-${interval.endTime}`,
@@ -243,13 +244,15 @@
                         interval.startTime,
                         interval.endTime,
                         0,
-                        cellWidth
+                        cellWidth,
+                        true
                     ).left,
                     width: GridPositionUtils.getPositionForInterval(
                         interval.startTime,
                         interval.endTime,
                         0,
-                        cellWidth
+                        cellWidth,
+                        true
                     ).width,
                     top: `0px`,
                     height: `${GridPositionUtils.ROW_HEIGHT * (workModes.length + 1)}px`
@@ -270,6 +273,8 @@
         type: 'vki' | 'rotation'
     ) {
         intervalsArray.forEach(interval => {
+            const title = `${interval.title || (type === 'vki' ? 'ВКИ' : 'Сезонный разворот')} ${interval.startTime}-${interval.endTime}`;
+            
             const positionedAstroInterval: PositionedAstroInterval = {
                 type,
                 id: interval.id,
@@ -280,18 +285,20 @@
                         interval.startTime,
                         interval.endTime,
                         0,
-                        cellWidth
+                        cellWidth,
+                        true
                     ).left,
                     width: GridPositionUtils.getPositionForInterval(
                         interval.startTime,
                         interval.endTime,
                         0,
-                        cellWidth
+                        cellWidth,
+                        true
                     ).width,
                     top: `0px`,
                     height: `${GridPositionUtils.ROW_HEIGHT * (workModes.length + 1)}px`
                 },
-                title: interval.title,
+                title: title,
                 opacity: interval.opacity,
                 zIndex: interval.zIndex,
                 data: interval
@@ -393,7 +400,7 @@
                             top: {item.position.top}; 
                             height: {item.position.height};
                             background: {item.color};
-                            opacity: {item.opacity || 0.8};
+                            opacity: {item.opacity || 1};
                             z-index: {item.zIndex || 5};
                         "
                         title="{item.title}">
@@ -563,16 +570,11 @@
 
     .interval-vki, .interval-rotation {
         cursor: default !important;
-        border-left: 2px solid #333;
-        border-right: 2px solid #333;
         border-radius: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-weight: bold;
-        font-size: 12px;
-        text-shadow: 0 0 2px rgba(0,0,0,0.5);
     }
     
     .interval-shadow {
@@ -592,7 +594,8 @@
     }
     
     .interval-astrocorrection {
-        cursor: default !important;        
+        cursor: default !important;    
+        border: 1px solid black;    
     }
 
     .interval-schedule {

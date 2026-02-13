@@ -54,7 +54,7 @@
             ppiNum: 1,
             duration: 300,
             customerCode: 1,
-            startTime: '10:00',
+            startTime: '10:00:00',
             msu1Config: getDefaultMsuConfig(),
             msu2Config: getDefaultMsuConfig(),
             kvdConfig: {
@@ -344,7 +344,7 @@
                     <input 
                         type="time" 
                         bind:value={localFormData.startTime}
-                        step="300"
+                        step="1"
                     />
                 </div>
                 

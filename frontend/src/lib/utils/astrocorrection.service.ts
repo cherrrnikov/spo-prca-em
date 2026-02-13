@@ -6,17 +6,17 @@ export class AstrocorrectionService {
     private static readonly ASTRO_DURATION = 18;
     
     private static readonly FULL_INTERVALS = [
-        { start: '03:37', end: '03:55' },
-        { start: '07:37', end: '07:55' },
-        { start: '11:37', end: '11:55' },
-        { start: '15:37', end: '15:55' },
-        { start: '19:37', end: '19:55' },
-        { start: '23:37', end: '23:55' }
+        { start: '03:37:00', end: '03:55:00' },
+        { start: '07:37:00', end: '07:55:00' },
+        { start: '11:37:00', end: '11:55:00' },
+        { start: '15:37:00', end: '15:55:00' },
+        { start: '19:37:00', end: '19:55:00' },
+        { start: '23:37:00', end: '23:55:00' }
     ];
     
     private static readonly NORMAL_INTERVALS = [
-        { start: '11:37', end: '11:55' },
-        { start: '23:37', end: '23:55' }
+        { start: '11:37:00', end: '11:55:00' },
+        { start: '23:37:00', end: '23:55:00' }
     ];
 
     static createAstrocorrectionIntervals(date: string, isFullMode: boolean): TimeInterval[] {
