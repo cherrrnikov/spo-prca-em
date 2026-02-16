@@ -87,14 +87,10 @@ export class IntervalUtils {
             willBeSavedInShadow: false 
         }));
 
-        console.log('Обработка теней. Всего теней:', shadowIntervals.length);
-
         for (const shadow of shadowIntervals) {
             const shadowStart = TimeUtils.timeToSeconds(shadow.startTime);
             const shadowEnd = TimeUtils.timeToSeconds(shadow.endTime);
             const shadowCenter = shadowStart + (shadowEnd - shadowStart) / 2;
-
-            console.log(`Тень: ${shadow.startTime}-${shadow.endTime}, центр: ${shadowCenter} минут`);
 
             const intervalsInThisShadow = updatedIntervals.filter(interval => {
                 const intervalStart = TimeUtils.timeToSeconds(interval.startTime);
@@ -117,41 +113,46 @@ export class IntervalUtils {
 
             // Находим интервал с наименьшим расстоянием до центра тени
             if (intervalsInThisShadow.length > 0) {
-                const sortedIntervals = [...intervalsInThisShadow].sort((a, b) => 
-                    a.shadowPriority - b.shadowPriority
-                );
 
-                const bestPriority = sortedIntervals[0].shadowPriority;
-                const bestIntervals = sortedIntervals.filter(i => 
-                    Math.abs(i.shadowPriority - bestPriority) < 0.1 // Небольшой допуск для равенства
-                );
+            const sortedIntervals = [...intervalsInThisShadow].sort((a, b) => {
+                // Сначала по расстоянию до центра
+                if (a.shadowPriority !== b.shadowPriority) {
+                    return a.shadowPriority - b.shadowPriority;
+                }
+                // При равном расстоянии - выбираем тот, что левее (меньше время начала)
+                return TimeUtils.timeToSeconds(a.startTime) - TimeUtils.timeToSeconds(b.startTime);
+            });
 
-                bestIntervals.forEach(interval => {
-                    interval.willBeSavedInShadow = true;
+            const winner = sortedIntervals[0];
+            
+            intervalsInThisShadow.forEach(interval => {
+                interval.willBeSavedInShadow = false;
+            });
+            
+            winner.willBeSavedInShadow = true;  
 
-                    if (interval.mode === 8) {
-                        if (interval.msu1Config) {
-                            interval.msu1Config.prVdMsu = 0;
-                            interval.msu1Config.vd1 = 0;
-                            interval.msu1Config.vd2 = 0;
-                            interval.msu1Config.vd3 = 0;
-                        }
-                        
-                        if (interval.msu2Config) {
-                            interval.msu2Config.prVdMsu = 0;
-                            interval.msu2Config.vd2 = 0;
-                            interval.msu2Config.vd2 = 0;
-                            interval.msu2Config.vd3 = 0;
-                        }
-                    }
+            if (winner.mode === 8) {
+                if (winner.msu1Config) {
+                    winner.msu1Config.prVdMsu = 0;
+                    winner.msu1Config.vd1 = 0;
+                    winner.msu1Config.vd2 = 0;
+                    winner.msu1Config.vd3 = 0;
+                }
+                
+                if (winner.msu2Config) {
+                    winner.msu2Config.prVdMsu = 0;
+                    winner.msu2Config.vd2 = 0;
+                    winner.msu2Config.vd2 = 0;
+                    winner.msu2Config.vd3 = 0;
+                }
+            }
+
+
+            intervalsInThisShadow
+                .filter(i => i !== winner)
+                .forEach(interval => {
+                    interval.willBeSaved = false;
                 });
-
-                // Все остальные интервалы в этой тени не будут сохранены
-                intervalsInThisShadow
-                    .filter(i => !bestIntervals.includes(i))
-                    .forEach(interval => {
-                        interval.willBeSaved = false;
-                    });
             }
         }
 
