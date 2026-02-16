@@ -231,7 +231,8 @@ export class IntervalUtils {
         const constraintViolations = ConstraintValidator.validate(
             shadowProcessedIntervals,
             vkiIntervals,
-            rotationIntervals
+            rotationIntervals,
+            astroIntervals
         );
 
         const withConstraints = shadowProcessedIntervals.map(interval => {

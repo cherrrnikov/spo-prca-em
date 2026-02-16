@@ -17,13 +17,30 @@ export class ConstraintValidator {
     static validate(
         regularIntervals: TimeInterval[],
         vkiIntervals: VkiInterval[],
-        rotationIntervals: RotationInterval[]
+        rotationIntervals: RotationInterval[],
+        astroIntervals: TimeInterval[]
     ): Map<string, ConstraintViolation[]> {
         const violations = new Map<string, ConstraintViolation[]>();
 
         // 1. Группируем интервалы по типам
         const intervalsByType = new Map<string, CheckableInterval[]>();
         
+        astroIntervals.forEach(a => {
+            const type = 'astrocorrection';  
+            if (!intervalsByType.has(type)) {
+                intervalsByType.set(type, []);
+            }
+            intervalsByType.get(type)!.push({
+                id: a.id,
+                startSeconds: TimeUtils.timeToSeconds(a.startTime),
+                endSeconds: TimeUtils.timeToSeconds(a.endTime),
+                modeType: type,
+                isAstro: true,
+                originalStart: a.startTime,
+                originalEnd: a.endTime
+            });
+        });
+
         regularIntervals.forEach(i => {
             const type = MODE_TO_CONSTRAINT_TYPE[i.mode] || 'unknown';
             if (!intervalsByType.has(type)) {
