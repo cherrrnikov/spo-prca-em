@@ -309,7 +309,8 @@ export class ConstraintValidator {
             withIntervalId: other.id,
             requiredGap: constraint.minGapSeconds,
             actualGap: gap,
-            direction: direction
+            direction: direction,
+            markRed: constraint.markRed || false
         };
 
         if (!violations.has(target.id)) {

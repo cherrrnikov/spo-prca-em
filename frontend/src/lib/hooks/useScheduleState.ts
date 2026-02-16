@@ -1,5 +1,6 @@
 import { CUSTOMER_CODES, WORK_MODES } from '$lib/constants/schedule';
 
+import { ConstraintValidator } from '$lib/services/constraints/constraintValidator.service';
 import type { UserResponse } from '$lib/types/auth';
 import type {
     CreatedProgramData,
@@ -345,6 +346,9 @@ export function useScheduleState() {
         const currentOperatorData = get(operatorData);
         const currentPpiAssignments = get(ppiAssignments);
         const currentZasvetkaIntervals = get(zasvetkaIntervals);
+        const currentVki = get(vkiIntervals);
+        const currentRotations = get(rotationIntervals);
+        const currentAstro = currentIntervals.filter(i => i.isAstrocorrection);
 
         const nonAstroIntervals = currentIntervals.filter(i => !i.isAstrocorrection);
 
@@ -359,13 +363,12 @@ export function useScheduleState() {
                 [])
         ];
         
+        // Проверяем конфликты с другими режимами
         let hasConflict = false;
         const conflictWith: number[] = [];
         
         for (const existingInterval of allIntervals) {
-            if (existingInterval.mode === newInterval.mode) {
-                continue;
-            }
+            if (existingInterval.mode === newInterval.mode) continue;
             
             const overlap = IntervalUtils.checkTwoIntervalsOverlap(
                 newInterval.startTime,
@@ -381,37 +384,40 @@ export function useScheduleState() {
                 }
             }
         }
-        
-        if (!newInterval.isAstrocorrection) {
-            const astroIntervals = currentIntervals.filter(i => i.isAstrocorrection);
-            
-            for (const astroInterval of astroIntervals) {
-                const overlap = IntervalUtils.checkTwoIntervalsOverlap(
-                    newInterval.startTime,
-                    newInterval.endTime,
-                    astroInterval.startTime,
-                    astroInterval.endTime
-                );
-            }
-        }
 
-        newInterval.hasConflict = hasConflict;
-        newInterval.conflictWith = conflictWith;
+        // Проверяем ограничения через ConstraintValidator
+        const constraintViolations = ConstraintValidator.validate(
+            [newInterval], // передаем новый интервал
+            currentVki,
+            currentRotations,
+            currentAstro,
+            get(shadowIntervals),
+            currentZasvetkaIntervals
+        );
+
+        const hasViolations = constraintViolations.has(newInterval.id);
         
+        // Проверяем засветки
         const zasvetkaCheck = IntervalUtils.checkZasvetkaProximity(
             newInterval.startTime,
             newInterval.endTime,
             currentZasvetkaIntervals
         );
-        
+
+        // Устанавливаем все флаги
+        newInterval.hasConflict = hasConflict;
+        newInterval.conflictWith = conflictWith;
         newInterval.nearZasvetka = zasvetkaCheck.nearZasvetka;
         newInterval.zasvetkaConflict = zasvetkaCheck.zasvetkaConflict;
         newInterval.zasvetkaDistance = zasvetkaCheck.minDistance;
+        newInterval.constraintViolations = constraintViolations.get(newInterval.id) || [];
         
+        // Финальный расчет willBeSaved
         newInterval.willBeSaved = 
             !hasConflict && 
             !zasvetkaCheck.zasvetkaConflict && 
-            !zasvetkaCheck.nearZasvetka;
+            !zasvetkaCheck.nearZasvetka &&
+            !hasViolations;
     }
 
     async function loadAstroEvents(date: string) {
@@ -622,24 +628,40 @@ export function useScheduleState() {
     }
 
     function getIntervalColor(interval: TimeInterval): string {
-        if (interval.constraintViolations && interval.constraintViolations.length > 0) {
-            return '#ffffff';
-        }
-
-        if (interval.isAstrocorrection) {
-            return '#1e40af'; 
-        }
-
+        // 1. Розовый - победитель в тени
         if (interval.inShadow && interval.willBeSavedInShadow) {
-            return '#ff69b4'; 
+            return '#ff69b4';
         }
-        if (interval.zasvetkaConflict || interval.nearZasvetka || (interval.constraintViolations && interval.constraintViolations.length > 0)) {
-            return '#ffffff';
-        }
+        
+        // 2. Красный - конфликт режимов
         if (interval.hasConflict) {
             return '#ff0000';
         }
+        
+        if (interval.constraintViolations && interval.constraintViolations.length > 0) {
+            // Проверяем, все ли violations от ограничений 77 и 78
+            const onlySpecialViolations = interval.constraintViolations.every(
+                v => v.constraintId === 77 || v.constraintId === 78
+            );
+            
+            if (onlySpecialViolations) {
+                return '#ff0000'; // красный только для 77 и 78
+            } else {
+                return '#ffffff'; // белый для всех остальных ограничений
+            }
+        }
 
+        // 4. Белый - проблемы с засветками
+        if (interval.zasvetkaConflict || interval.nearZasvetka) {
+            return '#ffffff';
+        }
+        
+        // 5. Синий - астрокоррекция
+        if (interval.isAstrocorrection) {
+            return '#1e40af';
+        }
+        
+        // 6. Обычный цвет по ППИ
         return interval.color;
     }
 

@@ -100,12 +100,26 @@ export class TimeConstraintsService {
             description: 'Между Шт./Уч. съемки,ОМИ,ТНП,КВД,ТС,Юст.ОНА и сезонным разворотом должно быть не менее 5700 сек'
         },
         {
+            id: 77,
+            fromModes: ['ona'],
+            toModes: ['shooting', 'tnp', 'kvd', 'ts', 'omi'],
+            minGapSeconds: 60,
+            description: 'Между Юст.ОНА и Шт./Уч. съемки,ТНП,КВД,ТС,ОМИ должно быть не менее 60 сек'
+        },
+        {
+            id: 78,
+            fromModes: ['shooting', 'tnp', 'kvd', 'ts', 'omi'],
+            toModes: ['ona'],
+            minGapSeconds: 60,
+            description: 'Между Шт./Уч. съемки,ТНП,КВД,ТС,ОМИ и Юст.ОНА должно быть не менее 60 сек'
+        },
+        {
             id: 81,
             fromModes: ['zasvetka'],
             toModes: ['shooting', 'tnp', 'kvd', 'ts', 'ona'],
             minGapSeconds: 300,
             description: 'Между засветками и Шт./Уч. съемки,ТНП,КВД,ТС,Юст.ОНА должно быть не менее 300 сек'
-        }
+        },
     ];
 
     static getAllConstraints(): TimeConstraint[] {
