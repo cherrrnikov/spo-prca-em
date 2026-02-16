@@ -1,7 +1,6 @@
 import { CUSTOMER_CODES, WORK_MODES } from '$lib/constants/schedule';
 
 import type { UserResponse } from '$lib/types/auth';
-import { MODE_TO_CONSTRAINT_TYPE } from '$lib/types/constraints';
 import type {
     CreatedProgramData,
     ForecastData,
@@ -361,8 +360,6 @@ export function useScheduleState() {
         ];
         
         let hasConflict = false;
-        let hasAstroConflict = false;
-        const astroConflictWith: number[] = [];
         const conflictWith: number[] = [];
         
         for (const existingInterval of allIntervals) {
@@ -395,26 +392,11 @@ export function useScheduleState() {
                     astroInterval.startTime,
                     astroInterval.endTime
                 );
-                
-                if (overlap) {
-                    hasAstroConflict = true;
-                    if (!astroConflictWith.includes(astroInterval.mode)) {
-                        astroConflictWith.push(astroInterval.mode);
-                    }
-                    
-                    console.log('Конфликт с астрокоррекцией:', {
-                        newInterval: `${newInterval.startTime}-${newInterval.endTime}`,
-                        astroInterval: `${astroInterval.startTime}-${astroInterval.endTime}`,
-                        mode: newInterval.mode
-                    });
-                }
             }
         }
 
         newInterval.hasConflict = hasConflict;
         newInterval.conflictWith = conflictWith;
-        newInterval.hasAstroConflict = hasAstroConflict;
-        newInterval.astroConflictWith = astroConflictWith;
         
         const zasvetkaCheck = IntervalUtils.checkZasvetkaProximity(
             newInterval.startTime,
@@ -428,7 +410,6 @@ export function useScheduleState() {
         
         newInterval.willBeSaved = 
             !hasConflict && 
-            !hasAstroConflict &&
             !zasvetkaCheck.zasvetkaConflict && 
             !zasvetkaCheck.nearZasvetka;
     }
@@ -508,8 +489,6 @@ export function useScheduleState() {
                         ...interval,
                         hasConflict: updatedInterval.hasConflict,
                         conflictWith: updatedInterval.conflictWith,
-                        hasAstroConflict: updatedInterval.hasAstroConflict,
-                        astroConflictWith: updatedInterval.astroConflictWith,
                         nearZasvetka: updatedInterval.nearZasvetka,
                         zasvetkaConflict: updatedInterval.zasvetkaConflict,
                         zasvetkaDistance: updatedInterval.zasvetkaDistance,
@@ -644,13 +623,6 @@ export function useScheduleState() {
 
     function getIntervalColor(interval: TimeInterval): string {
         if (interval.constraintViolations && interval.constraintViolations.length > 0) {
-            console.log(`🔴 Интервал с нарушениями:`, {
-                id: interval.id,
-                mode: interval.mode,
-                type: MODE_TO_CONSTRAINT_TYPE[interval.mode],
-                violations: interval.constraintViolations.length,
-                willBeSaved: interval.willBeSaved
-            });
             return '#ffffff';
         }
 
@@ -661,7 +633,7 @@ export function useScheduleState() {
         if (interval.inShadow && interval.willBeSavedInShadow) {
             return '#ff69b4'; 
         }
-        if (interval.zasvetkaConflict || interval.nearZasvetka || interval.hasAstroConflict || (interval.constraintViolations && interval.constraintViolations.length > 0)) {
+        if (interval.zasvetkaConflict || interval.nearZasvetka || (interval.constraintViolations && interval.constraintViolations.length > 0)) {
             return '#ffffff';
         }
         if (interval.hasConflict) {
@@ -673,10 +645,6 @@ export function useScheduleState() {
 
     function getIntervalTitle(interval: TimeInterval): string {
         let title = interval.title || '';
-        
-        if (interval.hasAstroConflict) {
-            title += ` (КОНФЛИКТ С АСТРОКОРРЕКЦИЕЙ)`;
-        }
 
         if (interval.hasConflict) {
             const conflictModes = interval.conflictWith?.map(modeId => {

@@ -313,8 +313,6 @@
         
         if (interval.isAstrocorrection) {
             classes.push('astrocorrection-interval');
-        } else if (interval.hasAstroConflict) {
-            classes.push('astro-conflict-interval');
         }
 
         if (interval.zasvetkaConflict || interval.nearZasvetka) {

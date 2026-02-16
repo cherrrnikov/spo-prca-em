@@ -232,7 +232,9 @@ export class IntervalUtils {
             shadowProcessedIntervals,
             vkiIntervals,
             rotationIntervals,
-            astroIntervals
+            astroIntervals,
+            shadowIntervals,
+            zasvetkaIntervals
         );
 
         const withConstraints = shadowProcessedIntervals.map(interval => {
@@ -242,7 +244,6 @@ export class IntervalUtils {
                     constraintViolations: violations || [],
                     hasConflict: false,
                     conflictWith: [],
-                    hasAstroConflict: false,
                     astroConflictWith: [],
                     nearZasvetka: false,
                     zasvetkaConflict: false,
@@ -280,25 +281,6 @@ export class IntervalUtils {
                 }
             }
             
-            for (const astroInterval of astroIntervals) {
-                const overlap = this.checkTwoIntervalsOverlap(
-                    withConstraints[i].startTime,
-                    withConstraints[i].endTime,
-                    astroInterval.startTime,
-                    astroInterval.endTime
-                );
-                
-                if (overlap) {
-                    withConstraints[i].hasAstroConflict = true;
-                    
-                    if (!withConstraints[i].astroConflictWith?.includes(astroInterval.mode)) {
-                        withConstraints[i].astroConflictWith = [
-                            ...(withConstraints[i].astroConflictWith || []), 
-                            astroInterval.mode
-                        ];
-                    }
-                }
-            }
         }
         
         const zasvetkaArray = zasvetkaIntervals || [];
@@ -328,9 +310,6 @@ export class IntervalUtils {
                     interval.willBeSaved = false;
                 }
                 else if (interval.nearZasvetka) {
-                    interval.willBeSaved = false;
-                }
-                else if (interval.hasAstroConflict) {
                     interval.willBeSaved = false;
                 }
                 else if (interval.constraintViolations && interval.constraintViolations.length > 0) {
