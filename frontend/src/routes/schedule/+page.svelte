@@ -89,8 +89,10 @@
             const date = newOperatorData.main.d_np.split('T')[0];
             setContextDate(date); 
             selectedProgramDate.set(date);
-            await loadForecastData(date);
+
             await loadAstroEvents(date);
+            console.log(`ВКИ после загрузки:`, $vkiIntervals);
+            await loadForecastData(date);
             await checkAndAddAstrocorrection(date);
         }
 
@@ -101,13 +103,18 @@
         );
         
         const intervalsWithAstro = await addAstrocorrectionToIntervals(newIntervals, $contextDate);
+        const currentVkiIntervals = $vkiIntervals;
         const currentZasvetkaIntervals = $zasvetkaIntervals;
         const currentShadowIntervals = $shadowIntervals;
+
+        console.log('Проверка конфликтов с ВКИ:', currentVkiIntervals);
 
         const intervalsWithConflicts = IntervalUtils.checkAllConflicts(
             intervalsWithAstro, 
             currentZasvetkaIntervals, 
-            currentShadowIntervals
+            currentShadowIntervals,
+            currentVkiIntervals,
+            $rotationIntervals
         );
 
         intervals.set(intervalsWithConflicts);

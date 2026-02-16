@@ -1,3 +1,5 @@
+import type { ConstraintViolation } from "./constraints";
+
 export interface TimeInterval {
     id: string;
     mode: number;
@@ -37,6 +39,7 @@ export interface TimeInterval {
     zasvetkaConflict?: boolean;      // true если пересекается с засветкой
     zasvetkaDistance?: number;       // расстояние до ближайшей засветки в секундах
     isAstrocorrection?: boolean;
+    constraintViolations?: ConstraintViolation[];
 }
 
 export interface CustomerCode {
@@ -428,6 +431,12 @@ export interface VkiInterval {
     color: string;
     opacity: number;
     zIndex: number;
+    impulseNumber: number;
+    mass: number;
+    angle: number;
+    nVit: number;
+    nDu: number;
+    vkiType: 'vki1' | 'vki2';
 }
 
 export interface RotationInterval {

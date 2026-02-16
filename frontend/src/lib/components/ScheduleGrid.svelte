@@ -321,6 +321,8 @@
             classes.push('zasvetka-conflict-interval');
         } else if (interval.hasConflict) {
             classes.push('conflict-interval');
+        } else if (interval.constraintViolations?.length) {
+            classes.push('constraint-violation'); 
         }
 
         if (interval.inShadow) {

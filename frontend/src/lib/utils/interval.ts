@@ -1,4 +1,5 @@
-import type { ShadowInterval, TimeInterval, ZasvetkaInterval } from '$lib/types/schedule';
+import { ConstraintValidator } from '$lib/services/constraints/constraintValidator.service';
+import type { RotationInterval, ShadowInterval, TimeInterval, VkiInterval, ZasvetkaInterval } from '$lib/types/schedule';
 import { IntervalValidationService } from './intervalValidation';
 import { TimeUtils } from './time';
 
@@ -218,29 +219,40 @@ export class IntervalUtils {
     static checkAllConflicts(
         intervals: TimeInterval[],
         zasvetkaIntervals: ZasvetkaInterval[] = [],
-        shadowIntervals: ShadowInterval[] = []
+        shadowIntervals: ShadowInterval[] = [],
+        vkiIntervals: VkiInterval[] = [],
+        rotationIntervals: RotationInterval[] = []
     ): TimeInterval[] {
         const astroIntervals = intervals.filter(i => i.isAstrocorrection);
         const regularIntervals = intervals.filter(i => !i.isAstrocorrection);
         
         const shadowProcessedIntervals = this.checkShadowPriority(regularIntervals, shadowIntervals || []);
 
-        const updatedIntervals = shadowProcessedIntervals.map(interval => ({
-            ...interval,
-            hasConflict: false,
-            conflictWith: [],
-            hasAstroConflict: false,
-            astroConflictWith: [],
-            nearZasvetka: false,
-            zasvetkaConflict: false,
-            zasvetkaDistance: 0,
-            willBeSaved: true 
-        }));
+        const constraintViolations = ConstraintValidator.validate(
+            shadowProcessedIntervals,
+            vkiIntervals,
+            rotationIntervals
+        );
+
+        const withConstraints = shadowProcessedIntervals.map(interval => {
+            const violations = constraintViolations.get(interval.id);
+                return {
+                    ...interval,
+                    constraintViolations: violations || [],
+                    hasConflict: false,
+                    conflictWith: [],
+                    hasAstroConflict: false,
+                    astroConflictWith: [],
+                    nearZasvetka: false,
+                    zasvetkaConflict: false,
+                    zasvetkaDistance: 0,
+                };
+        });
         
-        for (let i = 0; i < updatedIntervals.length; i++) {
-            for (let j = i + 1; j < updatedIntervals.length; j++) {
-                const intervalA = updatedIntervals[i];
-                const intervalB = updatedIntervals[j];
+        for (let i = 0; i < withConstraints.length; i++) {
+            for (let j = i + 1; j < withConstraints.length; j++) {
+                const intervalA = withConstraints[i];
+                const intervalB = withConstraints[j];
                 
                 if (intervalA.mode === intervalB.mode) {
                     continue;
@@ -263,69 +275,69 @@ export class IntervalUtils {
                     if (!intervalB.conflictWith?.includes(intervalA.mode)) {
                         intervalB.conflictWith = [...(intervalB.conflictWith || []), intervalA.mode];
                     }
-                    
-                    intervalA.willBeSaved = false;
-                    intervalB.willBeSaved = false;
+
                 }
             }
             
             for (const astroInterval of astroIntervals) {
                 const overlap = this.checkTwoIntervalsOverlap(
-                    updatedIntervals[i].startTime,
-                    updatedIntervals[i].endTime,
+                    withConstraints[i].startTime,
+                    withConstraints[i].endTime,
                     astroInterval.startTime,
                     astroInterval.endTime
                 );
                 
                 if (overlap) {
-                    updatedIntervals[i].hasAstroConflict = true;
+                    withConstraints[i].hasAstroConflict = true;
                     
-                    if (!updatedIntervals[i].astroConflictWith?.includes(astroInterval.mode)) {
-                        updatedIntervals[i].astroConflictWith = [
-                            ...(updatedIntervals[i].astroConflictWith || []), 
+                    if (!withConstraints[i].astroConflictWith?.includes(astroInterval.mode)) {
+                        withConstraints[i].astroConflictWith = [
+                            ...(withConstraints[i].astroConflictWith || []), 
                             astroInterval.mode
                         ];
                     }
-                    
-                    console.log(`Конфликт с астрокоррекцией: интервал ${updatedIntervals[i].id}`, {
-                        interval: `${updatedIntervals[i].startTime}-${updatedIntervals[i].endTime}`,
-                        astro: `${astroInterval.startTime}-${astroInterval.endTime}`,
-                        mode: updatedIntervals[i].mode
-                    });
                 }
             }
         }
         
         const zasvetkaArray = zasvetkaIntervals || [];
-        updatedIntervals.forEach(interval => {
-            const zasvetkaCheck = this.checkZasvetkaProximity(
-                interval.startTime,
-                interval.endTime,
-                zasvetkaArray
-            );
+        withConstraints.forEach(interval => {
+        const zasvetkaCheck = this.checkZasvetkaProximity(
+            interval.startTime,
+            interval.endTime,
+            zasvetkaArray
+        );
             
             interval.nearZasvetka = zasvetkaCheck.nearZasvetka;
             interval.zasvetkaConflict = zasvetkaCheck.zasvetkaConflict;
             interval.zasvetkaDistance = zasvetkaCheck.minDistance;
-            
-            if (interval.inShadow && interval.willBeSavedInShadow) {
-                interval.willBeSaved = true;
+        });
+
+        withConstraints.forEach(interval => {
+            if (interval.inShadow) {
+                interval.willBeSaved = interval.willBeSavedInShadow || false;
             } 
-            else if (interval.inShadow) {
-                interval.willBeSaved = false;
-            }
             else {
-                if (
-                    interval.hasConflict || 
-                    interval.zasvetkaConflict || 
-                    interval.nearZasvetka || 
-                    interval.hasAstroConflict
-                ) {
+                interval.willBeSaved = true;
+                
+                if (interval.hasConflict) {
+                    interval.willBeSaved = false;
+                }
+                else if (interval.zasvetkaConflict) {
+                    interval.willBeSaved = false;
+                }
+                else if (interval.nearZasvetka) {
+                    interval.willBeSaved = false;
+                }
+                else if (interval.hasAstroConflict) {
+                    interval.willBeSaved = false;
+                }
+                else if (interval.constraintViolations && interval.constraintViolations.length > 0) {
                     interval.willBeSaved = false;
                 }
             }
         });
 
-        return [...updatedIntervals, ...astroIntervals];
+        return [...withConstraints, ...astroIntervals];
     }
 }

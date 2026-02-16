@@ -71,6 +71,7 @@ export class ScheduleApiService {
             }
             
             const data = await response.json();
+
             return data;
             
         } catch (error) {
@@ -118,7 +119,7 @@ export class ScheduleApiService {
                                 data.impulses.length > 0;
                 console.log('VKI data details:', { 
                     main: data?.main, 
-                    impulsesCount: data?.impulses?.length,
+                    impulses: data?.impulses,
                     hasVkiData 
                 });
             }

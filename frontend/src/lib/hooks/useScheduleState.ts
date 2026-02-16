@@ -1,6 +1,7 @@
 import { CUSTOMER_CODES, WORK_MODES } from '$lib/constants/schedule';
 
 import type { UserResponse } from '$lib/types/auth';
+import { MODE_TO_CONSTRAINT_TYPE } from '$lib/types/constraints';
 import type {
     CreatedProgramData,
     ForecastData,
@@ -434,16 +435,25 @@ export function useScheduleState() {
 
     async function loadAstroEvents(date: string) {
         try {
+            console.log('Загрузка ВКИ для даты:', date);
+            
             const [vkiData, rotationData] = await Promise.all([
                 ScheduleCreationService.loadVkiData(date),
                 ScheduleCreationService.loadRotationData(date)
             ]);
             
+            console.log('Получены данные ВКИ:', vkiData);
+            
             const vkiList = ScheduleCreationService.convertVkiToIntervals(vkiData);
             const rotationList = ScheduleCreationService.convertRotationToIntervals(rotationData, date);
             
+            console.log('Преобразованные ВКИ интервалы:', vkiList);
+            
             vkiIntervals.set(vkiList);
             rotationIntervals.set(rotationList);
+
+            updateAllConflicts();
+            
         } catch (error) {
             console.error("Ошибка загрузки событий астрокоррекции: ", error);
             vkiIntervals.set([]);
@@ -477,13 +487,17 @@ export function useScheduleState() {
 
     function updateAllConflicts() {
         const currentIntervals = get(intervals);
-        const currentZasvetkaIntervals = get(zasvetkaIntervals) || [];
-        const currentShadowIntervals = get(shadowIntervals) || [];
+        const currentZasvetka = get(zasvetkaIntervals) || [];
+        const currentShadows = get(shadowIntervals) || [];
+        const currentVki = get(vkiIntervals) || [];
+        const currentRotations = get(rotationIntervals) || [];
         
         const intervalsWithConflicts = IntervalUtils.checkAllConflicts(
-            currentIntervals, 
-            currentZasvetkaIntervals,
-            currentShadowIntervals
+            currentIntervals,
+            currentZasvetka,
+            currentShadows,
+            currentVki,
+            currentRotations 
         );
         
         intervals.set(
@@ -502,7 +516,8 @@ export function useScheduleState() {
                         inShadow: updatedInterval.inShadow,
                         willBeSavedInShadow: updatedInterval.willBeSavedInShadow,
                         shadowPriority: updatedInterval.shadowPriority,
-                        willBeSaved: updatedInterval.willBeSaved
+                        willBeSaved: updatedInterval.willBeSaved,
+                        constraintViolations: updatedInterval.constraintViolations
                     };
                 }
                 return interval;
@@ -541,8 +556,6 @@ export function useScheduleState() {
                 kvdData: {
                     id: 0,
                     idMain: mainId,
-                    dn: dateOn,
-                    dk: dateOff,
                     prMsu: kvdConfig.prMsu,
                     prBssd: kvdConfig.prBssd,
                     prZg: kvdConfig.prZg
@@ -557,37 +570,34 @@ export function useScheduleState() {
                 tsData: {
                     id: 0,
                     idMain: mainId,
-                    dn: dateOn,
-                    dk: dateOff,
                     tip: 1,
                     reg: 1,
+                    dlit: baseData.dlit,
                     prMsu1: msu1Config.prMsu || 0,
-                    prVdMsu1: msu1Config.prVdMsu || 0,
-                    prIkMsu1: msu1Config.prIkMsu || 0,
-                    prVd1_1: msu1Config.vd1 || 0,
-                    prVd2_1: msu1Config.vd2 || 0,
-                    prVd3_1: msu1Config.vd3 || 0,
-                    prIk4_1: msu1Config.ik4 || 0,
-                    prIk5_1: msu1Config.ik5 || 0,
-                    prIk6_1: msu1Config.ik6 || 0,
-                    prIk7_1: msu1Config.ik7 || 0,
-                    prIk8_1: msu1Config.ik8 || 0,
-                    prIk9_1: msu1Config.ik9 || 0,
-                    prIk10_1: msu1Config.ik10 || 0,
+                    vd1Msu1: msu1Config.vd1 || 0,
+                    vd2Msu1: msu1Config.vd2 || 0,
+                    vd3Msu1: msu1Config.vd3 || 0,
+                    ik4Msu1: msu1Config.ik4 || 0,
+                    ik5Msu1: msu1Config.ik5 || 0,
+                    ik6Msu1: msu1Config.ik6 || 0,
+                    ik7Msu1: msu1Config.ik7 || 0,
+                    ik8Msu1: msu1Config.ik8 || 0,
+                    ik9Msu1: msu1Config.ik9 || 0,
+                    ik10Msu1: msu1Config.ik10 || 0,
                     prMsu2: msu2Config.prMsu || 0,
-                    prVdMsu2: msu2Config.prVdMsu || 0,
-                    prIkMsu2: msu2Config.prIkMsu || 0,
-                    prVd1_2: msu2Config.vd1 || 0,
-                    prVd2_2: msu2Config.vd2 || 0,
-                    prVd3_2: msu2Config.vd3 || 0,
-                    prIk4_2: msu2Config.ik4 || 0,
-                    prIk5_2: msu2Config.ik5 || 0,
-                    prIk6_2: msu2Config.ik6 || 0,
-                    prIk7_2: msu2Config.ik7 || 0,
-                    prIk8_2: msu2Config.ik8 || 0,
-                    prIk9_2: msu2Config.ik9 || 0,
-                    prIk10_2: msu2Config.ik10 || 0,
-                    prOtklZg: 0
+                    vd1Msu2: msu1Config.vd1 || 0,
+                    vd2Msu2: msu1Config.vd2 || 0,
+                    vd3Msu2: msu1Config.vd3 || 0,
+                    ik4Msu2: msu1Config.ik4 || 0,
+                    ik5Msu2: msu1Config.ik5 || 0,
+                    ik6Msu2: msu1Config.ik6 || 0,
+                    ik7Msu2: msu1Config.ik7 || 0,
+                    ik8Msu2: msu1Config.ik8 || 0,
+                    ik9Msu2: msu1Config.ik9 || 0,
+                    ik10Msu2: msu1Config.ik10 || 0,
+                    prBssd: 1,
+                    prZg: 1,
+                    prOtklZgBssd: 0
                 }
             };
         } else if (formData.modeType === 4) {
@@ -596,9 +606,9 @@ export function useScheduleState() {
                 tnpData: {
                     id: 0,
                     idMain: mainId,
-                    dn: dateOn,
-                    dk: dateOff,
-                    dlit: formData.duration
+                    prMsu: 1,
+                    prBssd: 1,
+                    prZg: 1
                 }
             };
         } else if (formData.modeType === 6) {
@@ -607,10 +617,11 @@ export function useScheduleState() {
                 onaData: {
                     id: 0,
                     idMain: mainId,
-                    dn: dateOn,
-                    dk: dateOff,
+                    typeOmi: 1,
+                    dN: dateOn,
+                    dK: dateOff,
                     nOna: formData.nOna || 1,
-                    dlit: formData.duration
+                    nPpi: formData.ppiNum
                 }
             };
         } else {
@@ -632,6 +643,17 @@ export function useScheduleState() {
     }
 
     function getIntervalColor(interval: TimeInterval): string {
+        if (interval.constraintViolations && interval.constraintViolations.length > 0) {
+            console.log(`🔴 Интервал с нарушениями:`, {
+                id: interval.id,
+                mode: interval.mode,
+                type: MODE_TO_CONSTRAINT_TYPE[interval.mode],
+                violations: interval.constraintViolations.length,
+                willBeSaved: interval.willBeSaved
+            });
+            return '#ffffff';
+        }
+
         if (interval.isAstrocorrection) {
             return '#1e40af'; 
         }
@@ -639,7 +661,7 @@ export function useScheduleState() {
         if (interval.inShadow && interval.willBeSavedInShadow) {
             return '#ff69b4'; 
         }
-        if (interval.zasvetkaConflict || interval.nearZasvetka || interval.hasAstroConflict) {
+        if (interval.zasvetkaConflict || interval.nearZasvetka || interval.hasAstroConflict || (interval.constraintViolations && interval.constraintViolations.length > 0)) {
             return '#ffffff';
         }
         if (interval.hasConflict) {
