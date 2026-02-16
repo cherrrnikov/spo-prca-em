@@ -81,7 +81,7 @@ export interface Id06MainDto {
 }
 
 export interface Id06KvdDto {
-    id: number;
+    id: number; 
     id_main: number;  
     dn: string;
     dk: string;
@@ -117,7 +117,7 @@ export interface Id06TsDto {
     pr_msu1: number;
     pr_vd_msu1: number;
     pr_ik_msu1: number;
-    pr_vd1_1: number;      // было prVd1_1
+    pr_vd1_1: number;       
     pr_vd2_1: number;      // было prVd2_1
     pr_vd3_1: number;      // было prVd3_1
     pr_ik4_1: number;      // было prIk4_1

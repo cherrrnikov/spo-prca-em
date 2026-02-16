@@ -97,6 +97,8 @@ export class ScheduleConverterService {
         return vkiData.impulses.map((impulse: Kr01ImpulseDto, index: number) => {
             const time = this.extractTimeOnly(impulse.date_im);
             const date = impulse.date_im.split('T')[0];
+
+            const vkiType = impulse.n_du >= 1 && impulse.n_du <= 4 ? 'vki1' : 'vki2';
             
             // Длительность 5 минут (300 секунд) фиксированная для отображения
             const duration = impulse.dlit || 300;
@@ -108,7 +110,7 @@ export class ScheduleConverterService {
                 startTime: time,
                 endTime: endTime,
                 duration: duration,
-                title: `ВКИ`,
+                title: vkiType === 'vki1' ? 'ВКИ1' : 'ВКИ2',
                 color: '#000000',
                 opacity: 1,
                 zIndex: 1,
@@ -116,7 +118,8 @@ export class ScheduleConverterService {
                 mass: impulse.massa,
                 angle: impulse.ugl_v,
                 nVit: impulse.n_vit,
-                nDu: impulse.n_du
+                nDu: impulse.n_du,
+                vkiType: vkiType
             };
         });
     }
