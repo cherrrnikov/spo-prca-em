@@ -7,7 +7,7 @@
     	CUSTOMER_CODES,
     	WORK_MODES
     } from '$lib/constants/schedule';
-    import { useScheduleState } from '$lib/hooks/useScheduleState';
+    import { useScheduleState } from '$lib/hooks/useScheduleState/index';
     import type { OperatorData, PpiAssignment, TimeInterval } from '$lib/types';
     import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
     import { IntervalUtils } from '$lib/utils/interval';
