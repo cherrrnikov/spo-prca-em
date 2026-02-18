@@ -12,7 +12,7 @@ import type {
     TimeInterval,
     VkiInterval,
     WorkMode
-} from '$lib/types/schedule';
+} from '$lib/types';
 import { TimeUtils } from '$lib/utils/time';
 import type { ScheduleStatus } from '../schedule-creation/types';
 import { ScheduleApiService } from './api/scheduleApi.service';

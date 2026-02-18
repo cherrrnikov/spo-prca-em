@@ -6,7 +6,7 @@
     	Id06TsDto,
     	Ppi,
     	PpiSelectionModal as PpiModalType
-    } from '$lib/types/schedule';
+    } from '$lib/types';
     import { ScheduleCreationService } from '../../services/scheduleCreation.service';
 
     let {

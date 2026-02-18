@@ -1,5 +1,5 @@
 import { MODE_NAMES, WORK_MODES } from '$lib/constants/schedule';
-import type { WorkMode } from '$lib/types/schedule';
+import type { WorkMode } from '$lib/types';
 
 export class ModeUtils {
     static getModeTitle(modeType: number): string {

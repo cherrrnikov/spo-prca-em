@@ -5,7 +5,7 @@ import type {
     OperatorData,
     PpiAssignment,
     ProgramModeData,
-} from '$lib/types/schedule';
+} from '$lib/types';
 import type { ScheduleStatus } from '../../schedule-creation/types';
 import { DurationCalculatorService } from '../utils/durationCalculator.service';
 

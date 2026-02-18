@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { TsMsuConfig } from '$lib/types/schedule';
+    import type { TsMsuConfig } from '$lib/types';
     
     export let msu: 'msu1' | 'msu2';
     export let config: TsMsuConfig;

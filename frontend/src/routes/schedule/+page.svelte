@@ -8,7 +8,7 @@
     	WORK_MODES
     } from '$lib/constants/schedule';
     import { useScheduleState } from '$lib/hooks/useScheduleState';
-    import type { OperatorData, PpiAssignment, TimeInterval } from '$lib/types/schedule';
+    import type { OperatorData, PpiAssignment, TimeInterval } from '$lib/types';
     import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
     import { IntervalUtils } from '$lib/utils/interval';
     import { TimeUtils } from '$lib/utils/time';

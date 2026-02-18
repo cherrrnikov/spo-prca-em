@@ -1,4 +1,4 @@
-import type { Id06TsDto, PpiAssignment, TimeInterval, TsMsuConfig } from '$lib/types/schedule';
+import type { Id06TsDto, PpiAssignment, TimeInterval, TsMsuConfig } from '$lib/types';
 import { CityService } from '../utils/cities.service';
 
 export class TsIntervalService {

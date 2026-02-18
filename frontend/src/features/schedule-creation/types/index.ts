@@ -1,4 +1,4 @@
-import type { OperatorData, PpiAssignment } from "$lib/types/schedule";
+import type { OperatorData, PpiAssignment } from "$lib/types";
 
 export type ScheduleStatus = 'main' | 'corrective';
 export type ShootingMode = 'default' | 'no_shooting';

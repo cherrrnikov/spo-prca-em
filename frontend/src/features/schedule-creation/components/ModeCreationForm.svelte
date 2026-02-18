@@ -5,7 +5,7 @@
     	PPI_LIST,
     	ZG_OPTIONS
     } from "$lib/constants/schedule";
-    import type { ModeCreationForm, TimeInterval, TsMsuConfig } from "$lib/types/schedule";
+    import type { ModeCreationForm, TimeInterval, TsMsuConfig } from "$lib/types";
     import { IntervalValidationService } from "$lib/utils/intervalValidation";
     import { onMount } from "svelte";
     import { ScheduleConverterService } from "../../services/data/scheduleConverter.service";
@@ -310,7 +310,7 @@
                 <div class="kvd-config-grid">
                     <div class="form-group">
                         <label>Номер антенны:</label>
-                        <div class="radio-group">
+                        <div class="radio-group">  
                             <label class="radio-label">
                                 <input 
                                     type="radio"

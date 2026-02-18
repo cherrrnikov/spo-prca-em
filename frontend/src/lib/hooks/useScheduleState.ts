@@ -1,7 +1,6 @@
 import { CUSTOMER_CODES, WORK_MODES } from '$lib/constants/schedule';
 
 import { ConstraintValidator } from '$lib/services/constraints/constraintValidator.service';
-import type { UserResponse } from '$lib/types/auth';
 import type {
     CreatedProgramData,
     ForecastData,
@@ -15,7 +14,8 @@ import type {
     TimeInterval,
     VkiInterval,
     ZasvetkaInterval
-} from '$lib/types/schedule';
+} from '$lib/types';
+import type { UserResponse } from '$lib/types/auth';
 import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
 import { IntervalUtils } from '$lib/utils/interval';
 import { IntervalValidationService } from '$lib/utils/intervalValidation';

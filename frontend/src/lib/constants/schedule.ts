@@ -1,11 +1,10 @@
-// schedule.ts - с правильной типизацией
 import type {
     City,
     CustomerCode,
     Ppi,
     WorkMode,
     ZgOption
-} from '$lib/types/schedule';
+} from '$lib/types';
 
 export const CUSTOMER_CODES: CustomerCode[] = [
     { value: 1, label: '01 - Заказчик 1'},

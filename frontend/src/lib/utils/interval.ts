@@ -1,5 +1,5 @@
 import { ConstraintValidator } from '$lib/services/constraints/constraintValidator.service';
-import type { RotationInterval, ShadowInterval, TimeInterval, VkiInterval, ZasvetkaInterval } from '$lib/types/schedule';
+import type { RotationInterval, ShadowInterval, TimeInterval, VkiInterval, ZasvetkaInterval } from '$lib/types';
 import { IntervalValidationService } from './intervalValidation';
 import { TimeUtils } from './time';
 

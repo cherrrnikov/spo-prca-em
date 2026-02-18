@@ -1,14 +1,14 @@
-import type { OperatorData, PpiAssignment } from '$lib/types/schedule';
+import type { OperatorData, PpiAssignment } from '$lib/types';
 
 export class AssignmentStatisticsService {
     static getAssignmentStatistics(
         operatorData: OperatorData,
         ppiAssignments: PpiAssignment[]
     ) {
-        const kvdCount = operatorData.kvdList?.length || 0;
-        const tnpCount = operatorData.tnpList?.length || 0;
-        const tsCount = operatorData.tsList?.length || 0;
-        const onaCount = operatorData.onaList?.length || 0;
+        const kvdCount = operatorData.kvd_list?.length || 0;
+        const tnpCount = operatorData.tnp_list?.length || 0;
+        const tsCount = operatorData.ts_list?.length || 0;
+        const onaCount = operatorData.ona_list?.length || 0;
         
         const kvdWithPpi = ppiAssignments.filter(a => a.recordType === 'kvd').length;
         const tnpWithPpi = ppiAssignments.filter(a => a.recordType === 'tnp').length;

@@ -5,7 +5,7 @@ import type {
     Kr01DataResponse,
     OperatorData,
     Ro02DataResponse
-} from '$lib/types/schedule';
+} from '$lib/types';
 
 export class ScheduleApiService {
     private static BASE_URL = '/api';

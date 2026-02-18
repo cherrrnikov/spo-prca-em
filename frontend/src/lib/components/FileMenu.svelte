@@ -1,10 +1,9 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
+  import type { TimeInterval } from '$lib/types';
   import type { UserResponse } from '$lib/types/auth';
-  import type { TimeInterval } from '$lib/types/schedule';
   import { onMount } from 'svelte';
-//   import { scheduleIntervals } from '$lib/stores/scheduleStore';
   
   let isOpen = $state(false);
   let isSubMenuOpen = $state(false);

@@ -9,7 +9,7 @@ import type {
     TsMsuConfig,
     VkiInterval,
     ZasvetkaInterval
-} from '$lib/types/schedule';
+} from '$lib/types';
 import { TimeUtils } from '$lib/utils/time';
 
 export class ScheduleConverterService {

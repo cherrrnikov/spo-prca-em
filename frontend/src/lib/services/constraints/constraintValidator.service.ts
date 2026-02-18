@@ -1,5 +1,5 @@
+import type { RotationInterval, ShadowInterval, TimeInterval, VkiInterval, ZasvetkaInterval } from '$lib/types';
 import { MODE_TO_CONSTRAINT_TYPE, type ConstraintViolation, type TimeConstraint } from '$lib/types/constraints';
-import type { RotationInterval, ShadowInterval, TimeInterval, VkiInterval, ZasvetkaInterval } from '$lib/types/schedule';
 import { TimeUtils } from '$lib/utils/time';
 import { TimeConstraintsService } from './timeConstraints.service';
 

@@ -1,4 +1,4 @@
-import type { TimeInterval } from '$lib/types/schedule';
+import type { TimeInterval } from '$lib/types';
 
 export class AstrocorrectionService {
     private static readonly ASTRO_MODE_ID = 9;

@@ -6,7 +6,7 @@
     	VkiInterval,
     	WorkMode,
     	ZasvetkaInterval
-    } from '$lib/types/schedule';
+    } from '$lib/types';
     import { GridPositionUtils } from "../utils/gridPosition";
 
     let {

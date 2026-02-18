@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { OperatorData, Ppi, PpiAssignment, PpiSelectionModal as PpiSelectionModalType } from "$lib/types/schedule";
+	import type { OperatorData, Ppi, PpiAssignment, PpiSelectionModal as PpiSelectionModalType } from "$lib/types";
 	import { onMount } from "svelte";
 	import { ScheduleCreationService } from "../../services/scheduleCreation.service";
 	import type { MsuGsType, ScheduleStatus, ShootingMode } from "../types";

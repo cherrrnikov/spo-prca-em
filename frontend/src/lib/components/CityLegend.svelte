@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { City } from '$lib/types/schedule';
+  import type { City } from '$lib/types';
   
   export let cities: City[];
 </script>
