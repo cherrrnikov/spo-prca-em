@@ -5,6 +5,7 @@ import type { UserResponse } from '$lib/types/auth';
 import type {
     CreatedProgramData,
     ForecastData,
+    Id02Dto,
     ModeCreationForm,
     OperatorData,
     PpiAssignment,
@@ -29,6 +30,7 @@ export function useScheduleState() {
     const creationMode = writable<'operator' | 'reference' | null>(null);
     const intervals = writable<TimeInterval[]>([]);
     const operatorData = writable<OperatorData | null>(null);
+    const bortData = writable<Id02Dto | null>(null);
     const ppiAssignments = writable<PpiAssignment[]>([]);
     const operatorDataLoaded = writable(false);
     const selectedProgramDate = writable<string>('');
@@ -46,6 +48,19 @@ export function useScheduleState() {
     const rotationIntervals = writable<RotationInterval[]>([]);
 
     let isEditing = writable(true);
+
+    async function loadBortData(date: string) {
+        try {
+            const data = await ScheduleApiService.loadBortData(date);
+            bortData.set(data);
+            console.log('ИД02:', data); 
+            return data;
+        } catch (error) {
+            console.error('Ошибка загрузки данных ID02:', error);
+            bortData.set(null);
+            return null;
+        }
+    }
 
     function loadUserData() {
         try {
@@ -80,6 +95,7 @@ export function useScheduleState() {
 
     function setContextDate(date: string) {
         contextDate.set(date);
+        loadBortData(date);
     }
 
     function handleIntervalClick(interval: TimeInterval) {
@@ -697,6 +713,7 @@ export function useScheduleState() {
         creationMode,
         intervals,
         operatorData,
+        bortData,
         ppiAssignments,
         operatorDataLoaded,
         selectedProgramDate,
@@ -723,6 +740,7 @@ export function useScheduleState() {
         handleModeFormCancel,
         loadAstroEvents,
         checkAndAddAstrocorrection,
+        loadBortData,
         
         getIntervalColor,
         getIntervalTitle,

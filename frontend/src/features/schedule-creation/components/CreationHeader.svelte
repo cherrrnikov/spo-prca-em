@@ -61,7 +61,7 @@
 
         try {
             operatorData = await ScheduleCreationService.loadOperatorData(selectedDate);
-            console.log('Данные оператора получены:', operatorData);
+            console.log('ИД06:', operatorData);
 
             await processAllRecords();
         } catch (error) {

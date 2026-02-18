@@ -1,6 +1,7 @@
 import type {
     CreateProgramRequest,
     ForecastData,
+    Id02Dto,
     Kr01DataResponse,
     OperatorData,
     Ro02DataResponse
@@ -97,6 +98,26 @@ export class ScheduleApiService {
             
         } catch (error) {
             console.warn(`Ошибка загрузки данных разворотов для даты ${date}:`, error);
+            return null;
+        }
+    }
+
+    static async loadBortData(date: string): Promise<Id02Dto | null> {
+        try {
+            const response = await fetch(`${this.BASE_URL}/schedule/bort-proxy?date=${date}`);
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    console.log(`Данные о состоянии бортовых систем не найдены для даты: ${date}`);
+                    return null;
+                }
+                throw new Error(`Ошибка сервера при загрузке данных о состоянии бортовых систем: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.warn(`Ошибка загрузки данных о состоянии бортовых систем для даты ${date}: `, error);
             return null;
         }
     }
