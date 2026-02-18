@@ -31,34 +31,6 @@ export class ScheduleConverterService {
         };
     }
 
-    static formatTimeFromISO(isoString: string): string {
-        try {
-            const date = new Date(isoString);
-            return date.toTimeString().substring(0, 5); 
-        } catch {
-            return "00:00";
-        }
-    }
-
-    static formatDateTime(dateStr: string): string {
-        try {
-            const date = new Date(dateStr);
-            return date.toLocaleString('ru-RU', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch {
-            return dateStr;
-        }
-    }
-
-    static formatTimeOnly(dateStr: string): string {
-        return TimeUtils.extractTimeFromTimestamp(dateStr);
-    }
-
     static convertForecastToIntervals(forecastData: ForecastData): {
         shadows: ShadowInterval[],
         zasvetki: ZasvetkaInterval[]
@@ -95,12 +67,10 @@ export class ScheduleConverterService {
         }
 
         return vkiData.impulses.map((impulse: Kr01ImpulseDto, index: number) => {
-            const time = this.extractTimeOnly(impulse.date_im);
+            const time = TimeUtils.extractTimeFromTimestamp(impulse.date_im);
             const date = impulse.date_im.split('T')[0];
 
             const vkiType = impulse.n_du >= 1 && impulse.n_du <= 4 ? 'vki1' : 'vki2';
-            
-            // Длительность 5 минут (300 секунд) фиксированная для отображения
             const duration = impulse.dlit || 300;
             const endTime = TimeUtils.calculateEndTime(time, duration / 60);
             
@@ -131,14 +101,12 @@ export class ScheduleConverterService {
 
         return rotationData.rotations
             .filter((rotation: Ro02Dto) => {
-                // Рисуем разворот ТОЛЬКО если дата запроса совпадает с dataRazv
                 const rotationDate = rotation.data_razv.split('T')[0];
                 return rotationDate === targetDate;
             })
             .map((rotation: Ro02Dto, index: number) => {
-                const time = this.extractTimeOnly(rotation.data_razv);
+                const time = TimeUtils.extractTimeFromTimestamp(rotation.data_razv);
                 const date = rotation.data_razv.split('T')[0];
-                
                 const duration = 300;
                 const endTime = TimeUtils.calculateEndTime(time, duration / 60);
                 
@@ -155,46 +123,5 @@ export class ScheduleConverterService {
                     rotationNumber: index + 1
                 };
             });
-    }
-
-    static createDateWithTime(baseDate: Date, timeStr: string): Date {
-        const date = new Date(baseDate);
-        
-        // Если timeStr уже полный timestamp
-        if (timeStr.includes('T') || timeStr.includes('-')) {
-            try {
-                return new Date(timeStr);
-            } catch {
-                // Если не удалось распарсить, продолжаем
-            }
-        }
-        
-        // Если только время HH:MM
-        const [hours, minutes] = timeStr.split(':').map(Number);
-        date.setHours(hours || 0, minutes || 0, 0, 0);
-        return date;
-    }
-
-    static extractTimeOnly(timeStr: string): string {
-        try {
-            if (timeStr.includes('T') || timeStr.includes('-')) {
-                const date = new Date(timeStr);
-                return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
-            }
-            
-            const timeRegex = /^(\d{1,2}):(\d{2})(:(\d{2}))?$/;
-            const match = timeStr.match(timeRegex);
-            
-            if (match) {
-                const hours = parseInt(match[1]).toString().padStart(2, '0');
-                const minutes = match[2];
-                const seconds = match[4] ? match[4].padStart(2, '0') : '00';
-                return `${hours}:${minutes}:${seconds}`;
-            }
-            
-            return "00:00:00";
-        } catch {
-            return "00:00:00";
-        }
     }
 }

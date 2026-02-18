@@ -21,9 +21,6 @@ import { ScheduleConverterService } from './data/scheduleConverter.service';
 import { TsIntervalService } from './data/tsInterval.service';
 import { AssignmentStatisticsService } from './statistics/assignmentStatistics.service';
 import { CityService } from './utils/cities.service';
-import { DateFormatterService } from './utils/dateFormatter.service';
-import { DurationCalculatorService } from './utils/durationCalculator.service';
-
 
 export class ScheduleCreationService {
     static async loadOperatorData(date: string): Promise<OperatorData> {
@@ -79,7 +76,6 @@ export class ScheduleCreationService {
     ): TimeInterval[] {
         const intervals: TimeInterval[] = [];
         
-        // Обработка КВД
         if (operatorData.kvd_list?.length) {
             operatorData.kvd_list.forEach(kvd => {
                 const assignment = ppiAssignments.find(a => 
@@ -92,7 +88,6 @@ export class ScheduleCreationService {
             });
         }
         
-        // Обработка ТНП
         if (operatorData.tnp_list?.length) {
             operatorData.tnp_list.forEach(tnp => {
                 const assignment = ppiAssignments.find(a => 
@@ -105,7 +100,6 @@ export class ScheduleCreationService {
             });
         }
         
-        // Обработка ТС
         if (operatorData.ts_list?.length) {
             operatorData.ts_list.forEach(ts => {
                 const tsSubIntervals = TsIntervalService.convertTsToSubIntervals(ts, ppiAssignments);
@@ -113,7 +107,6 @@ export class ScheduleCreationService {
             });
         }
 
-        // Обработка ОНА
         if (operatorData.ona_list?.length) {
             operatorData.ona_list.forEach(ona => {
                 const assignment = ppiAssignments.find(a => 
@@ -146,7 +139,7 @@ export class ScheduleCreationService {
     }
 
     static calculateDuration(startStr: string, endStr: string): number {
-        return DurationCalculatorService.calculateDuration(startStr, endStr);
+        return TimeUtils.calculateDuration(startStr, endStr);
     }
 
     static getAssignmentStatistics(
@@ -157,11 +150,11 @@ export class ScheduleCreationService {
     }
 
     static formatDateTime(dateStr: string): string {
-        return DateFormatterService.formatDateTime(dateStr);
+        return TimeUtils.formatDateTime(dateStr);
     }
 
     static formatTimeOnly(dateStr: string): string {
-        return DateFormatterService.formatTimeOnly(dateStr);
+        return TimeUtils.formatTimeOnly(dateStr);
     }
 
     static convertTsToSubIntervals(
@@ -173,10 +166,6 @@ export class ScheduleCreationService {
 
     static getDefaultMsuConfig() {
         return ScheduleConverterService.getDefaultMsuConfig();
-    }
-
-    static formatTimeFromISO(isoString: string): string {
-        return ScheduleConverterService.formatTimeFromISO(isoString);
     }
 
     static getCityByPpi(ppiNum: number): string {

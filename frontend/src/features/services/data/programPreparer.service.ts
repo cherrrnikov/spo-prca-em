@@ -1,13 +1,12 @@
 import type {
     CreatedProgramData,
     CreateProgramRequest,
-    Id06OnaDto,
     OperatorData,
     PpiAssignment,
-    ProgramModeData,
+    ProgramModeData
 } from '$lib/types';
+import { TimeUtils } from '$lib/utils/time';
 import type { ScheduleStatus } from '../../schedule-creation/types';
-import { DurationCalculatorService } from '../utils/durationCalculator.service';
 
 export class ProgramPreparerService {
     static prepareProgramData(
@@ -31,7 +30,6 @@ export class ProgramPreparerService {
 
         const modes: ProgramModeData[] = [];
 
-        // Добавляем режимы КВД
         if (operatorData.kvd_list?.length) {
             operatorData.kvd_list.forEach(kvd => {
                 const assignment = ppiAssignments.find(a => a.recordId === kvd.id && a.recordType === 'kvd');
@@ -41,7 +39,6 @@ export class ProgramPreparerService {
             });
         }
 
-        // Добавляем режимы ТНП
         if (operatorData.tnp_list?.length) {
             operatorData.tnp_list.forEach(tnp => {
                 const assignment = ppiAssignments.find(a => a.recordId === tnp.id && a.recordType === 'tnp');
@@ -51,7 +48,6 @@ export class ProgramPreparerService {
             });
         }
 
-        // Добавляем режимы ТС
         if (operatorData.ts_list?.length) {
             operatorData.ts_list.forEach(ts => {
                 const assignment = ppiAssignments.find(a => a.recordId === ts.id && a.recordType === 'ts');
@@ -61,7 +57,6 @@ export class ProgramPreparerService {
             });
         }
 
-        // Добавляем режимы ОНА
         if (operatorData.ona_list?.length) {
             operatorData.ona_list.forEach(ona => {
                 const assignment = ppiAssignments.find(a => 
@@ -112,12 +107,10 @@ export class ProgramPreparerService {
             dateOff: kvd.dk,
             kodMode: 7,
             numPpi: assignment.ppiNum,
-            dlit: DurationCalculatorService.calculateDuration(kvd.dn, kvd.dk),
+            dlit: TimeUtils.calculateDuration(kvd.dn, kvd.dk),
             kvdData: {
                 id: kvd.id,
                 idMain: kvd.idMain,
-                dn: kvd.dn,
-                dk: kvd.dk,
                 prMsu: kvd.prMsu,
                 prBssd: kvd.prBssd,
                 prZg: kvd.prZg
@@ -137,9 +130,9 @@ export class ProgramPreparerService {
             tnpData: {
                 id: tnp.id,
                 idMain: tnp.idMain,
-                dn: tnp.dn,
-                dk: tnp.dk,
-                dlit: tnp.dlit,
+                prMsu: tnp.prMsu,
+                prBssd: tnp.prBssd,
+                prZg: tnp.prZg
             }
         };
     }
@@ -152,42 +145,39 @@ export class ProgramPreparerService {
             dateOff: ts.dk,
             kodMode: 8,
             numPpi: assignment.ppiNum,
-            dlit: DurationCalculatorService.calculateDuration(ts.dn, ts.dk),
+            dlit: TimeUtils.calculateDuration(ts.dn, ts.dk),
             zakazchik: this.getCustomerLabel(customerCode || 5),
             tsData: {
                 id: ts.id,
                 idMain: ts.idMain,
-                dn: ts.dn,
-                dk: ts.dk,
                 tip: ts.tip,
                 reg: ts.reg,
+                dlit: ts.dlit,
                 prMsu1: ts.prMsu1,
-                prVdMsu1: ts.prVdMsu1,
-                prIkMsu1: ts.prIkMsu1,
-                prVd1_1: ts.prVd1_1,
-                prVd2_1: ts.prVd2_1,
-                prVd3_1: ts.prVd3_1,
-                prIk4_1: ts.prIk4_1,
-                prIk5_1: ts.prIk5_1,
-                prIk6_1: ts.prIk6_1,
-                prIk7_1: ts.prIk7_1,
-                prIk8_1: ts.prIk8_1,
-                prIk9_1: ts.prIk9_1,
-                prIk10_1: ts.prIk10_1,
+                vd1Msu1: ts.vd1Msu1,
+                vd2Msu1: ts.vd2Msu1,
+                vd3Msu1: ts.vd3Msu1,
+                ik4Msu1: ts.ik4Msu1,
+                ik5Msu1: ts.ik5Msu1,
+                ik6Msu1: ts.ik6Msu1,
+                ik7Msu1: ts.ik7Msu1,
+                ik8Msu1: ts.ik8Msu1,
+                ik9Msu1: ts.ik9Msu1,
+                ik10Msu1: ts.ik10Msu1,
                 prMsu2: ts.prMsu2,
-                prVdMsu2: ts.prVdMsu2,
-                prIkMsu2: ts.prIkMsu2,
-                prVd1_2: ts.prVd1_2,
-                prVd2_2: ts.prVd2_2,
-                prVd3_2: ts.prVd3_2,
-                prIk4_2: ts.prIk4_2,
-                prIk5_2: ts.prIk5_2,
-                prIk6_2: ts.prIk6_2,
-                prIk7_2: ts.prIk7_2,
-                prIk8_2: ts.prIk8_2,
-                prIk9_2: ts.prIk9_2,
-                prIk10_2: ts.prIk10_2,
-                prOtklZg: ts.prOtklZg
+                vd1Msu2: ts.vd1Msu2,
+                vd2Msu2: ts.vd2Msu2,
+                vd3Msu2: ts.vd3Msu2,
+                ik4Msu2: ts.ik4Msu2,
+                ik5Msu2: ts.ik5Msu2,
+                ik6Msu2: ts.ik6Msu2,
+                ik7Msu2: ts.ik7Msu2,
+                ik8Msu2: ts.ik8Msu2,
+                ik9Msu2: ts.ik9Msu2,
+                ik10Msu2: ts.ik10Msu2,
+                prBssd: ts.prBssd,
+                prZg: ts.prZg,
+                prOtklZgBssd: ts.prOtklZgBssd
             }
         };
     }
@@ -195,7 +185,7 @@ export class ProgramPreparerService {
     private static createOnaModeData(
         numRp: number, 
         numKa: number, 
-        ona: Id06OnaDto, 
+        ona: any, 
         assignment: PpiAssignment
     ): ProgramModeData {
         return {
@@ -209,10 +199,11 @@ export class ProgramPreparerService {
             onaData: {  
                 id: ona.id,
                 idMain: ona.id_main,  
-                dn: ona.dn,
-                dk: ona.dk,
+                typeOmi: ona.typeOmi,
+                dN: ona.dn,
+                dK: ona.dk,
                 nOna: ona.n_ona,
-                dlit: ona.dlit
+                nPpi: ona.nPpi
             }
         };
     }

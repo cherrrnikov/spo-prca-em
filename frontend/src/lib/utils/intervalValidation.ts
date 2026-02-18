@@ -1,4 +1,4 @@
-import { TimeUtils } from "./time";
+import { TimeUtils } from '$lib/utils/time';
 
 export class IntervalValidationService {
     static validateInterval(startTime: string, endTime: string): {
