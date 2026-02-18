@@ -18,10 +18,10 @@
     import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
     
     import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
-    import { IntervalUtils } from '$lib/utils/interval';
     import { TimeUtils } from '$lib/utils/time';
     
     import type { OperatorData, PpiAssignment } from '$lib/types';
+    import { checkAllConflicts } from '$lib/utils/interval/index';
 
     const cities = CITIES;
     const workModes = WORK_MODES;
@@ -126,7 +126,7 @@
                 hasAstro
             );
 
-            const intervalsWithConflicts = IntervalUtils.checkAllConflicts(
+            const intervalsWithConflicts = checkAllConflicts(
                 intervalsWithAstro, 
                 $zasvetkaIntervals, 
                 $shadowIntervals,

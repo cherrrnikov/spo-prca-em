@@ -1,7 +1,9 @@
 import { WORK_MODES } from '$lib/constants/schedule';
 import { ConstraintValidator } from '$lib/services/constraints/constraintValidator.service';
 import type { TimeInterval } from '$lib/types';
-import { IntervalUtils } from '$lib/utils/interval';
+import { checkTwoIntervalsOverlap } from '$lib/utils/interval/conflicts';
+import { checkAllConflicts } from '$lib/utils/interval/index';
+import { checkZasvetkaProximity } from '$lib/utils/interval/zasvetka';
 import { get } from 'svelte/store';
 import { ScheduleCreationService } from '../../../features/services/scheduleCreation.service';
 import type { createStores } from './stores';
@@ -46,7 +48,7 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
         for (const existingInterval of allIntervals) {
             if (existingInterval.mode === newInterval.mode) continue;
             
-            const overlap = IntervalUtils.checkTwoIntervalsOverlap(
+            const overlap = checkTwoIntervalsOverlap(
                 newInterval.startTime,
                 newInterval.endTime,
                 existingInterval.startTime,
@@ -74,7 +76,7 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
         const hasViolations = constraintViolations.has(newInterval.id);
         
         // Проверка засветок
-        const zasvetkaCheck = IntervalUtils.checkZasvetkaProximity(
+        const zasvetkaCheck = checkZasvetkaProximity(
             newInterval.startTime,
             newInterval.endTime,
             currentZasvetkaIntervals
@@ -102,7 +104,7 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
         const currentVki = get(vkiIntervals) || [];
         const currentRotations = get(rotationIntervals) || [];
         
-        const intervalsWithConflicts = IntervalUtils.checkAllConflicts(
+        const intervalsWithConflicts = checkAllConflicts(
             currentIntervals,
             currentZasvetka,
             currentShadows,
@@ -112,7 +114,7 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
         
         intervals.set(
             currentIntervals.map(interval => {
-                const updatedInterval = intervalsWithConflicts.find(i => i.id === interval.id);
+                const updatedInterval = intervalsWithConflicts.find((i: { id: string; }) => i.id === interval.id);
                 if (updatedInterval) {
                     return {
                         ...interval,

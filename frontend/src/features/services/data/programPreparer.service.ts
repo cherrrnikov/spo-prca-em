@@ -68,8 +68,14 @@ export class ProgramPreparerService {
             });
         }
 
-        console.log("Подготовленная ПРЦА: ", mainData);
-        console.log("Подготовленные записи режимов ПРЦА: ", modes);
+        console.log('ПРЦА подготовлена:', {
+            main: mainData,
+            modesCount: modes.length,
+            kvd: modes.filter(m => m.kodMode === 7).length,
+            tnp: modes.filter(m => m.kodMode === 4).length,
+            ts: modes.filter(m => m.kodMode === 8).length,
+            ona: modes.filter(m => m.kodMode === 6).length
+        });
 
         return { mainData, modes };
     }
@@ -94,8 +100,6 @@ export class ProgramPreparerService {
             baseRequest.modes.push(created.modeData);
         });
 
-        console.log("FULL DATA:", baseRequest);
-        
         return baseRequest;
     }
 

@@ -138,11 +138,6 @@ export class ScheduleApiService {
                                 data.main !== null && 
                                 data.impulses && 
                                 data.impulses.length > 0;
-                console.log('VKI data details:', { 
-                    main: data?.main, 
-                    impulses: data?.impulses,
-                    hasVkiData 
-                });
             }
             
             if (rotationData.status === 'fulfilled') {
@@ -150,17 +145,9 @@ export class ScheduleApiService {
                 hasRotationData = data !== null && 
                                     data.rotations && 
                                     data.rotations.length > 0;
-                console.log('Rotation data details:', {  
-                    rotationsCount: data?.rotations?.length,
-                    hasRotationData 
-                });
             }
-            console.log('Проверка астрокоррекции для даты', date, ':', {
-                hasVkiData,
-                hasRotationData,
-                vkiResult: vkiData.status,
-                rotationResult: rotationData.status
-            });
+
+            console.log(`Астрокоррекция для ${date}: ${hasVkiData || hasRotationData ? 'ЕСТЬ' : 'НЕТ'}`);
             
             return hasVkiData || hasRotationData;
             

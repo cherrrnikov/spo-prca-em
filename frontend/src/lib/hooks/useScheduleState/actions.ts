@@ -4,7 +4,7 @@ import type {
     TimeInterval
 } from '$lib/types';
 import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
-import { IntervalUtils } from '$lib/utils/interval';
+import { checkIntervalOverlap } from '$lib/utils/interval/conflicts';
 import { IntervalValidationService } from '$lib/utils/intervalValidation';
 import { TimeUtils } from '$lib/utils/time';
 import { get } from 'svelte/store';
@@ -23,15 +23,8 @@ export function createActions(
         userData,
         creationMode,
         intervals,
-        operatorData,
         bortData,
-        ppiAssignments,
         operatorDataLoaded,
-        selectedProgramDate,
-        forecastData,
-        shadowIntervals,
-        zasvetkaIntervals,
-        forecastDataLoaded,
         selectedMode,
         createdPrograms,
         editingInterval,
@@ -213,7 +206,7 @@ export function createActions(
         }
 
         const currentIntervals = get(intervals);
-        const sameModeOverlap = IntervalUtils.checkIntervalOverlap(
+        const sameModeOverlap = checkIntervalOverlap(
             currentIntervals,
             formData.startTime,
             formData.duration,
@@ -275,7 +268,7 @@ export function createActions(
         }
 
         const currentIntervals = get(intervals);
-        const sameModeOverlap = IntervalUtils.checkIntervalOverlap(
+        const sameModeOverlap = checkIntervalOverlap(
             currentIntervals,
             formData.startTime,
             formData.duration,

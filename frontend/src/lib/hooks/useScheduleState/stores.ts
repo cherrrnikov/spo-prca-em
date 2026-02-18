@@ -17,7 +17,6 @@ export function createStores() {
     // Данные пользователя
     const userData = writable<UserResponse | null>(null);
     const isEditing = writable(true);
-
     // Режим создания
     const creationMode = writable<'operator' | 'reference' | null>(null);
 
