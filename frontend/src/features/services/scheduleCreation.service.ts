@@ -19,7 +19,6 @@ import { ScheduleApiService } from './api/scheduleApi.service';
 import { ProgramPreparerService } from './data/programPreparer.service';
 import { ScheduleConverterService } from './data/scheduleConverter.service';
 import { TsIntervalService } from './data/tsInterval.service';
-import { AssignmentStatisticsService } from './statistics/assignmentStatistics.service';
 import { CityService } from './utils/cities.service';
 
 export class ScheduleCreationService {
@@ -140,13 +139,6 @@ export class ScheduleCreationService {
 
     static calculateDuration(startStr: string, endStr: string): number {
         return TimeUtils.calculateDuration(startStr, endStr);
-    }
-
-    static getAssignmentStatistics(
-        operatorData: OperatorData,
-        ppiAssignments: PpiAssignment[]
-    ) {
-        return AssignmentStatisticsService.getAssignmentStatistics(operatorData, ppiAssignments);
     }
 
     static formatDateTime(dateStr: string): string {

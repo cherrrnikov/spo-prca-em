@@ -91,9 +91,6 @@
             await processRecordBatch(operatorData.ona_list, 'ona', 'Юстировка ОНА');
         }
         
-        
-        const stats = ScheduleCreationService.getAssignmentStatistics(operatorData, ppiAssignments);
-        
         completePpiSelection();
     }
 
@@ -208,10 +205,6 @@
     }
     
     function handleCancelCreation() {
-        // if (operatorData && ppiAssignments.length > 0 && onDataProcessed) {
-        //     onDataProcessed(operatorData, ppiAssignments);
-        // }
-
         scheduleStatus = 'main';
         shootingMode = 'default';
         msuGsType = 'msu_gs_1';
@@ -220,16 +213,13 @@
         ppiModal.isOpen = false;
         isLoading = false;
         
-        // Это вызовет onCancel в +page.svelte и вернет FileMenu
         onCancelProp?.();
     }
 
     function resetFormState() {
-        // Просто сбрасываем состояние формы, но не вызываем onCancel
         scheduleStatus = 'main';
         shootingMode = 'default';
         msuGsType = 'msu_gs_1';
-        // НЕ сбрасываем operatorData и ppiAssignments - они нужны!
         ppiModal.isOpen = false;
         isLoading = false;
     }

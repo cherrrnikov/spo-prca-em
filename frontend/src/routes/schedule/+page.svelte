@@ -1,26 +1,30 @@
 <script lang="ts">
+    import { onMount } from 'svelte';
+    
+    import {
+    	CITIES,
+    	WORK_MODES
+    } from '$lib/constants/schedule';
+    
     import CityLegend from '$lib/components/CityLegend.svelte';
     import FileMenu from '$lib/components/FileMenu.svelte';
     import ScheduleGrid from '$lib/components/ScheduleGrid.svelte';
-    import {
-    	CITIES,
-    	CUSTOMER_CODES,
-    	WORK_MODES
-    } from '$lib/constants/schedule';
+    import CreationHeader from '../../features/schedule-creation/components/CreationHeader.svelte';
+    import ModeCreationFormComponent from '../../features/schedule-creation/components/ModeCreationForm.svelte';
+    
     import { useScheduleState } from '$lib/hooks/useScheduleState/index';
-    import type { OperatorData, PpiAssignment, TimeInterval } from '$lib/types';
+    
+    import { ScheduleApiService } from '../../features/services/api/scheduleApi.service';
+    import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
+    
     import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
     import { IntervalUtils } from '$lib/utils/interval';
     import { TimeUtils } from '$lib/utils/time';
-    import { onMount } from 'svelte';
-    import CreationHeader from '../../features/schedule-creation/components/CreationHeader.svelte';
-    import ModeCreationFormComponent from '../../features/schedule-creation/components/ModeCreationForm.svelte';
-    import { ScheduleApiService } from '../../features/services/api/scheduleApi.service';
-    import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
+    
+    import type { OperatorData, PpiAssignment } from '$lib/types';
 
     const cities = CITIES;
     const workModes = WORK_MODES;
-    const customerCodes = CUSTOMER_CODES;
 
     const {
         userData,
@@ -30,16 +34,13 @@
         ppiAssignments,
         operatorDataLoaded,
         selectedProgramDate,
-        forecastData,
         shadowIntervals,
         zasvetkaIntervals,
-        forecastDataLoaded,
         selectedMode,
         createdPrograms,
         editingInterval,
         selectedIntervalId,
         contextDate,   
-        hasAstrocorrectionData,    
         vkiIntervals,
         rotationIntervals,
         isEditing,  
@@ -52,7 +53,6 @@
         handleModeFormSubmit,
         handleModeFormCancel,
         loadAstroEvents,
-        checkAndAddAstrocorrection,
         
         getIntervalColor,
         getIntervalTitle,
@@ -63,6 +63,7 @@
         loadUserData();
     });
 
+    // Создание ПРЦА
     function startOperatorCreation() {
         creationMode.set('operator');
     }
@@ -76,6 +77,22 @@
         creationMode.set(null);
     }
     
+    // Загрузка данных
+    async function loadForecastData(date: string) {
+        try {
+            const data = await ScheduleCreationService.loadForecastData(date);
+            
+            const forecastIntervals = ScheduleCreationService.convertForecastToIntervals(data);
+            shadowIntervals.set(forecastIntervals.shadows);
+            zasvetkaIntervals.set(forecastIntervals.zasvetki);
+        } catch (error) {
+            console.warn('Ошибка загрузки прогнозных данных:', error);
+            shadowIntervals.set([]);
+            zasvetkaIntervals.set([]);
+        }
+    }
+    
+    // Обработка данных оператора
     async function updateIntervalsFromOperatorData(
         newOperatorData: OperatorData,
         newPpiAssignments: PpiAssignment[]
@@ -90,79 +107,35 @@
             setContextDate(date); 
             selectedProgramDate.set(date);
 
-            await loadAstroEvents(date);
-            console.log(`ВКИ после загрузки:`, $vkiIntervals);
-            await loadForecastData(date);
-            await checkAndAddAstrocorrection(date);
-        }
+            await Promise.all([
+                loadAstroEvents(date),
+                loadForecastData(date)
+            ]);
 
-        const newIntervals = ScheduleCreationService.convertToTimeIntervals(
-            newOperatorData,
-            newPpiAssignments,
-            workModes
-        );
-        
-        const intervalsWithAstro = await addAstrocorrectionToIntervals(newIntervals, $contextDate);
-        const currentVkiIntervals = $vkiIntervals;
-        const currentZasvetkaIntervals = $zasvetkaIntervals;
-        const currentShadowIntervals = $shadowIntervals;
-
-        console.log('Проверка конфликтов с ВКИ:', currentVkiIntervals);
-
-        const intervalsWithConflicts = IntervalUtils.checkAllConflicts(
-            intervalsWithAstro, 
-            currentZasvetkaIntervals, 
-            currentShadowIntervals,
-            currentVkiIntervals,
-            $rotationIntervals
-        );
-
-        intervals.set(intervalsWithConflicts);
-
-        isEditing.set(false);
-        logAllIntervals('После загрузки данных оператора');
-    }
-
-    async function addAstrocorrectionToIntervals(intervals: TimeInterval[], date: string): Promise<TimeInterval[]> {
-        try {
             const hasAstro = await ScheduleApiService.hasAstrocorrectionData(date);
-            console.log('Астрокоррекция для даты', date, ':', 
-                hasAstro ? 'ПОЛНЫЙ РЕЖИМ (6 интервалов)' : 'ОБЫЧНЫЙ РЕЖИМ (2 интервала)');
             
-            return AstrocorrectionService.mergeAstrocorrection(intervals, date, hasAstro);
-        } catch (error) {
-            console.warn('Ошибка при добавлении астрокоррекции:', error);
-            return intervals;
-        }
-    }
+            const newIntervals = ScheduleCreationService.convertToTimeIntervals(
+                newOperatorData,
+                newPpiAssignments,
+                workModes
+            );
+            
+            const intervalsWithAstro = AstrocorrectionService.mergeAstrocorrection(
+                newIntervals, 
+                date, 
+                hasAstro
+            );
 
-    async function loadForecastData(date: string) {
-        try {
-            const data = await ScheduleCreationService.loadForecastData(date);
-            forecastData.set(data);
-            forecastDataLoaded.set(true);
-            
-            const forecastIntervals = ScheduleCreationService.convertForecastToIntervals(data);
-            shadowIntervals.set(forecastIntervals.shadows);
-            zasvetkaIntervals.set(forecastIntervals.zasvetki);
-            
-            console.log('Прогнозные данные загружены:', {
-                shadows: forecastIntervals.shadows,
-                zasvetki: forecastIntervals.zasvetki
-            });
+            const intervalsWithConflicts = IntervalUtils.checkAllConflicts(
+                intervalsWithAstro, 
+                $zasvetkaIntervals, 
+                $shadowIntervals,
+                $vkiIntervals,
+                $rotationIntervals
+            );
 
-            const currentIntervals = $intervals;
-            if (currentIntervals.length > 0) {
-                const intervalsWithConflicts = IntervalUtils.checkAllConflicts(
-                    currentIntervals, 
-                    forecastIntervals.zasvetki
-                );
-                intervals.set(intervalsWithConflicts);
-            }
-        } catch (error) {
-            console.warn('Ошибка загрузки прогнозных данных:', error);
-            shadowIntervals.set([]);
-            zasvetkaIntervals.set([]);
+            intervals.set(intervalsWithConflicts);
+            isEditing.set(false);
         }
     }
 
