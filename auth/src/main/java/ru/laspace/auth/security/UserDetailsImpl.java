@@ -76,10 +76,6 @@ public class UserDetailsImpl implements UserDetails {
         return user.getLockTime();
     }
 
-    public LocalDateTime getLastFailedLogin() {
-        return user.getLastFailedLogin();
-    }
-
     public int getRemainingAttempts() {
         return Math.max(0, securityProperties.getMaxFailedAttempts() - user.getFailedAttempts());
     }

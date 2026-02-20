@@ -5,100 +5,67 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import ru.laspace.auth.dto.response.ErrorResponse;
 import ru.laspace.auth.exception.AuthException;
 import ru.laspace.auth.exception.NotFoundException;
 import ru.laspace.auth.exception.TokenRefreshException;
 
 @Slf4j
 @RestControllerAdvice
-@Hidden // Скрываем в Swagger UI
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorResponse handleAuthException(AuthException ex) {
-        log.warn("Auth exception: {}", ex.getMessage());
-        return ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Authentication Failed")
-                .message(ex.getMessage())
-                .build();
-    }
-
-    @ExceptionHandler(BadCredentialsException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorResponse handleBadCredentialsException(BadCredentialsException ex) {
-        log.warn("Bad credentials: {}", ex.getMessage());
-        return ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Invalid Credentials")
-                .message("Неверный логин или пароль")
-                .build();
+    public ResponseEntity<ErrorResponse> handleAuthException(AuthException ex, HttpServletRequest request) {
+        log.warn("Auth error: {}", ex.getMessage());
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Authentication Failed", ex.getMessage(), request);
     }
 
     @ExceptionHandler(TokenRefreshException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ErrorResponse handleTokenRefreshException(TokenRefreshException ex) {
-        log.warn("Token refresh exception: {}", ex.getMessage());
-        return ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.FORBIDDEN.value())
-                .error("Token Refresh Failed")
-                .message(ex.getMessage())
-                .build();
+    public ResponseEntity<ErrorResponse> handleTokenRefreshException(TokenRefreshException ex,
+            HttpServletRequest request) {
+        log.warn("Token refresh error: {}", ex.getMessage());
+        return buildResponse(HttpStatus.FORBIDDEN, "Token Refresh Failed", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentialsException(HttpServletRequest request) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Invalid Credentials",
+                "Invalid username or password", request);
     }
 
     @ExceptionHandler(NotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleNotFoundException(NotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException ex, HttpServletRequest request) {
         log.warn("Not found: {}", ex.getMessage());
-        return ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.NOT_FOUND.value())
-                .error("Not Found")
-                .message(ex.getMessage())
-                .build();
+        return buildResponse(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleIllegalArgumentException(IllegalArgumentException ex) {
-        log.warn("Illegal argument: {}", ex.getMessage());
-        return ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("Bad Request")
-                .message(ex.getMessage())
-                .build();
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex,
+            HttpServletRequest request) {
+        log.warn("Bad request: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage(), request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ErrorResponse handleAccessDeniedException(AccessDeniedException ex) {
-        log.warn("Access denied: {}", ex.getMessage());
-        return ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.FORBIDDEN.value())
-                .error("Access Denied")
-                .message("У вас нет прав для выполнения этого действия")
-                .build();
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Access Denied",
+                "You don't have permission", request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
@@ -108,37 +75,36 @@ public class GlobalExceptionHandler {
 
         log.warn("Validation errors: {}", errors);
 
-        return ErrorResponse.builder()
+        ErrorResponse response = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("Validation Failed")
-                .message("Ошибка валидации")
+                .message("Validation error")
+                .path(request.getRequestURI())
                 .details(errors)
                 .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleGenericException(Exception ex) {
-        log.error("Internal server error: ", ex);
-        return ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .error("Internal Server Error")
-                .message("Произошла внутренняя ошибка сервера")
-                .build();
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
+        log.error("Internal server error", ex);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                "An unexpected error occurred", request);
     }
 
-    @lombok.Data
-    @lombok.Builder
-    @lombok.AllArgsConstructor
-    @lombok.NoArgsConstructor
-    @Hidden
-    static class ErrorResponse {
-        private LocalDateTime timestamp;
-        private Integer status;
-        private String error;
-        private String message;
-        private Map<String, String> details;
+    private ResponseEntity<ErrorResponse> buildResponse(
+            HttpStatus status, String error, String message, HttpServletRequest request) {
+
+        ErrorResponse response = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(status.value())
+                .error(error)
+                .message(message)
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(status).body(response);
     }
 }
