@@ -4,12 +4,10 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateUserRequest {
@@ -27,8 +25,6 @@ public class CreateUserRequest {
     private String lastName;
 
     private boolean enabled = true;
-    private boolean accountLocked = false;
-    private int failedAttempts = 0;
 
     private Set<String> roles;
 }

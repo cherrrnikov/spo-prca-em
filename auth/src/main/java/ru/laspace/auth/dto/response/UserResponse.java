@@ -1,6 +1,5 @@
 package ru.laspace.auth.dto.response;
 
-import java.time.LocalDateTime;
 import java.util.Set;
 
 import lombok.AllArgsConstructor;
@@ -19,7 +18,5 @@ public class UserResponse {
     private boolean enabled;
     private boolean accountLocked;
     private int failedAttempts;
-    private LocalDateTime lastLoginAt;
-    private LocalDateTime lastLogoutAt;
     private Set<String> roles;
 }
