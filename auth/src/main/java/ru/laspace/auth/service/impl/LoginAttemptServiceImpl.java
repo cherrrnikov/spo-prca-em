@@ -1,7 +1,8 @@
 package ru.laspace.auth.service.impl;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
@@ -15,130 +16,90 @@ import ru.laspace.auth.service.LoginAttemptService;
 @Service
 @RequiredArgsConstructor
 public class LoginAttemptServiceImpl implements LoginAttemptService {
+
     private final UserRepository userRepository;
     private final SecurityProperties securityProperties;
 
-    @Transactional
     @Override
+    @Transactional
     public void loginSucceeded(String username) {
         userRepository.findByUsername(username).ifPresent(user -> {
-            int oldAttempts = user.getFailedAttempts();
-            boolean wasLocked = user.isAccountLocked();
-
             user.resetFailedAttempts();
-            User savedUser = userRepository.save(user); // Явное сохранение
-
-            log.info("Сброс счетчика неудачных попыток для пользователя: {}. Было: {}, стало: {}, была блокировка: {}",
-                    username, oldAttempts, savedUser.getFailedAttempts(), wasLocked);
+            userRepository.save(user);
+            log.debug("Reset failed attempts for user: {}", username);
         });
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW) // Новая транзакция для каждого неудачного входа
     @Override
+    @Transactional
     public void loginFailed(String username) {
-        User user = userRepository.findByUsername(username).orElse(null);
+        applyLoginDelay();
 
-        if (user == null) {
-            log.debug("Пользователь не найден: {}. Применяем задержку.", username);
-            applyLoginDelay();
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
             return;
         }
 
-        if (!securityProperties.isEnableBruteForceProtection()) {
-            log.debug("Защита от brute force отключена для пользователя: {}", username);
-            return;
-        }
-
-        // Сохраняем старое состояние для логов
-        int oldAttempts = user.getFailedAttempts();
-        boolean wasLocked = user.isAccountLocked();
-
-        // Увеличиваем счетчик
+        User user = userOpt.get();
         user.incrementFailedAttempts();
 
-        log.debug("Увеличиваем счетчик для пользователя: {}. Было: {}, стало: {}",
-                username, oldAttempts, user.getFailedAttempts());
-
         if (user.getFailedAttempts() >= securityProperties.getMaxFailedAttempts()) {
-            if (!user.isAccountLocked() || user.isAccountLockExpired()) {
-                user.lockAccount();
-                log.warn("Аккаунт заблокирован из-за слишком большого количества неудачных попыток: {}. Попыток: {}",
-                        username, user.getFailedAttempts());
-            }
+            user.lockAccount();
+            log.warn("Account locked for user: {}", username);
         }
 
-        User savedUser = userRepository.save(user); // Явное сохранение
-
-        log.info("Неудачная попытка входа для пользователя: {}. Попытки: {} -> {}. Заблокирован: {}",
-                username, oldAttempts, savedUser.getFailedAttempts(), savedUser.isAccountLocked());
+        userRepository.save(user);
+        log.debug("Failed attempt for user: {}, attempts: {}",
+                username, user.getFailedAttempts());
     }
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public boolean isAccountLocked(String username) {
         return userRepository.findByUsername(username)
                 .map(user -> {
-                    boolean isLocked = user.isAccountLocked() && !user.isAccountLockExpired();
-
-                    if (isLocked) {
-                        log.debug("Аккаунт заблокирован: {}. Попыток: {}, время блокировки: {}",
-                                username, user.getFailedAttempts(), user.getLockTime());
+                    if (user.isAccountLocked() &&
+                            !securityProperties.isLockExpired(user.getLockTime())) {
+                        return true;
                     }
-
-                    // Если блокировка истекла, снимаем её
-                    if (user.isAccountLocked() && user.isAccountLockExpired()) {
-                        log.info("Блокировка истекла для пользователя: {}. Снимаем блокировку.", username);
+                    if (user.isAccountLocked()) {
                         user.setAccountLocked(false);
                         user.setLockTime(null);
                         userRepository.save(user);
                     }
-                    return isLocked;
+                    return false;
                 })
                 .orElse(false);
     }
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public int getRemainingAttempts(String username) {
         return userRepository.findByUsername(username)
-                .map(user -> {
-                    int remaining = securityProperties.getMaxFailedAttempts() - user.getFailedAttempts();
-
-                    if (user.isAccountLocked() && !user.isAccountLockExpired()) {
-                        remaining = 0;
-                    }
-
-                    remaining = Math.max(0, remaining);
-
-                    log.debug("Оставшихся попыток для пользователя {}: {} (использовано: {}, максимум: {})",
-                            username, remaining, user.getFailedAttempts(), securityProperties.getMaxFailedAttempts());
-                    return remaining;
-                })
+                .map(user -> Math.max(0,
+                        securityProperties.getMaxFailedAttempts() - user.getFailedAttempts()))
                 .orElse(securityProperties.getMaxFailedAttempts());
     }
 
-    @Transactional
     @Override
+    @Transactional
     public void unlockAccount(String username) {
         userRepository.findByUsername(username).ifPresent(user -> {
-            int oldAttempts = user.getFailedAttempts();
-            user.resetFailedAttempts();
-            User savedUser = userRepository.save(user);
-            log.info("Аккаунт разблокирован: {}. Было попыток: {}, стало: {}",
-                    username, oldAttempts, savedUser.getFailedAttempts());
+            user.setAccountLocked(false);
+            user.setLockTime(null);
+            user.setFailedAttempts(0);
+            userRepository.save(user);
+            log.info("Account unlocked for user: {}", username);
         });
     }
 
-    // Метод для задержки при неудачной попытке (защита от брутфорса)
     @Override
     public void applyLoginDelay() {
         if (securityProperties.getLoginDelayMillis() > 0) {
             try {
-                log.debug("Применяем задержку в {} мс", securityProperties.getLoginDelayMillis());
                 Thread.sleep(securityProperties.getLoginDelayMillis());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                log.warn("Задержка прервана");
             }
         }
     }
