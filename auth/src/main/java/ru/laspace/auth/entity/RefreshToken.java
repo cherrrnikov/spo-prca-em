@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -37,11 +38,34 @@ public class RefreshToken {
     @Column(name = "expiry_date", nullable = false)
     @NotNull
     private LocalDateTime expiryDate;
-    
+
+    @Column(name = "ip_address", length = 45)
+    private String ipAddress;
+
+    @Column(name = "user_agent", length = 500)
+    private String userAgent;
+
     @Column(nullable = false)
     private boolean revoked = false;
 
+    @Column(name = "revoked_at")
+    private LocalDateTime revokedAt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    public boolean isValid() {
+        return !revoked && expiryDate.isAfter(LocalDateTime.now());
+    }
+
+    public void revoke() {
+        this.revoked = true;
+        this.revokedAt = LocalDateTime.now();
+    }
 
 }
