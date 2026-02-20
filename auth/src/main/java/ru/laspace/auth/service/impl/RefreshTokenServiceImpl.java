@@ -2,6 +2,7 @@ package ru.laspace.auth.service.impl;
 
 import java.time.LocalDateTime;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,60 +10,86 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.laspace.auth.entity.RefreshToken;
 import ru.laspace.auth.entity.User;
-import ru.laspace.auth.exception.TokenRefreshException;
+import ru.laspace.auth.exception.AuthException;
 import ru.laspace.auth.repository.RefreshTokenRepository;
+import ru.laspace.auth.security.JwtService;
 import ru.laspace.auth.service.RefreshTokenService;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class RefreshTokenServiceImpl implements RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtService jwtService;
 
     @Override
-    public RefreshToken createRefreshToken(User user, String token) {
-        RefreshToken refreshTokenEntity = new RefreshToken();
+    @Transactional
+    public String createRefreshToken(User user, String ipAddress, String userAgent) {
+        // Отзываем старый токен если есть
+        refreshTokenRepository.findByUserId(user.getId())
+                .ifPresent(token -> {
+                    token.revoke();
+                    refreshTokenRepository.save(token);
+                });
 
-        refreshTokenEntity.setUser(user);
-        refreshTokenEntity.setToken(token);
-        refreshTokenEntity.setExpiryDate(LocalDateTime.now().plusDays(7));
-        refreshTokenEntity.setCreatedAt(LocalDateTime.now());
-        refreshTokenEntity.setRevoked(false);
+        String tokenValue = jwtService.generateRefreshToken(user.getUsername(), user.getId());
 
-        return refreshTokenEntity;
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setToken(tokenValue);
+        refreshToken.setUser(user);
+        refreshToken.setExpiryDate(LocalDateTime.now().plusDays(7));
+        refreshToken.setIpAddress(ipAddress);
+        refreshToken.setUserAgent(userAgent);
+
+        refreshTokenRepository.save(refreshToken);
+        return tokenValue;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public RefreshToken verifyRefreshToken(String token) {
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
-                .orElseThrow(() -> new TokenRefreshException("RefreshToken не найден"));
-
-        if (refreshToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            throw new TokenRefreshException("RefreshToken истёк");
+        if (!jwtService.validateToken(token) ||
+                !jwtService.validateTokenType(token, "refresh")) {
+            throw new AuthException("Invalid refresh token");
         }
 
-        if (refreshToken.isRevoked()) {
-            throw new TokenRefreshException("RefreshToken аннулирован");
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
+                .orElseThrow(() -> new AuthException("Refresh token not found"));
+
+        if (!refreshToken.isValid()) {
+            throw new AuthException("Refresh token is revoked or expired");
         }
 
         return refreshToken;
     }
 
     @Override
-    public void revokeRefreshToken(String refreshToken, Long userId) {
-        refreshTokenRepository.findByToken(refreshToken)
-                .ifPresent(token -> {
-                    if (token.getUser().getId().equals(userId)) {
-                        token.setRevoked(true);
-                        refreshTokenRepository.save(token);
-                        log.info("Refresh token отозван для пользователя ID={}", userId);
-                    } else {
-                        log.warn(
-                                "Попытка отозвать чужой refreshToken. Токен принадлежит пользователю ID={}, запросил ID={}",
-                                token.getUser().getId(), userId);
-                        throw new TokenRefreshException("Refresh token не принадлежит пользователю");
-                    }
-                });
+    @Transactional
+    public void revokeRefreshToken(String token) {
+        refreshTokenRepository.findByToken(token).ifPresent(tokenEntity -> {
+            tokenEntity.revoke();
+            refreshTokenRepository.save(tokenEntity);
+        });
+    }
+
+    @Override
+    @Transactional
+    public void revokeAllUserTokens(Long userId) {
+        refreshTokenRepository.revokeAllUserTokens(userId, LocalDateTime.now());
+    }
+
+    @Override
+    @Transactional
+    @Scheduled(cron = "0 0 3 * * ?")
+    public void cleanupExpiredTokens() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime monthAgo = now.minusMonths(1);
+
+        int expired = refreshTokenRepository.deleteExpiredTokens(now);
+        int oldRevoked = refreshTokenRepository.deleteOldRevokedTokens(monthAgo);
+
+        if (expired > 0 || oldRevoked > 0) {
+            log.info("Cleaned up {} expired and {} old revoked tokens", expired, oldRevoked);
+        }
     }
 }
