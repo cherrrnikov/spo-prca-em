@@ -4,10 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import ru.laspace.auth.entity.Role;
-
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,9 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import ru.laspace.auth.dto.request.CreateUserRequest;
 import ru.laspace.auth.dto.request.UpdateUserRolesRequest;
 import ru.laspace.auth.dto.response.UserResponse;
+import ru.laspace.auth.entity.Role;
 import ru.laspace.auth.entity.User;
 import ru.laspace.auth.exception.NotFoundException;
-import ru.laspace.auth.mapper.UserMapper;
 import ru.laspace.auth.repository.RoleRepository;
 import ru.laspace.auth.repository.UserRepository;
 import ru.laspace.auth.service.AdminService;
@@ -30,21 +27,19 @@ import ru.laspace.auth.service.LoginAttemptService;
 @Transactional
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
+
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final UserMapper userMapper;
     private final LoginAttemptService loginAttemptService;
 
     @Override
-    @CacheEvict(value = { "userResponses", "userList" }, allEntries = true)
+    @CacheEvict(value = "allUsers", allEntries = true)
     public UserResponse createUser(CreateUserRequest request) {
-        log.info("Создание пользователя: {} с ролями: {}",
-                request.getUsername(), request.getRoles());
+        log.info("Creating user: {} with roles: {}", request.getUsername(), request.getRoles());
 
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException(
-                    String.format("Пользователь '%s' уже существует", request.getUsername()));
+            throw new IllegalArgumentException("User already exists: " + request.getUsername());
         }
 
         User user = new User();
@@ -60,55 +55,45 @@ public class AdminServiceImpl implements AdminService {
         }
 
         User savedUser = userRepository.save(user);
-        log.info("Пользователь создан: ID={}, username={}",
-                savedUser.getId(), savedUser.getUsername());
+        log.info("User created with ID: {}", savedUser.getId());
 
-        return userMapper.toResponse(savedUser);
+        return buildUserResponse(savedUser);
     }
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "userList", key = "'allUsers'")
     public List<UserResponse> getAllUsers() {
-        log.info("Получение списка всех пользователей");
+        log.info("Getting all users");
         return userRepository.findAll().stream()
-                .map(user -> userMapper.toResponse(user))
+                .map(this::buildUserResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "userResponses", key = "#id")
     public UserResponse getUserById(Long id) {
-        log.info("Получение пользователя по ID: {}", id);
-        @SuppressWarnings("null")
+        log.info("Getting user by ID: {}", id);
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с ID=%d не найден", id)));
-        return userMapper.toResponse(user);
+                .orElseThrow(() -> new NotFoundException("User" + id));
+        return buildUserResponse(user);
     }
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "userResponses", key = "#username")
     public UserResponse getUserByUsername(String username) {
-        log.info("Получение пользователя по username: {}", username);
+        log.info("Getting user by username: {}", username);
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь '%s' не найден", username)));
-        return userMapper.toResponse(user);
+                .orElseThrow(() -> new NotFoundException("User" + username));
+        return buildUserResponse(user);
     }
 
-    @SuppressWarnings("null")
     @Override
-    @CacheEvict(value = { "userResponses", "userList" }, allEntries = true)
+    @CacheEvict(value = "allUsers", allEntries = true)
     public UserResponse updateUserRoles(Long userId, UpdateUserRolesRequest request) {
-        log.info("Обновление ролей пользователя ID={}, новые роли: {}",
-                userId, request.getRoles());
+        log.info("Updating roles for user ID: {}", userId);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с ID=%d не найден", userId)));
+                .orElseThrow(() -> new NotFoundException("User" + userId));
 
         user.getRoles().clear();
 
@@ -118,96 +103,81 @@ public class AdminServiceImpl implements AdminService {
         }
 
         User updatedUser = userRepository.save(user);
-        log.info("Роли пользователя ID={} обновлены", userId);
+        log.info("Roles updated for user: {}", updatedUser.getUsername());
 
-        return userMapper.toResponse(updatedUser);
+        return buildUserResponse(updatedUser);
     }
 
-    @SuppressWarnings("null")
     @Override
-    @CacheEvict(value = { "userResponses", "userList" }, allEntries = true)
+    @CacheEvict(value = "allUsers", allEntries = true)
     public void deleteUser(Long userId) {
-        log.info("Удаление пользователя ID={}", userId);
-
+        log.info("Deleting user ID: {}", userId);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с ID=%d не найден", userId)));
-
+                .orElseThrow(() -> new NotFoundException("User" + userId));
         userRepository.delete(user);
-        log.info("Пользователь ID={} удален", userId);
+        log.info("User deleted: {}", user.getUsername());
     }
 
     @Override
-    @CacheEvict(value = { "userResponses", "userList" }, key = "#userId")
+    @CacheEvict(value = "allUsers", allEntries = true)
     public UserResponse disableUser(Long userId) {
-        log.info("Блокировка пользователя ID={}", userId);
-
-        @SuppressWarnings("null")
+        log.info("Disabling user ID: {}", userId);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с ID=%d не найден", userId)));
-
+                .orElseThrow(() -> new NotFoundException("User" + userId));
         user.setEnabled(false);
         User updatedUser = userRepository.save(user);
-
-        return userMapper.toResponse(updatedUser);
+        return buildUserResponse(updatedUser);
     }
 
     @Override
-    @CacheEvict(value = { "userResponses", "userList" }, key = "#userId")
+    @CacheEvict(value = "allUsers", allEntries = true)
     public UserResponse enableUser(Long userId) {
-        log.info("Разблокировка пользователя ID={}", userId);
-
-        @SuppressWarnings("null")
+        log.info("Enabling user ID: {}", userId);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с ID=%d не найден", userId)));
-
+                .orElseThrow(() -> new NotFoundException("User" + userId));
         user.setEnabled(true);
         User updatedUser = userRepository.save(user);
-
-        return userMapper.toResponse(updatedUser);
+        return buildUserResponse(updatedUser);
     }
 
     @Override
-    @CacheEvict(value = { "userResponses", "userList" }, key = "#userId")
+    @CacheEvict(value = "allUsers", allEntries = true)
     public UserResponse unlockUserAccount(Long userId) {
-        log.info("Разблокировка аккаунта пользователя ID={}", userId);
-
-        @SuppressWarnings("null")
+        log.info("Unlocking account for user ID: {}", userId);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с ID=%d не найден", userId)));
-
+                .orElseThrow(() -> new NotFoundException("User" + userId));
         loginAttemptService.unlockAccount(user.getUsername());
-        User updatedUser = userRepository.findById(userId).orElseThrow();
-
-        return userMapper.toResponse(updatedUser);
+        return buildUserResponse(user);
     }
 
     @Override
-    @CacheEvict(value = { "userResponses", "userList" }, key = "#userId")
+    @CacheEvict(value = "allUsers", allEntries = true)
     public UserResponse resetUserPassword(Long userId, String newPassword) {
-        log.info("Сброс пароля пользователя ID={}", userId);
-
-        @SuppressWarnings("null")
+        log.info("Resetting password for user ID: {}", userId);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с ID=%d не найден", userId)));
-
+                .orElseThrow(() -> new NotFoundException("User" + userId));
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.resetFailedAttempts();
-
         User updatedUser = userRepository.save(user);
-
-        return userMapper.toResponse(updatedUser);
+        return buildUserResponse(updatedUser);
     }
 
     private Set<Role> fetchRolesByName(Set<String> roleNames) {
         return roleNames.stream()
-                .map(roleName -> roleRepository.findByName(roleName).orElseThrow(
-                        () -> new IllegalArgumentException(
-                                String.format("Роль %s не найдена", roleName))))
+                .map(roleName -> roleRepository.findByName(roleName)
+                        .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleName)))
                 .collect(Collectors.toSet());
+    }
+
+    private UserResponse buildUserResponse(User user) {
+        return UserResponse.builder()
+                .username(user.getUsername())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .enabled(user.isEnabled())
+                .accountLocked(user.isAccountLocked())
+                .failedAttempts(user.getFailedAttempts())
+                .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()))
+                .build();
     }
 }
