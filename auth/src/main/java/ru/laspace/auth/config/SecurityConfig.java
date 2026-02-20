@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -22,7 +23,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import lombok.RequiredArgsConstructor;
 import ru.laspace.auth.security.JwtAuthenticationFilter;
-import ru.laspace.auth.security.UserDetailsServiceImpl;
 
 @Configuration
 @EnableWebSecurity
@@ -30,7 +30,7 @@ import ru.laspace.auth.security.UserDetailsServiceImpl;
 @RequiredArgsConstructor
 public class SecurityConfig {
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
-        private final UserDetailsServiceImpl userDetailsService;
+        private final UserDetailsService userDetailsService;
 
         @Bean
         public PasswordEncoder passwordEncoder() {

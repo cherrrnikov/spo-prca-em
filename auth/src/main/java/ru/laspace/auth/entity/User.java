@@ -89,8 +89,4 @@ public class User {
         this.lockTime = LocalDateTime.now();
     }
 
-    public boolean isAccountLockExpired() {
-        throw new UnsupportedOperationException("Unimplemented method 'isAccountLockExpired'");
-    }
-
 }

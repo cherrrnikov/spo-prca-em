@@ -20,8 +20,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.debug("Loading user by username: {}", username);
+
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        user.getRoles().size();
+
+        log.debug("User loaded: {} with {} roles", username, user.getRoles().size());
 
         return new CustomUserDetails(user);
     }
