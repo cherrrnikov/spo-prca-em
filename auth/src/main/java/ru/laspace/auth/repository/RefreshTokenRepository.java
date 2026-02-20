@@ -1,7 +1,6 @@
 package ru.laspace.auth.repository;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,11 +15,18 @@ import ru.laspace.auth.entity.RefreshToken;
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
     Optional<RefreshToken> findByToken(String token);
 
+    Optional<RefreshToken> findByUserId(Long userId);
+
     @Modifying
     @Query("DELETE FROM RefreshToken rt WHERE rt.expiryDate < :now")
-    int deleteAllExpiryDateBefore(@Param("now") LocalDateTime now);
+    int deleteExpiredTokens(@Param("now") LocalDateTime now);
 
-    @Query("SELECT rt FROM RefreshToken rt WHERE rt.user.id = :userId AND rt.revoked = false")
-    List<RefreshToken> findAllValidTokensByUser(@Param("userId") Long userId);
+    @Modifying
+    @Query("UPDATE RefreshToken rt SET rt.revoked = true, rt.revokedAt = :now WHERE rt.user.id = :userId")
+    void revokeAllUserTokens(@Param("userId") Long userId, @Param("now") LocalDateTime now);
+
+    @Modifying
+    @Query("DELETE FROM RefreshToken rt WHERE rt.revoked = true AND rt.revokedAt < :date")
+    int deleteOldRevokedTokens(@Param("date") LocalDateTime date);
 
 }
