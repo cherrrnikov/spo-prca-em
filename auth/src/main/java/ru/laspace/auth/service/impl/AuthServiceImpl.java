@@ -31,6 +31,7 @@ import ru.laspace.auth.security.JwtService;
 import ru.laspace.auth.service.AuthService;
 import ru.laspace.auth.service.LoginAttemptService;
 import ru.laspace.auth.service.RefreshTokenService;
+import ru.laspace.auth.service.UserCacheService;
 
 @Slf4j
 @Service
@@ -45,6 +46,7 @@ public class AuthServiceImpl implements AuthService {
     private final LoginAttemptService loginAttemptService;
     private final PasswordEncoder passwordEncoder;
     private final SecurityProperties securityProperties;
+    private final UserCacheService userCacheService;
 
     @Override
     @Transactional
@@ -68,7 +70,9 @@ public class AuthServiceImpl implements AuthService {
             // Сброс счетчика неудачных попыток
             user.resetFailedAttempts();
             user.setLastLoginAt(LocalDateTime.now());
-            userRepository.save(user);
+
+            user = userRepository.save(user);
+            userCacheService.updateCachedUser(user);
 
             // Генерация токенов
             String accessToken = jwtService.generateAccessToken(

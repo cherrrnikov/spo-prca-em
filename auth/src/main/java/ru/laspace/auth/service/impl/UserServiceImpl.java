@@ -1,6 +1,5 @@
 package ru.laspace.auth.service.impl;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ru.laspace.auth.dto.request.CreateUserRequest;
 import ru.laspace.auth.dto.response.UserResponse;
 import ru.laspace.auth.entity.Role;
 import ru.laspace.auth.entity.User;
@@ -22,11 +22,14 @@ import ru.laspace.auth.exception.NotFoundException;
 import ru.laspace.auth.repository.RoleRepository;
 import ru.laspace.auth.repository.UserRepository;
 import ru.laspace.auth.security.CustomUserDetails;
+import ru.laspace.auth.service.LoginAttemptService;
 import ru.laspace.auth.service.RefreshTokenService;
+import ru.laspace.auth.service.UserCacheService;
 import ru.laspace.auth.service.UserService;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
@@ -34,6 +37,10 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+    private final LoginAttemptService loginAttemptService;
+    private final UserCacheService userCacheService;
+
+    // Публичные методы
 
     @Override
     @Transactional(readOnly = true)
@@ -41,133 +48,197 @@ public class UserServiceImpl implements UserService {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
 
-        User user = userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new NotFoundException("User" + userDetails.getId()));
+        log.info("Getting current user: {}", userDetails.getUsername());
+
+        User user = userCacheService.findByUsername(userDetails.getUsername())
+                .map(cachedUser -> userCacheService.toEntityWithRoles(cachedUser))
+                .orElseThrow(() -> new NotFoundException("User " + userDetails.getUsername()));
 
         return buildUserResponse(user);
     }
 
+    // Админские методы
+
     @Override
-    @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "allUsers", allEntries = true)
+    public UserResponse createUser(CreateUserRequest request) {
+        log.info("Creating user: {} with roles: {}", request.getUsername(), request.getRoles());
+
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new IllegalArgumentException("User already exists: " + request.getUsername());
+        }
+
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setEnabled(request.isEnabled());
+
+        if (request.getRoles() != null && !request.getRoles().isEmpty()) {
+            Set<Role> roles = fetchRolesByName(request.getRoles());
+            user.setRoles(roles);
+        }
+
+        User savedUser = userRepository.save(user);
+        userCacheService.updateCachedUser(savedUser);
+
+        log.info("User created with ID: {}", savedUser.getId());
+        return buildUserResponse(savedUser);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
     @Cacheable(value = "allUsers", unless = "#result.isEmpty()")
     public List<UserResponse> getAllUsers() {
+        log.info("Getting all users");
         return userRepository.findAll().stream()
                 .map(this::buildUserResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
-    @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
     public UserResponse getUserById(Long id) {
+        log.info("Getting user by ID: {}", id);
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User" + id));
+                .orElseThrow(() -> new NotFoundException("User " + id));
         return buildUserResponse(user);
     }
 
     @Override
-    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public UserResponse getUserByUsername(String username) {
+        log.info("Getting user by username: {}", username);
+        User user = userCacheService.findByUsername(username)
+                .map(cachedUser -> userCacheService.toEntityWithRoles(cachedUser))
+                .orElseThrow(() -> new NotFoundException("User " + username));
+        return buildUserResponse(user);
+    }
+
+    @Override
     @PreAuthorize("hasRole('ADMIN')")
     @CacheEvict(value = "allUsers", allEntries = true)
-    public UserResponse updateUserRoles(Long id, List<String> roles) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User" + id));
+    public UserResponse updateUserRoles(Long userId, Set<String> roleNames) {
+        log.info("Updating roles for user ID: {} with roles: {}", userId, roleNames);
 
-        Set<Role> newRoles = new HashSet<>();
-        for (String roleName : roles) {
-            Role role = roleRepository.findByName(roleName)
-                    .orElseThrow(() -> new NotFoundException("Role" + roleName));
-            newRoles.add(role);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User " + userId));
+
+        user.getRoles().clear();
+
+        if (roleNames != null && !roleNames.isEmpty()) {
+            Set<Role> roles = fetchRolesByName(roleNames);
+            user.getRoles().addAll(roles);
         }
 
-        user.setRoles(newRoles);
         User updatedUser = userRepository.save(user);
+        userCacheService.updateCachedUser(updatedUser);
 
         // Отзываем все токены при изменении ролей
-        refreshTokenService.revokeAllUserTokens(id);
+        refreshTokenService.revokeAllUserTokens(userId);
 
+        log.info("Roles updated for user: {}", updatedUser.getUsername());
         return buildUserResponse(updatedUser);
     }
 
     @Override
-    @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     @CacheEvict(value = "allUsers", allEntries = true)
-    public void deleteUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User" + id));
+    public void deleteUser(Long userId) {
+        log.info("Deleting user ID: {}", userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User " + userId));
 
-        refreshTokenService.revokeAllUserTokens(id);
+        refreshTokenService.revokeAllUserTokens(userId);
+        userCacheService.evictUserFromCache(user.getUsername());
         userRepository.delete(user);
+
         log.info("User deleted: {}", user.getUsername());
     }
 
     @Override
-    @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     @CacheEvict(value = "allUsers", allEntries = true)
-    public UserResponse enableUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User" + id));
-
-        user.setEnabled(true);
-        User updatedUser = userRepository.save(user);
-        return buildUserResponse(updatedUser);
-    }
-
-    @Override
-    @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
-    @CacheEvict(value = "allUsers", allEntries = true)
-    public UserResponse disableUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User" + id));
+    public UserResponse disableUser(Long userId) {
+        log.info("Disabling user ID: {}", userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User " + userId));
 
         user.setEnabled(false);
-        refreshTokenService.revokeAllUserTokens(id);
+        refreshTokenService.revokeAllUserTokens(userId);
 
         User updatedUser = userRepository.save(user);
+        userCacheService.updateCachedUser(updatedUser);
+
         return buildUserResponse(updatedUser);
     }
 
     @Override
-    @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     @CacheEvict(value = "allUsers", allEntries = true)
-    public UserResponse unlockAccount(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User" + id));
+    public UserResponse enableUser(Long userId) {
+        log.info("Enabling user ID: {}", userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User " + userId));
 
-        user.setAccountLocked(false);
-        user.setLockTime(null);
-        user.setFailedAttempts(0);
+        user.setEnabled(true);
 
         User updatedUser = userRepository.save(user);
+        userCacheService.updateCachedUser(updatedUser);
+
         return buildUserResponse(updatedUser);
     }
 
     @Override
-    @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     @CacheEvict(value = "allUsers", allEntries = true)
-    public UserResponse resetPassword(Long id, String newPassword) {
+    public UserResponse unlockUserAccount(Long userId) {
+        log.info("Unlocking account for user ID: {}", userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User " + userId));
+
+        loginAttemptService.unlockAccount(user.getUsername());
+
+        User updatedUser = userRepository.save(user);
+        userCacheService.updateCachedUser(updatedUser);
+
+        return buildUserResponse(updatedUser);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "allUsers", allEntries = true)
+    public UserResponse resetUserPassword(Long userId, String newPassword) {
+        log.info("Resetting password for user ID: {}", userId);
+
         if (newPassword == null || newPassword.length() < 6) {
             throw new IllegalArgumentException("Password must be at least 6 characters");
         }
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User" + id));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User " + userId));
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));
-        user.setFailedAttempts(0);
-        user.setAccountLocked(false);
-        user.setLockTime(null);
+        user.resetFailedAttempts();
 
-        refreshTokenService.revokeAllUserTokens(id);
+        refreshTokenService.revokeAllUserTokens(userId);
 
         User updatedUser = userRepository.save(user);
+        userCacheService.updateCachedUser(updatedUser);
+
         return buildUserResponse(updatedUser);
+    }
+
+    private Set<Role> fetchRolesByName(Set<String> roleNames) {
+        return roleNames.stream()
+                .map(roleName -> roleRepository.findByName(roleName)
+                        .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleName)))
+                .collect(Collectors.toSet());
     }
 
     private UserResponse buildUserResponse(User user) {

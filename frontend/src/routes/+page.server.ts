@@ -67,7 +67,7 @@ export const actions = {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 900
+                maxAge: 900 // 15 минут
             });
             
             cookies.set('refresh_token', data.refreshToken, {
@@ -75,23 +75,22 @@ export const actions = {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 604800
+                maxAge: 604800 // 7 дней
             });
 
             const userData = {
                 username: data.username,
                 firstName: data.firstName,
                 lastName: data.lastName,
-                roles: data.roles || [],
-                lastLoginAt: data.lastLoginAt
+                roles: data.roles || []
             };
 
             cookies.set('user_data', JSON.stringify(userData), {
                 path: '/',
-                httpOnly: false,
+                httpOnly: false, 
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 900
+                maxAge: 900 // 15 минут
             });
 
             console.log('Куки установлены, делаю редирект на /schedule');
@@ -123,23 +122,33 @@ export const actions = {
 
         try {
             if (refreshToken) {
-                await fetch('http://localhost:8080/api/auth/logout', {
+                console.log('Выполняем logout на сервере');
+                
+                const response = await fetch('http://localhost:8080/api/auth/logout', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${accessToken}`
                     },
-                    body: JSON.stringify({refreshToken})
+                    body: JSON.stringify({ refreshToken })
                 });
+
+                if (!response.ok) {
+                    console.log('Logout response not OK:', response.status);
+                } else {
+                    console.log('Logout успешен');
+                }
             }
         } catch (error) {
             console.error('Ошибка при выходе:', error);
         }
 
+        // Очищаем все куки независимо от результата
         ['access_token', 'refresh_token', 'user_data'].forEach(name => {
-            cookies.delete(name, {path:'/'});
+            cookies.delete(name, { path: '/' });
         });
 
+        console.log('Куки очищены, редирект на главную');
         throw redirect(303, '/');
     }
 } satisfies Actions;

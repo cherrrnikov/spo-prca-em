@@ -15,22 +15,6 @@ export interface JwtResponse {
     firstName: string;
     lastName: string;
     roles: string[];
-    lastLoginAt: string;
-}
-
-export interface UserCacheDto {
-    id: number;
-    username: string;
-    firstName: string;
-    lastName: string;
-    lastLoginAt: string;
-    lastLogoutAt: string;
-    enabled: boolean;
-    failedAttempts: number;
-    accountLocked: boolean;
-    lockTime: string;
-    lastFailedLogin: string;
-    roles: string[];
 }
 
 export interface UserResponse {
@@ -40,7 +24,20 @@ export interface UserResponse {
     enabled: boolean;
     accountLocked: boolean;
     failedAttempts: number;
-    lastLoginAt: string;
-    lastLogoutAt: string;
     roles: string[];
 }
+
+export interface CachedUser {
+    id: number;
+    username: string;
+    firstName: string;
+    lastName: string;
+    lastLoginAt: string | null;
+    lastLogoutAt: string | null;
+    enabled: boolean;
+    failedAttempts: number;
+    accountLocked: boolean;
+    lockTime: string | null;
+    roles: string[];
+}
+

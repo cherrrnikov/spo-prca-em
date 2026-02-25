@@ -1,25 +1,33 @@
 package ru.laspace.auth.service;
 
 import java.util.List;
+import java.util.Set;
 
+import ru.laspace.auth.dto.request.CreateUserRequest;
 import ru.laspace.auth.dto.response.UserResponse;
 
 public interface UserService {
+    // Публичные методы
     UserResponse getCurrentUser();
+
+    // Админские методы
+    UserResponse createUser(CreateUserRequest request);
 
     List<UserResponse> getAllUsers();
 
     UserResponse getUserById(Long id);
 
-    UserResponse updateUserRoles(Long id, List<String> roles);
+    UserResponse getUserByUsername(String username);
 
-    void deleteUser(Long id);
+    UserResponse updateUserRoles(Long userId, Set<String> roleNames);
 
-    UserResponse enableUser(Long id);
+    void deleteUser(Long userId);
 
-    UserResponse disableUser(Long id);
+    UserResponse disableUser(Long userId);
 
-    UserResponse unlockAccount(Long id);
+    UserResponse enableUser(Long userId);
 
-    UserResponse resetPassword(Long id, String newPassword);
+    UserResponse unlockUserAccount(Long userId);
+
+    UserResponse resetUserPassword(Long userId, String newPassword);
 }

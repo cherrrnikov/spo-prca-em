@@ -11,6 +11,7 @@ import ru.laspace.auth.config.SecurityProperties;
 import ru.laspace.auth.entity.User;
 import ru.laspace.auth.repository.UserRepository;
 import ru.laspace.auth.service.LoginAttemptService;
+import ru.laspace.auth.service.UserCacheService;
 
 @Slf4j
 @Service
@@ -19,13 +20,18 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
 
     private final UserRepository userRepository;
     private final SecurityProperties securityProperties;
+    private final UserCacheService userCacheService;
 
     @Override
     @Transactional
     public void loginSucceeded(String username) {
-        userRepository.findByUsername(username).ifPresent(user -> {
+        userRepository.findByUsernameInternal(username).ifPresent(user -> {
             user.resetFailedAttempts();
-            userRepository.save(user);
+
+            User savedUser = userRepository.save(user);
+
+            userCacheService.updateCachedUser(savedUser);
+
             log.debug("Reset failed attempts for user: {}", username);
         });
     }
@@ -35,7 +41,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     public void loginFailed(String username) {
         applyLoginDelay();
 
-        Optional<User> userOpt = userRepository.findByUsername(username);
+        Optional<User> userOpt = userRepository.findByUsernameInternal(username);
         if (userOpt.isEmpty()) {
             return;
         }
@@ -48,7 +54,10 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
             log.warn("Account locked for user: {}", username);
         }
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        userCacheService.updateCachedUser(savedUser);
+
         log.debug("Failed attempt for user: {}, attempts: {}",
                 username, user.getFailedAttempts());
     }
@@ -56,16 +65,20 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     @Override
     @Transactional(readOnly = true)
     public boolean isAccountLocked(String username) {
-        return userRepository.findByUsername(username)
-                .map(user -> {
-                    if (user.isAccountLocked() &&
-                            !securityProperties.isLockExpired(user.getLockTime())) {
+        return userCacheService.findByUsername(username)
+                .map(cachedUser -> {
+                    if (cachedUser.isAccountLocked() &&
+                            !securityProperties.isLockExpired(cachedUser.getLockTime())) {
                         return true;
                     }
-                    if (user.isAccountLocked()) {
-                        user.setAccountLocked(false);
-                        user.setLockTime(null);
-                        userRepository.save(user);
+
+                    if (cachedUser.isAccountLocked()) {
+                        userRepository.findByUsernameInternal(username).ifPresent(user -> {
+                            user.setAccountLocked(false);
+                            user.setLockTime(null);
+                            User savedUser = userRepository.save(user);
+                            userCacheService.updateCachedUser(savedUser);
+                        });
                     }
                     return false;
                 })
@@ -75,20 +88,24 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     @Override
     @Transactional(readOnly = true)
     public int getRemainingAttempts(String username) {
-        return userRepository.findByUsername(username)
-                .map(user -> Math.max(0,
-                        securityProperties.getMaxFailedAttempts() - user.getFailedAttempts()))
+        return userCacheService.findByUsername(username)
+                .map(cachedUser -> Math.max(0,
+                        securityProperties.getMaxFailedAttempts() - cachedUser.getFailedAttempts()))
                 .orElse(securityProperties.getMaxFailedAttempts());
     }
 
     @Override
     @Transactional
     public void unlockAccount(String username) {
-        userRepository.findByUsername(username).ifPresent(user -> {
+        userRepository.findByUsernameInternal(username).ifPresent(user -> {
             user.setAccountLocked(false);
             user.setLockTime(null);
             user.setFailedAttempts(0);
-            userRepository.save(user);
+
+            User savedUser = userRepository.save(user);
+
+            userCacheService.updateCachedUser(savedUser);
+
             log.info("Account unlocked for user: {}", username);
         });
     }
