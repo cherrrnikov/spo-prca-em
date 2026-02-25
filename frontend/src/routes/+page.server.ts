@@ -13,6 +13,7 @@ export const actions = {
         const formData = await request.formData();
         const username = formData.get('username') as string;
         const password = formData.get('password') as string;
+        const userAgent = request.headers.get('user-agent') || 'unknown';
 
         if (!username?.trim() || !password) {
             return fail(400, {
@@ -33,7 +34,8 @@ export const actions = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'User-Agent': userAgent
                 },
                 body: JSON.stringify(loginRequest)
             });
