@@ -68,9 +68,6 @@ public class User {
     @Column(name = "lock_time")
     private LocalDateTime lockTime;
 
-    @Column(name = "last_failed_login")
-    private LocalDateTime lastFailedLogin;
-
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     @ToString.Exclude
@@ -79,7 +76,6 @@ public class User {
 
     public void incrementFailedAttempts() {
         this.failedAttempts++;
-        this.lastFailedLogin = LocalDateTime.now();
     }
 
     public void resetFailedAttempts() {
@@ -91,18 +87,6 @@ public class User {
     public void lockAccount() {
         this.accountLocked = true;
         this.lockTime = LocalDateTime.now();
-    }
-
-    public boolean isAccountLockExpired() {
-        if (lockTime == null) {
-            return true;
-        }
-        return LocalDateTime.now().isAfter(lockTime.plusMinutes(15));
-    }
-
-    @Override
-    public String toString() {
-        return "User{id=" + id + ", username='" + username + "'}";
     }
 
 }

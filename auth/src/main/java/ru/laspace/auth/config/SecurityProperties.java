@@ -1,5 +1,7 @@
 package ru.laspace.auth.config;
 
+import java.time.LocalDateTime;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -13,4 +15,11 @@ public class SecurityProperties {
     private int accountLockDurationMinutes = 15;
     private boolean enableBruteForceProtection = true;
     private int loginDelayMillis = 1000;
+
+    public boolean isLockExpired(LocalDateTime lockTime) {
+        if (lockTime == null)
+            return true;
+        return LocalDateTime.now().isAfter(
+                lockTime.plusMinutes(accountLockDurationMinutes));
+    }
 }

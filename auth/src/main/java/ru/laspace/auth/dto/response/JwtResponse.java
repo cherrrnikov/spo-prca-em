@@ -1,9 +1,6 @@
 package ru.laspace.auth.dto.response;
 
-import java.time.LocalDateTime;
 import java.util.Set;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -35,7 +32,4 @@ public class JwtResponse {
     @Schema(description = "Роли пользователя")
     private Set<String> roles;
 
-    @Schema(description = "Время последнего входа")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime lastLoginAt;
 }

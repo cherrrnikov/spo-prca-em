@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ cookies, fetch }) => {
+export const load: PageServerLoad = async ({ cookies }) => {
   const accessToken = cookies.get('access_token');
 
   if (!accessToken) {
@@ -9,12 +9,11 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
   }
   
   try {
-    const userData = cookies.get('user_data');
+    const userDataStr = cookies.get('user_data');
     
-    if (userData) {
-      return {
-        user: JSON.parse(userData)
-      };
+    if (userDataStr) {
+      const userData = JSON.parse(userDataStr);
+      return { user: userData };
     }
     
     throw redirect(303, '/');

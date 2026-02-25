@@ -1,20 +1,16 @@
 package ru.laspace.auth.service;
 
-import ru.laspace.auth.dto.cache.UserCacheDto;
-import ru.laspace.auth.security.UserDetailsImpl;
+import java.util.Optional;
+
+import ru.laspace.auth.dto.cache.CachedUser;
+import ru.laspace.auth.entity.User;
 
 public interface UserCacheService {
-    UserCacheDto getCachedUserByUsername(String username);
+    Optional<CachedUser> findByUsername(String username);
 
-    UserCacheDto getCachedUserById(Long userId);
+    CachedUser updateCachedUser(User user);
 
-    UserCacheDto cacheUser(String username, UserCacheDto userCacheDTO);
+    void evictUserFromCache(String username);
 
-    void evictUserCache(String username);
-
-    void evictAllUserCache();
-
-    UserDetailsImpl createUserDetailsFromCache(UserCacheDto dto);
-
-    UserCacheDto convertToCacheDTO(UserDetailsImpl userDetails);
+    User toEntityWithRoles(CachedUser cachedUser);
 }

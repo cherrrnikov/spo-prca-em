@@ -3,8 +3,10 @@ package ru.laspace.auth.security;
 import java.io.IOException;
 
 import org.springframework.lang.NonNull;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -20,34 +22,35 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtValidator jwtValidator;
-    private final JwtAuthenticationProvider jwtAuthenticationProvider;
 
-    @SuppressWarnings("null")
+    private final JwtService jwtService;
+    private final UserDetailsServiceImpl userDetailsService;
+
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain)
-            throws ServletException, IOException {
-
-        if (shouldNotFilter(request)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         try {
             String jwt = parseJwt(request);
 
-            if (jwt != null && jwtValidator.validateToken(jwt)) {
-                Authentication authentication = jwtAuthenticationProvider.getAuthentication(jwt);
+            if (jwt != null && jwtService.validateToken(jwt) &&
+                    jwtService.validateTokenType(jwt, "access")) {
 
+                String username = jwtService.getUsername(jwt);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.debug("Аутентификация установлена для пользователя: {}", authentication.getName());
+
+                log.debug("Authenticated user: {}", username);
             }
         } catch (Exception e) {
-            log.error("Не удается установить пользователя: {}", e.getMessage());
-            // Не выбрасываем исключение, чтобы запрос мог продолжиться (но без
-            // аутентификации)
-            SecurityContextHolder.clearContext();
+            log.error("Cannot set user authentication: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);
@@ -55,37 +58,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
-
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
             return headerAuth.substring(7);
         }
-
         return null;
     }
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String path = request.getServletPath();
-        String method = request.getMethod();
-
-        if (path.startsWith("/swagger-ui") ||
+        return path.startsWith("/api/auth/login") ||
+                path.startsWith("/api/auth/register") ||
+                path.startsWith("/api/auth/refresh") ||
+                path.startsWith("/swagger-ui") ||
                 path.startsWith("/v3/api-docs") ||
-                path.startsWith("/webjars/") ||
-                path.startsWith("/swagger-resources") ||
-                path.equals("/swagger-ui.html") ||
-                path.equals("/favicon.ico") ||
-                path.equals("/actuator/health")) {
-            return true;
-        }
-
-        if ("OPTIONS".equals(method)) {
-            return true;
-        }
-
-        if (path.equals("/api/auth/login") && "POST".equals(method)) {
-            return true;
-        }
-
-        return false;
+                path.startsWith("/api-docs");
     }
 }
