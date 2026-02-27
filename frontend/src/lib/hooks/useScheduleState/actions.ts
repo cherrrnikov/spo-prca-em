@@ -201,6 +201,7 @@ export function createActions(
         }
         
         updateAllConflicts();
+        syncCurrentProgramWithStore();
     }
 
     function handleIntervalUpdate(formData: ModeCreationForm) {
@@ -255,6 +256,7 @@ export function createActions(
         editingInterval.set(null);
         selectedIntervalId.set(null);
         isEditing.set(false);
+        syncCurrentProgramWithStore();
     }
 
     function handleModeSelect(modeId: number) {
@@ -306,6 +308,7 @@ export function createActions(
         editingInterval.set(null);
         selectedIntervalId.set(null);
         isEditing.set(false);
+        syncCurrentProgramWithStore();
     }
 
     function handleModeFormCancel() {
@@ -489,6 +492,8 @@ export function createActions(
 
     // Переключение между ПРЦА
     function selectProgram(programId: string) {
+        syncCurrentProgramWithStore();
+
         const program = get(programsList).find(p => p.id === programId);
         if (!program) return;
         
@@ -503,6 +508,39 @@ export function createActions(
         rotationIntervals.set(program.rotationIntervals);
         contextDate.set(program.date);
         activeProgramId.set(programId);
+    }
+
+    // Синхронизировать изменения с активной ПРЦА
+    function syncCurrentProgramWithStore() {
+        const currentActiveId = get(activeProgramId);
+        if (!currentActiveId) return; // не в режиме анализа
+        
+        const currentIntervals = get(intervals);
+        const currentOperator = get(operatorData);
+        const currentPpi = get(ppiAssignments);
+        const currentCreated = get(createdPrograms);
+        const currentShadows = get(shadowIntervals);
+        const currentZasvetki = get(zasvetkaIntervals);
+        const currentVki = get(vkiIntervals);
+        const currentRotations = get(rotationIntervals);
+        
+        programsList.update(list => 
+            list.map(program => 
+                program.id === currentActiveId 
+                    ? {
+                        ...program,
+                        intervals: [...currentIntervals],
+                        operatorData: currentOperator ? { ...currentOperator } : null,
+                        ppiAssignments: [...currentPpi],
+                        createdPrograms: [...currentCreated],
+                        shadowIntervals: [...currentShadows],
+                        zasvetkaIntervals: [...currentZasvetki],
+                        vkiIntervals: [...currentVki],
+                        rotationIntervals: [...currentRotations]
+                    }
+                    : program
+            )
+        );
     }
 
     // Удаление ПРЦА из анализа
@@ -606,6 +644,7 @@ export function createActions(
         createAnalysis,
         selectProgram,
         exitAnalysisMode,
-        deleteProgramFromAnalysis
+        deleteProgramFromAnalysis,
+        syncCurrentProgramWithStore 
     };
 }
