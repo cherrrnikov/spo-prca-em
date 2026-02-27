@@ -1,7 +1,13 @@
 import { WORK_MODES } from '$lib/constants/schedule';
 import type {
+    CreatedProgramData,
     ModeCreationForm,
-    TimeInterval
+    ProgramModeData,
+    RotationInterval,
+    ShadowInterval,
+    TimeInterval,
+    VkiInterval,
+    ZasvetkaInterval
 } from '$lib/types';
 import type { ProgramsListItem } from '$lib/types/analysis';
 import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
@@ -394,59 +400,389 @@ export function createActions(
                 // Пропускаем исходную дату (она уже есть)
                 if (date === currentProgram.date) continue;
                 
-                // Загружаем данные на эту дату
+                console.log(`\n--- Обработка даты: ${date} ---`);
+                
+                // Загружаем ВСЕ данные для этой даты
                 let operatorDataForDate = null;
                 let bortDataForDate = null;
-                let intervalsForDate = [...currentProgram.intervals];
-                let shadowsForDate = [...currentProgram.shadowIntervals];
-                let zasvetkiForDate = [...currentProgram.zasvetkaIntervals];
-                let vkiForDate = [...currentProgram.vkiIntervals];
-                let rotationsForDate = [...currentProgram.rotationIntervals];
+                let forecastDataForDate = null;
+                let vkiDataForDate = null;
+                let rotationDataForDate = null;
                 
                 try {
-                    // Пытаемся загрузить данные оператора на эту дату
-                    operatorDataForDate = await ScheduleApiService.loadOperatorData(date);
-                    bortDataForDate = await ScheduleApiService.loadBortData(date);
-                    
-                    // Если есть данные оператора, создаем интервалы на их основе
-                    if (operatorDataForDate) {
-                        // Здесь логика создания интервалов из данных оператора
-                        // (аналогично тому как это делается при создании ПРЦА)
-                        intervalsForDate = ScheduleCreationService.convertToTimeIntervals(
-                            operatorDataForDate,
-                            currentProgram.ppiAssignments,
-                            WORK_MODES
-                        );
-                    }
-                    
-                    // Загружаем прогнозные данные
-                    const forecastData = await ScheduleApiService.loadForecastData(date);
-                    if (forecastData) {
-                        const forecast = ScheduleConverterService.convertForecastToIntervals(forecastData);
-                        shadowsForDate = forecast.shadows;
-                        zasvetkiForDate = forecast.zasvetki;
-                    }
-                    
-                    // Загружаем астрособытия
-                    const [vkiData, rotationData] = await Promise.all([
-                        ScheduleApiService.loadVkiData(date),
-                        ScheduleApiService.loadRotationData(date)
+                    // Загружаем все данные параллельно
+                    const [operator, bort, forecast, vki, rotation] = await Promise.allSettled([
+                        ScheduleApiService.loadOperatorData(date).catch(() => null),
+                        ScheduleApiService.loadBortData(date).catch(() => null),
+                        ScheduleApiService.loadForecastData(date).catch(() => null),
+                        ScheduleApiService.loadVkiData(date).catch(() => null),
+                        ScheduleApiService.loadRotationData(date).catch(() => null)
                     ]);
                     
-                    vkiForDate = ScheduleConverterService.convertVkiToIntervals(vkiData);
-                    rotationsForDate = ScheduleConverterService.convertRotationToIntervals(rotationData, date);
+                    operatorDataForDate = operator.status === 'fulfilled' ? operator.value : null;
+                    bortDataForDate = bort.status === 'fulfilled' ? bort.value : null;
+                    forecastDataForDate = forecast.status === 'fulfilled' ? forecast.value : null;
+                    vkiDataForDate = vki.status === 'fulfilled' ? vki.value : null;
+                    rotationDataForDate = rotation.status === 'fulfilled' ? rotation.value : null;
                     
                 } catch (error) {
-                    console.warn(`Нет данных для даты ${date}, копируем исходную ПРЦА`);
-                    // Если данных нет - используем копию исходных интервалов с новой датой
+                    console.warn(`Ошибка при загрузке данных для ${date}:`, error);
+                }
+                
+                // Конвертируем прогнозные данные в интервалы
+                let shadowsForDate: ShadowInterval[] = [];
+                let zasvetkiForDate: ZasvetkaInterval[] = [];
+                
+                if (forecastDataForDate) {
+                    const forecast = ScheduleConverterService.convertForecastToIntervals(forecastDataForDate);
+                    shadowsForDate = forecast.shadows;
+                    zasvetkiForDate = forecast.zasvetki;
+                }
+                
+                // Конвертируем астрособытия
+                let vkiForDate: VkiInterval[] = [];
+                let rotationsForDate: RotationInterval[] = [];
+                
+                if (vkiDataForDate) {
+                    vkiForDate = ScheduleConverterService.convertVkiToIntervals(vkiDataForDate);
+                }
+                
+                if (rotationDataForDate) {
+                    rotationsForDate = ScheduleConverterService.convertRotationToIntervals(rotationDataForDate, date);
+                }
+                
+                let intervalsForDate: TimeInterval[] = [];
+                let createdProgramsForDate: CreatedProgramData[] = [];
+                
+                if (operatorDataForDate) {
+                    console.log(`✅ Есть данные ИД06 для ${date}, создаём интервалы из них`);
+                    
+                    // Проверяем, какие типы режимов есть в ИД06
+                    const hasKvd = operatorDataForDate.kvd_list && operatorDataForDate.kvd_list.length > 0;
+                    const hasTnp = operatorDataForDate.tnp_list && operatorDataForDate.tnp_list.length > 0;
+                    const hasTs = operatorDataForDate.ts_list && operatorDataForDate.ts_list.length > 0;
+                    const hasOna = operatorDataForDate.ona_list && operatorDataForDate.ona_list.length > 0;
+                    
+                    console.log(`  📊 Типы в ИД06: КВД:${hasKvd}, ТНП:${hasTnp}, ТС:${hasTs}, ОНА:${hasOna}`);
+                    
+                    // Создаём интервалы из ИД06
+                    const intervalsFromId06 = ScheduleCreationService.convertToTimeIntervals(
+                        operatorDataForDate,
+                        currentProgram.ppiAssignments,
+                        WORK_MODES
+                    );
+                    
+                    // Начинаем с интервалов из ИД06
+                    intervalsForDate = [...intervalsFromId06];
+                    
+                    // Создаём Set существующих ID для быстрого поиска
+                    const existingIds = new Set(intervalsFromId06.map(i => i.id));
+                    
+                    // Добавляем недостающие типы из исходной ПРЦА
+                    currentProgram.intervals.forEach(interval => {
+                        const mode = interval.mode;
+                        
+                        // Пропускаем астрокоррекции (они будут добавлены позже)
+                        if (interval.isAstrocorrection) return;
+                        
+                        // Определяем, нужно ли копировать этот интервал
+                        let shouldCopy = false;
+                        let typeName = '';
+                        
+                        if (mode === 7 && !hasKvd) {        // КВД
+                            shouldCopy = true;
+                            typeName = 'КВД';
+                        } else if (mode === 4 && !hasTnp) { // ТНП
+                            shouldCopy = true;
+                            typeName = 'ТНП';
+                        } else if (mode === 8 && !hasTs) {  // ТС
+                            shouldCopy = true;
+                            typeName = 'ТС';
+                        } else if (mode === 6 && !hasOna) { // ОНА
+                            shouldCopy = true;
+                            typeName = 'ОНА';
+                        }
+                        
+                        if (shouldCopy) {
+                            console.log(`  ➕ Копируем ${typeName} из исходной ПРЦА`);
+                            
+                            const newInterval = {
+                                ...interval,
+                                id: `${interval.id}_${date.replace(/-/g, '')}`,
+                                date: date
+                            };
+                            
+                            // Проверяем, не добавили ли уже такой интервал
+                            if (!existingIds.has(newInterval.id)) {
+                                intervalsForDate.push(newInterval);
+                                existingIds.add(newInterval.id);
+                                
+                                // Также копируем соответствующий createdProgram
+                                const originalProgram = currentProgram.createdPrograms.find(p => 
+                                    p.timeInterval.id === interval.id
+                                );
+                                
+                                if (originalProgram) {
+                                    createdProgramsForDate.push({
+                                        ...originalProgram,
+                                        tempId: `${originalProgram.tempId}_${date.replace(/-/g, '')}`,
+                                        timeInterval: newInterval
+                                    });
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Создаём createdPrograms из ИД06
+                    const mainId = operatorDataForDate.main?.id || 0;
+                    const numKa = operatorDataForDate.main?.n_ka || 1;
+                    
+                    // КВД
+                    if (operatorDataForDate.kvd_list) {
+                        operatorDataForDate.kvd_list.forEach((kvd: any) => {
+                            const assignment = currentProgram.ppiAssignments.find(a => 
+                                a.recordId === kvd.id && a.recordType === 'kvd'
+                            );
+                            
+                            if (assignment) {
+                                const modeData: ProgramModeData = {
+                                    numRp: 0,
+                                    numKa: numKa,
+                                    dateOn: kvd.dn,
+                                    dateOff: kvd.dk,
+                                    kodMode: 7,
+                                    numPpi: assignment.ppiNum,
+                                    dlit: TimeUtils.calculateDuration(kvd.dn, kvd.dk),
+                                    kvdData: {
+                                        id: kvd.id,
+                                        idMain: mainId,
+                                        prMsu: kvd.prMsu,
+                                        prBssd: kvd.prBssd,
+                                        prZg: kvd.prZg
+                                    }
+                                };
+                                
+                                const tempId = `kvd_${kvd.id}_${date.replace(/-/g, '')}`;
+                                const timeInterval = intervalsForDate.find(i => 
+                                    i.id.includes(`kvd_${kvd.id}`)
+                                );
+                                
+                                if (timeInterval) {
+                                    createdProgramsForDate.push({
+                                        tempId,
+                                        modeData,
+                                        timeInterval
+                                    });
+                                }
+                            }
+                        });
+                    }
+                    
+                    // ТНП
+                    if (operatorDataForDate.tnp_list) {
+                        operatorDataForDate.tnp_list.forEach((tnp: any) => {
+                            const assignment = currentProgram.ppiAssignments.find(a => 
+                                a.recordId === tnp.id && a.recordType === 'tnp'
+                            );
+                            
+                            if (assignment) {
+                                const modeData: ProgramModeData = {
+                                    numRp: 0,
+                                    numKa: numKa,
+                                    dateOn: tnp.dn,
+                                    dateOff: tnp.dk,
+                                    kodMode: 4,
+                                    numPpi: assignment.ppiNum,
+                                    dlit: tnp.dlit,
+                                    tnpData: {
+                                        id: tnp.id,
+                                        idMain: mainId,
+                                        prMsu: tnp.prMsu,
+                                        prBssd: tnp.prBssd,
+                                        prZg: tnp.prZg
+                                    }
+                                };
+                                
+                                const tempId = `tnp_${tnp.id}_${date.replace(/-/g, '')}`;
+                                const timeInterval = intervalsForDate.find(i => 
+                                    i.id.includes(`tnp_${tnp.id}`)
+                                );
+                                
+                                if (timeInterval) {
+                                    createdProgramsForDate.push({
+                                        tempId,
+                                        modeData,
+                                        timeInterval
+                                    });
+                                }
+                            }
+                        });
+                    }
+                    
+                    // ТС (особая обработка - разбиваем на подынтервалы)
+                    if (operatorDataForDate.ts_list) {
+                        for (const ts of operatorDataForDate.ts_list) {
+                            const assignment = currentProgram.ppiAssignments.find(a => 
+                                a.recordId === ts.id && a.recordType === 'ts'
+                            );
+                            
+                            if (assignment) {
+                                // Находим все подынтервалы для этого ТС
+                                const tsSubIntervals = intervalsForDate.filter(i => 
+                                    i.id.startsWith(`ts_${ts.id}`)
+                                );
+                                
+                                tsSubIntervals.forEach((subInterval, idx) => {
+                                    const modeData: ProgramModeData = {
+                                        numRp: 0,
+                                        numKa: numKa,
+                                        dateOn: `${date}T${subInterval.startTime}`,
+                                        dateOff: `${date}T${subInterval.endTime}`,
+                                        kodMode: 8,
+                                        numPpi: assignment.ppiNum,
+                                        dlit: subInterval.dlit || 420,
+                                        tsData: {
+                                            id: ts.id,
+                                            idMain: mainId,
+                                            tip: ts.tip,
+                                            reg: ts.reg,
+                                            dlit: subInterval.dlit || 420,
+                                            prMsu1: ts.pr_msu1,
+                                            vd1Msu1: ts.pr_vd1_1,
+                                            vd2Msu1: ts.pr_vd2_1,
+                                            vd3Msu1: ts.pr_vd3_1,
+                                            ik4Msu1: ts.pr_ik4_1,
+                                            ik5Msu1: ts.pr_ik5_1,
+                                            ik6Msu1: ts.pr_ik6_1,
+                                            ik7Msu1: ts.pr_ik7_1,
+                                            ik8Msu1: ts.pr_ik8_1,
+                                            ik9Msu1: ts.pr_ik9_1,
+                                            ik10Msu1: ts.pr_ik10_1,
+                                            prMsu2: ts.pr_msu2,
+                                            vd1Msu2: ts.pr_vd1_2,
+                                            vd2Msu2: ts.pr_vd2_2,
+                                            vd3Msu2: ts.pr_vd3_2,
+                                            ik4Msu2: ts.pr_ik4_2,
+                                            ik5Msu2: ts.pr_ik5_2,
+                                            ik6Msu2: ts.pr_ik6_2,
+                                            ik7Msu2: ts.pr_ik7_2,
+                                            ik8Msu2: ts.pr_ik8_2,
+                                            ik9Msu2: ts.pr_ik9_2,
+                                            ik10Msu2: ts.pr_ik10_2,
+                                            prBssd: 0,
+                                            prZg: 0,
+                                            prOtklZgBssd: ts.pr_otkl_zg
+                                        }
+                                    };
+                                    
+                                    const tempId = `ts_${ts.id}_${idx}_${date.replace(/-/g, '')}`;
+                                    createdProgramsForDate.push({
+                                        tempId,
+                                        modeData,
+                                        timeInterval: subInterval
+                                    });
+                                });
+                            }
+                        }
+                    }
+                    
+                    // ОНА
+                    if (operatorDataForDate.ona_list) {
+                        operatorDataForDate.ona_list.forEach((ona: any) => {
+                            const assignment = currentProgram.ppiAssignments.find(a => 
+                                a.recordId === ona.id && a.recordType === 'ona'
+                            );
+                            
+                            if (assignment) {
+                                const modeData: ProgramModeData = {
+                                    numRp: 0,
+                                    numKa: numKa,
+                                    dateOn: ona.dn,
+                                    dateOff: ona.dk,
+                                    kodMode: 6,
+                                    numPpi: assignment.ppiNum,
+                                    dlit: ona.dlit,
+                                    onaData: {
+                                        id: ona.id,
+                                        idMain: ona.id_main,
+                                        typeOmi: ona.typeOmi,
+                                        dN: ona.dn,
+                                        dK: ona.dk,
+                                        nOna: ona.n_ona,
+                                        nPpi: assignment.ppiNum
+                                    }
+                                };
+                                
+                                const tempId = `ona_${ona.id}_${date.replace(/-/g, '')}`;
+                                const timeInterval = intervalsForDate.find(i => 
+                                    i.id.includes(`ona_${ona.id}`)
+                                );
+                                
+                                if (timeInterval) {
+                                    createdProgramsForDate.push({
+                                        tempId,
+                                        modeData,
+                                        timeInterval
+                                    });
+                                }
+                            }
+                        });
+                    }
+                    
+                } else {
+                    console.log(`⚠️ Нет данных ИД06 для ${date}, копируем всё из исходной ПРЦА`);
+                    
                     intervalsForDate = currentProgram.intervals.map(interval => ({
                         ...interval,
                         id: `${interval.id}_${date.replace(/-/g, '')}`,
                         date: date
                     }));
+                    
+                    createdProgramsForDate = currentProgram.createdPrograms.map(p => ({
+                        ...p,
+                        tempId: `${p.tempId}_${date.replace(/-/g, '')}`,
+                        timeInterval: {
+                            ...p.timeInterval,
+                            id: `${p.timeInterval.id}_${date.replace(/-/g, '')}`,
+                            date: date
+                        }
+                    }));
                 }
                 
-                // Проверяем конфликты
+                // --- АСТРОКОРРЕКЦИИ ---
+                // Определяем режим астрокоррекции для этой даты
+                let isFullAstroMode = false;
+                
+                // Проверяем наличие ВКИ
+                if (vkiDataForDate && vkiDataForDate.impulses && vkiDataForDate.impulses.length > 0) {
+                    isFullAstroMode = true;
+                    console.log(`📡 Есть данные ВКИ для ${date}, полный режим астрокоррекции`);
+                }
+                
+                // Проверяем, попадает ли дата в период сезонного разворота
+                if (rotationDataForDate && rotationDataForDate.rotations) {
+                    for (const rotation of rotationDataForDate.rotations) {
+                        const rotationStart = rotation.data_n.split('T')[0];
+                        const rotationEnd = rotation.data_k ? rotation.data_k.split('T')[0] : rotationStart;
+                        
+                        if (date >= rotationStart && date <= rotationEnd) {
+                            isFullAstroMode = true;
+                            console.log(`🔄 Дата ${date} входит в период разворота (${rotationStart} - ${rotationEnd}), полный режим астрокоррекции`);
+                            break;
+                        }
+                    }
+                }
+                
+                // Добавляем астрокоррекции
+                intervalsForDate = AstrocorrectionService.mergeAstrocorrection(
+                    intervalsForDate,
+                    date,
+                    isFullAstroMode
+                );
+                
+                console.log(`✨ Добавлено астрокоррекций: ${isFullAstroMode ? '6 (полный режим)' : '2 (обычный режим)'}`);
+                
+                // Проверяем конфликты с новыми тенями/засветками/астрособытиями
                 const intervalsWithConflicts = checkAllConflicts(
                     intervalsForDate,
                     zasvetkiForDate,
@@ -455,22 +791,16 @@ export function createActions(
                     rotationsForDate
                 );
                 
-                // Создаем запись ПРЦА для этой даты
+                // Создаём запись ПРЦА для этой даты
                 newPrograms.push({
-                    id: `program_${date.replace(/-/g, '')}_${Date.now()}_${newPrograms.length}`,
+                    id: `program_${date.replace(/-/g, '')}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
                     name: `ПРЦА ${TimeUtils.formatDate(date)}`,
                     date: date,
                     intervals: intervalsWithConflicts,
                     operatorData: operatorDataForDate,
                     bortData: bortDataForDate,
                     ppiAssignments: [...currentProgram.ppiAssignments],
-                    createdPrograms: currentProgram.createdPrograms.map(p => ({
-                        ...p,
-                        timeInterval: {
-                            ...p.timeInterval,
-                            date: date
-                        }
-                    })),
+                    createdPrograms: createdProgramsForDate,
                     shadowIntervals: shadowsForDate,
                     zasvetkaIntervals: zasvetkiForDate,
                     vkiIntervals: vkiForDate,
@@ -481,6 +811,7 @@ export function createActions(
             // Добавляем все созданные ПРЦА в список
             programsList.update(list => [...list, ...newPrograms]);
             
+            console.log(`\n=== ИТОГО: создано ${newPrograms.length} ПРЦА для анализа ===`);
             alert(`Создано ${newPrograms.length} ПРЦА для анализа`);
             
         } catch (error) {
