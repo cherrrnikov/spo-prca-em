@@ -77,6 +77,12 @@
         loadUserData();
     });
 
+    $effect(() => {
+        console.log("creationMode изменился:", $creationMode);
+        console.log("operatorDataLoaded:", $operatorDataLoaded);
+        console.log("intervals length:", $intervals.length);
+    });
+
     // Создание ПРЦА
     function startOperatorCreation() {
         creationMode.set('operator');
@@ -178,6 +184,7 @@
                     onReferenceCreate={startReferenceCreation}
                     onAnalysisClick={saveCurrentProgramToAnalysis}
                     isAnalysisMode={$isAnalysisMode}
+                    isOperatorMode={$creationMode === 'operator'}
                     intervals={$intervals}
                     operatorData={$operatorData}
                     ppiAssignments={$ppiAssignments}
@@ -198,6 +205,7 @@
                 onReferenceCreate={startReferenceCreation}
                 onAnalysisClick={saveCurrentProgramToAnalysis}
                 isAnalysisMode={$isAnalysisMode}
+                isOperatorMode={$creationMode === 'operator'}
                 intervals={$intervals}
                 operatorData={$operatorData}
                 ppiAssignments={$ppiAssignments}
@@ -225,17 +233,15 @@
         />
     </div>
 
-    <div class="form-container">
+    <div class="forms-container">
         {#if $selectedMode}
-            <div class="creation-form-container">
-                <ModeCreationFormComponent
-                    selectedMode={$selectedMode}
-                    editingInterval={$editingInterval}
-                    onSubmit={handleModeFormSubmit}
-                    onCancel={handleModeFormCancel}
-                    onUpdate={handleIntervalUpdate}
-                />
-            </div>
+            <ModeCreationFormComponent
+                selectedMode={$selectedMode}
+                editingInterval={$editingInterval}
+                onSubmit={handleModeFormSubmit}
+                onCancel={handleModeFormCancel}
+                onUpdate={handleIntervalUpdate}
+            />
         {/if}
 
         {#if $isAnalysisMode}
@@ -253,6 +259,7 @@
         modalData={$analysisModal}
         onClose={closeAnalysisModal}
         onCreate={createAnalysis}
+        contextDate={$selectedProgramDate}
     />
 
     
@@ -288,23 +295,23 @@
     .grid-container {
         padding: 0;
         width: 100%;
-        flex: 1;
-        /* overflow: auto; */
+        flex: 0 1 auto;
         display: flex;
         justify-content: center;
         align-items: flex-start;
     }
-    .form-container {
-        /* width: 400px; */
+
+    .forms-container {
+        flex: 1 1 auto;  
+        min-height: 0;
+        flex-shrink: 0;
+        border-top: 1px solid #e2e8f0;
         padding: 1rem;
-        background: white;
-        border-left: 1px solid #e2e8f0;
+        max-height: 40vh;
         overflow-y: auto;
         display: flex;
-        flex-direction: column;
-        gap: 1rem;
+        gap: 2rem;
     }
-
     .schedule-footer {
         display: flex;
         justify-content: end;

@@ -397,7 +397,7 @@
 
     .form-header h3 {
         margin: 0;
-        font-size: 1.25rem;
+        font-size: 1rem;
         color: #2d3748;
     }
 

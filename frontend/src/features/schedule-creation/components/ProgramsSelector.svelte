@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { ProgramsListItem } from '$lib/types/analysis';
-    import { TimeUtils } from '$lib/utils/time';
     
     let {
         programs = [],
@@ -16,7 +15,7 @@
         onDelete?: (id: string) => void;
     }>();
     
-    let isOpen = $state(false);
+    let isOpen = $state(true);
 
     $effect(() => {
         console.log("=== СПИСОК ПРЦА В АНАЛИЗЕ ===");
@@ -30,7 +29,7 @@
 <div class="programs-selector">
     <div class="selector-header">
         <div class="selector-title">
-            <h3>Анализ ПРЦА</h3>
+            <h3>Анализ ПРЦА ({programs.length})</h3>
         </div>
         <div class="selector-actions">
             <button 
@@ -40,41 +39,44 @@
             >
                 ✕
             </button>
-            <button 
+            <!-- <button 
                 class="toggle-button"
                 on:click={() => isOpen = !isOpen}
                 aria-label={isOpen ? 'Свернуть' : 'Развернуть'}
             >
                 {isOpen ? '▼' : '▶'}
-            </button>
+            </button> -->
         </div>
     </div>
     
     {#if isOpen}
-        <div class="programs-list">
+        <div class="programs-grid">
             {#each programs as program}
-                <label class="program-item {program.id === activeId ? 'active' : ''}">
+                <div class="program-card {program.id === activeId ? 'active' : ''}">
                     <input
                         type="radio"
                         name="program-select"
+                        id={program.id}
                         value={program.id}
                         checked={program.id === activeId}
                         on:change={() => onSelect(program.id)}
+                        class="program-radio"
                     />
-                    <div class="program-info">
-                        <span class="program-name">{program.name}</span>
-                        <span class="program-date">{TimeUtils.formatDate(program.date)}</span>
-                    </div>
-                </label>
-                {#if onDelete}
-                    <button 
-                        class="delete-program" 
-                        on:click={() => onDelete(program.id)}
-                        title="Удалить из анализа"
-                    >
-                        Удалить
-                    </button>
-                {/if}
+                    <label for={program.id} class="program-label">
+                        <div class="program-info">
+                            <span class="program-name">{program.name}</span>
+                        </div>
+                    </label>
+                    {#if onDelete}
+                        <button 
+                            class="delete-program" 
+                            on:click={() => onDelete(program.id)}
+                            title="Удалить из анализа"
+                        >
+                            ✕
+                        </button>
+                    {/if}
+                </div>
             {/each}
         </div>
     {/if}
@@ -82,38 +84,23 @@
 
 <style>
     .programs-selector {
-        background: white;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        margin-bottom: 1rem;
         overflow: hidden;
+        width: 40%;
     }
     
     .selector-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0.75rem 1rem;
         background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .selector-title {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        margin-bottom: 0.5rem;
     }
     
     .selector-title h3 {
         margin: 0;
-        font-size: 0.95rem;
-        font-weight: 600;
+        font-size: 1rem;
+        font-weight: bold;
         color: #2d3748;
-    }
-    
-    .icon {
-        font-size: 1.1rem;
     }
     
     .selector-actions {
@@ -140,7 +127,7 @@
         background: #c53030;
     }
     
-    .toggle-button {
+    /* .toggle-button {
         background: #edf2f7;
         border: none;
         width: 24px;
@@ -156,76 +143,87 @@
     
     .toggle-button:hover {
         background: #e2e8f0;
-    }
+    } */
     
-    .programs-list {
-        padding: 0.5rem;
-        max-height: 200px;
+    .programs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 0.75rem;
+        /* padding: 1rem; */
+        max-height: 300px;
         overflow-y: auto;
     }
     
-    .program-item {
+    .program-card {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem;
+        gap: 0.5rem;
+        padding: 0.5rem;
         border-radius: 6px;
-        cursor: pointer;
-        transition: background 0.2s;
-        border: 1px solid transparent;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        transition: all 0.2s;
+        min-width: 0; /* для корректного переноса текста */
     }
     
-    .program-item:hover {
-        background: #f7fafc;
-    }
-    
-    .program-item.active {
-        background: #ebf8ff;
+    .program-card.active {
         border-color: #4299e1;
+        background: #ebf8ff;
+        box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
     }
     
-    .program-item input[type="radio"] {
-        width: 18px;
-        height: 18px;
+    .program-radio {
+        width: 16px;
+        height: 16px;
         cursor: pointer;
+        flex-shrink: 0;
+    }
+    
+    .program-label {
+        flex: 1;
+        cursor: pointer;
+        min-width: 0; /* для переноса */
     }
     
     .program-info {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
+        overflow: hidden;
     }
     
     .program-name {
         font-weight: 600;
         color: #2d3748;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .program-date {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         color: #718096;
-    }
-
-    .program-item-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .program-item {
-        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .delete-program {
         background: none;
         border: none;
         cursor: pointer;
-        padding: 0.25rem 0.5rem;
-        font-size: 1rem;
+        width: 20px;
+        height: 20px;
+        font-size: 0.8rem;
         opacity: 0.6;
         transition: opacity 0.2s;
         border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #e53e3e;
     }
     
     .delete-program:hover {

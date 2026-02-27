@@ -44,7 +44,8 @@ export function createActions(
         programsList,            
         activeProgramId,         
         isAnalysisMode,          
-        analysisModal 
+        analysisModal,
+        selectedProgramDate  
     } = stores;
 
     const {
@@ -317,7 +318,7 @@ export function createActions(
     function saveCurrentProgramToAnalysis() {
         const currentBortData = get(bortData);
         const currentIntervals = get(intervals);
-        const currentDate = get(contextDate);
+        const currentDate = get(selectedProgramDate);
         const currentOperator = get(operatorData);
         const currentPpi = get(ppiAssignments);
         const currentCreated = get(createdPrograms);
@@ -348,12 +349,15 @@ export function createActions(
         activeProgramId.set(programItem.id);
         isAnalysisMode.set(true);
         
-        openAnalysisModal();
+        openAnalysisModal(currentDate);
     }
 
     // Открыть модальное окно выбора периода
-    function openAnalysisModal() {
-        const currentDate = get(contextDate);
+    function openAnalysisModal(date?: string) {
+        const currentDate = date || get(selectedProgramDate) || get(contextDate);
+
+        console.log("openAnalysisModal with date:", currentDate); 
+
         analysisModal.set({
             isOpen: true,
             startDate: currentDate,

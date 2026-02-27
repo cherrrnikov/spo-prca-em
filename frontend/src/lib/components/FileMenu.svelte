@@ -19,7 +19,8 @@
     selectedProgramDate = '',
     createdPrograms = [],
     onAnalysisClick,
-    isAnalysisMode = false
+    isAnalysisMode = false,
+    isOperatorMode = false
   } = $props<{
     userData: UserResponse | null;
     onOperatorCreate?: () => void;
@@ -31,6 +32,7 @@
     createdPrograms?: any[];
     onAnalysisClick?: () => void;
     isAnalysisMode?: boolean;
+    isOperatorMode?: boolean; 
   }>();
 
   function handleClickOutside(event: MouseEvent) {
@@ -263,9 +265,11 @@
         <button onclick={handleExport} class="menu-item">
           Отчет
         </button>
-        <button onclick={handleAnalysis} class="menu-item analysis">
+        {#if isOperatorMode && operatorData && intervals && intervals.length > 0}
+          <button onclick={handleAnalysis} class="menu-item analysis">
             Анализ
-        </button>
+          </button>
+        {/if}
         <button onclick={handleArchive} class="menu-item">
           Просмотр архива
         </button>

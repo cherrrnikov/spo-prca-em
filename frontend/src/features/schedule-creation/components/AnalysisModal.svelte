@@ -4,16 +4,24 @@
     let {
         modalData,
         onClose,
-        onCreate
+        onCreate,
+        contextDate = ''
     } = $props<{
         modalData: AnalysisModalState;
         onClose: () => void;
         onCreate: (startDate: string, endDate: string) => Promise<void>;
+        contextDate?: string;
     }>();
     
-    let startDate = $state(modalData.startDate);
+    let startDate = $state(modalData.startDate || contextDate);
     let endDate = $state(modalData.endDate);
     
+    $effect(() => {
+        if (modalData.isOpen) {
+            startDate = modalData.startDate || contextDate;
+        }
+    });
+
     function validateDates(): boolean {
         if (!startDate || !endDate) {
             alert('Выберите начальную и конечную даты');
@@ -118,7 +126,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 1rem 1.5rem;
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: #667eea;
         color: white;
     }
     
