@@ -1,5 +1,5 @@
 export class TimeUtils {
-    // ========== БАЗОВЫЕ КОНВЕРТАЦИИ ==========
+    // Базовые конвертации
     
     static timeToSeconds(timeStr: string): number {
         try {
@@ -22,7 +22,7 @@ export class TimeUtils {
         return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
-    // ========== РАСЧЕТЫ ==========
+    // Расчеты 
 
     static calculateEndTimeSeconds(startTime: string, durationSeconds: number): string {
         const startSeconds = this.timeToSeconds(startTime);
@@ -40,7 +40,7 @@ export class TimeUtils {
         return Math.floor((end.getTime() - start.getTime()) / 1000);
     }
 
-    // ========== ФОРМАТИРОВАНИЕ ==========
+    // Форматирование
 
     static formatDateTime(dateStr: string): string {
         try {
@@ -93,7 +93,7 @@ export class TimeUtils {
         }
     }
 
-    // ========== ИЗВЛЕЧЕНИЕ ==========
+    // Извлечение
 
     static extractTimeFromTimestamp(timestamp: string): string {
         try {
@@ -136,7 +136,7 @@ export class TimeUtils {
         }
     }
 
-    // ========== ВАЛИДАЦИЯ ==========
+    // Валидация
 
     static isTimeValid(timeStr: string): boolean {
         if (timeStr === '24:00:00' || timeStr === '24:00') {
@@ -161,7 +161,7 @@ export class TimeUtils {
         return seconds >= 0 && seconds < 24 * 3600;
     }
 
-    // ========== ВСПОМОГАТЕЛЬНЫЕ ==========
+    // Вспомогательные 
 
     static createDateWithTime(baseDate: Date, timeStr: string): Date {
         const date = new Date(baseDate);
@@ -176,5 +176,18 @@ export class TimeUtils {
         const [hours, minutes] = timeStr.split(':').map(Number);
         date.setHours(hours || 0, minutes || 0, 0, 0);
         return date;
+    }
+
+    static generateDateRange(startDate: string, endDate: string): string[] {
+        const dates: string[] = [];
+        const currentDate = new Date(startDate);
+        const lastDate = new Date(endDate);
+        
+        while (currentDate <= lastDate) {
+            dates.push(currentDate.toISOString().split('T')[0]);
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        return dates;
     }
 }

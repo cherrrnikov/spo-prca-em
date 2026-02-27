@@ -10,6 +10,7 @@ import type {
     VkiInterval,
     ZasvetkaInterval
 } from '$lib/types';
+import type { AnalysisModalState, ProgramsListItem } from '$lib/types/analysis';
 import type { UserResponse } from '$lib/types/auth';
 import { writable } from 'svelte/store';
 
@@ -52,6 +53,18 @@ export function createStores() {
     const editingInterval = writable<TimeInterval | null>(null);
     const selectedIntervalId = writable<string | null>(null);
 
+    // Анализ
+    const programsList = writable<ProgramsListItem[]>([]);
+    const activeProgramId = writable<string | null>(null);
+    const isAnalysisMode = writable<boolean>(false);
+
+    const analysisModal = writable<AnalysisModalState>({
+        isOpen: false,
+        startDate: '',
+        endDate: '',
+        isLoading: false
+    })
+
     return {
         // Данные пользователя
         userData,
@@ -90,6 +103,12 @@ export function createStores() {
         // Редактирование
         selectedMode,
         editingInterval,
-        selectedIntervalId
+        selectedIntervalId,
+
+        // Анализ 
+        programsList,
+        activeProgramId,
+        isAnalysisMode,
+        analysisModal
     };
 }

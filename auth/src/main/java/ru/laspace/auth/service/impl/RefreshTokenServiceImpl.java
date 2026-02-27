@@ -25,7 +25,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     @Transactional
     public String createRefreshToken(User user, String ipAddress, String userAgent) {
-        // Отзываем ВСЕ активные токены пользователя (более надёжно)
+        // Отзываем ВСЕ активные токены пользователя
         refreshTokenRepository.revokeAllUserTokens(user.getId(), LocalDateTime.now());
 
         String tokenValue = jwtService.generateRefreshToken(user.getUsername(), user.getId());

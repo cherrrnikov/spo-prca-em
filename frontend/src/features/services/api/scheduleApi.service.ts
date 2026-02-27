@@ -156,4 +156,25 @@ export class ScheduleApiService {
             return false;
         }
     }
+
+    static async loadAllDataForDate(date: string): Promise<{
+        operatorData: OperatorData | null;
+        forecastData: ForecastData | null;
+        vkiData: Kr01DataResponse | null;
+        rotationData: Ro02DataResponse | null;
+    }> {
+        const [operatorData, forecastData, vkiData, rotationData] = await Promise.allSettled([
+            this.loadOperatorData(date).catch(() => null),
+            this.loadForecastData(date).catch(() => null),
+            this.loadVkiData(date).catch(() => null),
+            this.loadRotationData(date).catch(() => null)
+        ]);
+        
+        return {
+            operatorData: operatorData.status === 'fulfilled' ? operatorData.value : null,
+            forecastData: forecastData.status === 'fulfilled' ? forecastData.value : null,
+            vkiData: vkiData.status === 'fulfilled' ? vkiData.value : null,
+            rotationData: rotationData.status === 'fulfilled' ? rotationData.value : null
+        };
+    }
 }

@@ -3,12 +3,15 @@ import type {
     ModeCreationForm,
     TimeInterval
 } from '$lib/types';
+import type { ProgramsListItem } from '$lib/types/analysis';
 import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
+import { checkAllConflicts } from '$lib/utils/interval';
 import { checkIntervalOverlap } from '$lib/utils/interval/conflicts';
 import { IntervalValidationService } from '$lib/utils/intervalValidation';
 import { TimeUtils } from '$lib/utils/time';
 import { get } from 'svelte/store';
 import { ScheduleApiService } from '../../../features/services/api/scheduleApi.service';
+import { ScheduleConverterService } from '../../../features/services/data/scheduleConverter.service';
 import { ScheduleCreationService } from '../../../features/services/scheduleCreation.service';
 import type { createCreators } from './creators';
 import type { createStores } from './stores';
@@ -24,6 +27,7 @@ export function createActions(
         creationMode,
         intervals,
         bortData,
+        operatorData,
         operatorDataLoaded,
         selectedMode,
         createdPrograms,
@@ -33,7 +37,14 @@ export function createActions(
         hasAstrocorrectionData,
         vkiIntervals,
         rotationIntervals,
-        isEditing
+        isEditing,
+        ppiAssignments,          
+        shadowIntervals,        
+        zasvetkaIntervals,     
+        programsList,            
+        activeProgramId,         
+        isAnalysisMode,          
+        analysisModal 
     } = stores;
 
     const {
@@ -302,6 +313,222 @@ export function createActions(
         isEditing.set(false);
     }
 
+    // Сохранение текущей ПРЦА в список для анализа 
+    function saveCurrentProgramToAnalysis() {
+        const currentBortData = get(bortData);
+        const currentIntervals = get(intervals);
+        const currentDate = get(contextDate);
+        const currentOperator = get(operatorData);
+        const currentPpi = get(ppiAssignments);
+        const currentCreated = get(createdPrograms);
+        const currentShadows = get(shadowIntervals);
+        const currentZasvetki = get(zasvetkaIntervals);
+        const currentVki = get(vkiIntervals);
+        const currentRotations = get(rotationIntervals);
+
+        // Генерируем имя для ПРЦА
+        const programName = `ПРЦА ${TimeUtils.formatDate(currentDate)} ${new Date().toLocaleTimeString()}`;
+        
+        const programItem: ProgramsListItem = {
+            id: `program_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            name: programName,
+            date: currentDate,
+            intervals: [...currentIntervals],
+            operatorData: currentOperator ? { ...currentOperator } : null,
+            bortData: currentBortData ? {...currentBortData} : null,
+            ppiAssignments: [...currentPpi],
+            createdPrograms: [...currentCreated],
+            shadowIntervals: [...currentShadows],
+            zasvetkaIntervals: [...currentZasvetki],
+            vkiIntervals: [...currentVki],
+            rotationIntervals: [...currentRotations]
+        };
+        
+        programsList.update(list => [...list, programItem]);
+        activeProgramId.set(programItem.id);
+        isAnalysisMode.set(true);
+        
+        openAnalysisModal();
+    }
+
+    // Открыть модальное окно выбора периода
+    function openAnalysisModal() {
+        const currentDate = get(contextDate);
+        analysisModal.set({
+            isOpen: true,
+            startDate: currentDate,
+            endDate: currentDate,
+            isLoading: false
+        });
+    }
+
+    // Закрыть модальное окно
+    function closeAnalysisModal() {
+        analysisModal.update(modal => ({ ...modal, isOpen: false }));
+    }
+
+    // Создать анализ (копировать на диапазон дат)
+    async function createAnalysis(startDate: string, endDate: string) {
+        analysisModal.update(modal => ({ ...modal, isLoading: true }));
+        
+        try {
+            const currentProgram = get(programsList).find(p => p.id === get(activeProgramId));
+            if (!currentProgram) throw new Error("Нет активной ПРЦА");
+            
+            console.log("Исходная ПРЦА:", currentProgram.name);
+            console.log("Диапазон дат:", startDate, "→", endDate);
+            
+            const dates = TimeUtils.generateDateRange(startDate, endDate);
+            console.log("Даты для копирования:", dates);
+            
+            const newPrograms: ProgramsListItem[] = [];
+            
+            for (const date of dates) {
+                // Пропускаем исходную дату (она уже есть)
+                if (date === currentProgram.date) continue;
+                
+                // Загружаем данные на эту дату
+                let operatorDataForDate = null;
+                let bortDataForDate = null;
+                let intervalsForDate = [...currentProgram.intervals];
+                let shadowsForDate = [...currentProgram.shadowIntervals];
+                let zasvetkiForDate = [...currentProgram.zasvetkaIntervals];
+                let vkiForDate = [...currentProgram.vkiIntervals];
+                let rotationsForDate = [...currentProgram.rotationIntervals];
+                
+                try {
+                    // Пытаемся загрузить данные оператора на эту дату
+                    operatorDataForDate = await ScheduleApiService.loadOperatorData(date);
+                    bortDataForDate = await ScheduleApiService.loadBortData(date);
+                    
+                    // Если есть данные оператора, создаем интервалы на их основе
+                    if (operatorDataForDate) {
+                        // Здесь логика создания интервалов из данных оператора
+                        // (аналогично тому как это делается при создании ПРЦА)
+                        intervalsForDate = ScheduleCreationService.convertToTimeIntervals(
+                            operatorDataForDate,
+                            currentProgram.ppiAssignments,
+                            WORK_MODES
+                        );
+                    }
+                    
+                    // Загружаем прогнозные данные
+                    const forecastData = await ScheduleApiService.loadForecastData(date);
+                    if (forecastData) {
+                        const forecast = ScheduleConverterService.convertForecastToIntervals(forecastData);
+                        shadowsForDate = forecast.shadows;
+                        zasvetkiForDate = forecast.zasvetki;
+                    }
+                    
+                    // Загружаем астрособытия
+                    const [vkiData, rotationData] = await Promise.all([
+                        ScheduleApiService.loadVkiData(date),
+                        ScheduleApiService.loadRotationData(date)
+                    ]);
+                    
+                    vkiForDate = ScheduleConverterService.convertVkiToIntervals(vkiData);
+                    rotationsForDate = ScheduleConverterService.convertRotationToIntervals(rotationData, date);
+                    
+                } catch (error) {
+                    console.warn(`Нет данных для даты ${date}, копируем исходную ПРЦА`);
+                    // Если данных нет - используем копию исходных интервалов с новой датой
+                    intervalsForDate = currentProgram.intervals.map(interval => ({
+                        ...interval,
+                        id: `${interval.id}_${date.replace(/-/g, '')}`,
+                        date: date
+                    }));
+                }
+                
+                // Проверяем конфликты
+                const intervalsWithConflicts = checkAllConflicts(
+                    intervalsForDate,
+                    zasvetkiForDate,
+                    shadowsForDate,
+                    vkiForDate,
+                    rotationsForDate
+                );
+                
+                // Создаем запись ПРЦА для этой даты
+                newPrograms.push({
+                    id: `program_${date.replace(/-/g, '')}_${Date.now()}_${newPrograms.length}`,
+                    name: `ПРЦА ${TimeUtils.formatDate(date)}`,
+                    date: date,
+                    intervals: intervalsWithConflicts,
+                    operatorData: operatorDataForDate,
+                    bortData: bortDataForDate,
+                    ppiAssignments: [...currentProgram.ppiAssignments],
+                    createdPrograms: currentProgram.createdPrograms.map(p => ({
+                        ...p,
+                        timeInterval: {
+                            ...p.timeInterval,
+                            date: date
+                        }
+                    })),
+                    shadowIntervals: shadowsForDate,
+                    zasvetkaIntervals: zasvetkiForDate,
+                    vkiIntervals: vkiForDate,
+                    rotationIntervals: rotationsForDate
+                });
+            }
+            
+            // Добавляем все созданные ПРЦА в список
+            programsList.update(list => [...list, ...newPrograms]);
+            
+            alert(`Создано ${newPrograms.length} ПРЦА для анализа`);
+            
+        } catch (error) {
+            console.error("Ошибка при создании анализа:", error);
+        } finally {
+            analysisModal.update(modal => ({ ...modal, isLoading: false, isOpen: false }));
+        }
+    }
+
+    // Переключение между ПРЦА
+    function selectProgram(programId: string) {
+        const program = get(programsList).find(p => p.id === programId);
+        if (!program) return;
+        
+        // Устанавливаем все данные выбранной ПРЦА
+        intervals.set(program.intervals);
+        operatorData.set(program.operatorData);
+        ppiAssignments.set(program.ppiAssignments);
+        createdPrograms.set(program.createdPrograms);
+        shadowIntervals.set(program.shadowIntervals);
+        zasvetkaIntervals.set(program.zasvetkaIntervals);
+        vkiIntervals.set(program.vkiIntervals);
+        rotationIntervals.set(program.rotationIntervals);
+        contextDate.set(program.date);
+        activeProgramId.set(programId);
+    }
+
+    // Удаление ПРЦА из анализа
+    function deleteProgramFromAnalysis(programId: string) {
+        programsList.update(list => {
+            const newList = list.filter(p => p.id !== programId);
+            
+            // Если удаляем активную ПРЦА
+            if (get(activeProgramId) === programId) {
+                if (newList.length > 0) {
+                    // Выбираем первую из оставшихся
+                    selectProgram(newList[0].id);
+                } else {
+                    // Если список пуст - выходим из режима анализа
+                    isAnalysisMode.set(false);
+                    activeProgramId.set(null);
+                }
+            }
+            
+            return newList;
+        });
+    }
+
+    // Выход из режима анализа
+    function exitAnalysisMode() {
+        isAnalysisMode.set(false);
+        activeProgramId.set(null);
+        programsList.set([]);
+    }
+
     // Вспомогательные функции для интерфейса
 
     function getIntervalColor(interval: TimeInterval): string {
@@ -368,6 +595,13 @@ export function createActions(
         handleModeFormSubmit,
         handleModeFormCancel,
         getIntervalColor,
-        getIntervalTitle
+        getIntervalTitle,
+        saveCurrentProgramToAnalysis,
+        openAnalysisModal,
+        closeAnalysisModal,
+        createAnalysis,
+        selectProgram,
+        exitAnalysisMode,
+        deleteProgramFromAnalysis
     };
 }

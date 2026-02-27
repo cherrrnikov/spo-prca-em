@@ -40,7 +40,12 @@ public class ProgramsMode {
     private LocalDateTime dateOff;
 
     @Column(name = "kod_mode")
-    private Integer kodMode;
+    private Integer kodMode; // 1-съемка
+                             // 2-ОМИ
+                             // 4-тнп
+                             // 6-юст ОНА
+                             // 7-квд
+                             // 8-ТС';
 
     @Column(name = "num_ppi")
     private Integer numPpi;

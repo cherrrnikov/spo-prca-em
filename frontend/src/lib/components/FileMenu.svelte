@@ -17,7 +17,9 @@
     operatorData = null,
     ppiAssignments = [],
     selectedProgramDate = '',
-    createdPrograms = []
+    createdPrograms = [],
+    onAnalysisClick,
+    isAnalysisMode = false
   } = $props<{
     userData: UserResponse | null;
     onOperatorCreate?: () => void;
@@ -27,6 +29,8 @@
     ppiAssignments?: any[];
     selectedProgramDate?: string;
     createdPrograms?: any[];
+    onAnalysisClick?: () => void;
+    isAnalysisMode?: boolean;
   }>();
 
   function handleClickOutside(event: MouseEvent) {
@@ -194,12 +198,18 @@
       
     } catch (error) {
       console.error("Ошибка при подготовке данных:", error);
-      alert('Ошибка при подготовке данных для сохранения: ' + error.message);
     }
   }
 
   function handleExport() {
     alert('Генерация отчета');
+  }
+
+  function handleAnalysis() {
+    if (onAnalysisClick) {
+        onAnalysisClick();
+    }
+    isOpen = false;
   }
 
   function handleArchive() {
@@ -252,6 +262,9 @@
         <hr />
         <button onclick={handleExport} class="menu-item">
           Отчет
+        </button>
+        <button onclick={handleAnalysis} class="menu-item analysis">
+            Анализ
         </button>
         <button onclick={handleArchive} class="menu-item">
           Просмотр архива

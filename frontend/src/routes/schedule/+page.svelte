@@ -22,6 +22,8 @@
     
     import type { OperatorData, PpiAssignment } from '$lib/types';
     import { checkAllConflicts } from '$lib/utils/interval/index';
+    import AnalysisModal from '../../features/schedule-creation/components/AnalysisModal.svelte';
+    import ProgramsSelector from '../../features/schedule-creation/components/ProgramsSelector.svelte';
 
     const cities = CITIES;
     const workModes = WORK_MODES;
@@ -44,6 +46,10 @@
         vkiIntervals,
         rotationIntervals,
         isEditing,  
+        programsList,
+        activeProgramId,
+        isAnalysisMode,
+        analysisModal,
         
         loadUserData,
         handleIntervalClick,
@@ -56,7 +62,15 @@
         
         getIntervalColor,
         getIntervalTitle,
-        setContextDate
+        setContextDate,
+
+        saveCurrentProgramToAnalysis,
+        openAnalysisModal,
+        closeAnalysisModal,
+        createAnalysis,
+        selectProgram,
+        exitAnalysisMode,
+        deleteProgramFromAnalysis
     } = useScheduleState();
 
     onMount(() => {
@@ -162,6 +176,8 @@
                     userData={$userData}
                     onOperatorCreate={startOperatorCreation}
                     onReferenceCreate={startReferenceCreation}
+                    onAnalysisClick={saveCurrentProgramToAnalysis}
+                    isAnalysisMode={$isAnalysisMode}
                     intervals={$intervals}
                     operatorData={$operatorData}
                     ppiAssignments={$ppiAssignments}
@@ -180,6 +196,13 @@
                 userData={$userData}
                 onOperatorCreate={startOperatorCreation}
                 onReferenceCreate={startReferenceCreation}
+                onAnalysisClick={saveCurrentProgramToAnalysis}
+                isAnalysisMode={$isAnalysisMode}
+                intervals={$intervals}
+                operatorData={$operatorData}
+                ppiAssignments={$ppiAssignments}
+                selectedProgramDate={$selectedProgramDate}
+                createdPrograms={$createdPrograms}
             />
         {/if}
     </header>
@@ -202,17 +225,36 @@
         />
     </div>
 
-    {#if $selectedMode}
-        <div class="creation-form-container">
-            <ModeCreationFormComponent
-                selectedMode={$selectedMode}
-                editingInterval={$editingInterval}
-                onSubmit={handleModeFormSubmit}
-                onCancel={handleModeFormCancel}
-                onUpdate={handleIntervalUpdate}
+    <div class="form-container">
+        {#if $selectedMode}
+            <div class="creation-form-container">
+                <ModeCreationFormComponent
+                    selectedMode={$selectedMode}
+                    editingInterval={$editingInterval}
+                    onSubmit={handleModeFormSubmit}
+                    onCancel={handleModeFormCancel}
+                    onUpdate={handleIntervalUpdate}
+                />
+            </div>
+        {/if}
+
+        {#if $isAnalysisMode}
+            <ProgramsSelector
+                programs={$programsList}
+                activeId={$activeProgramId}
+                onSelect={selectProgram}
+                onExitAnalysis={exitAnalysisMode}
+                onDelete={deleteProgramFromAnalysis}
             />
-        </div>
-    {/if}
+        {/if}
+    </div>
+
+    <AnalysisModal
+        modalData={$analysisModal}
+        onClose={closeAnalysisModal}
+        onCreate={createAnalysis}
+    />
+
     
     <footer class="schedule-footer">
         <CityLegend {cities} />
@@ -251,6 +293,16 @@
         display: flex;
         justify-content: center;
         align-items: flex-start;
+    }
+    .form-container {
+        /* width: 400px; */
+        padding: 1rem;
+        background: white;
+        border-left: 1px solid #e2e8f0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
     }
 
     .schedule-footer {
