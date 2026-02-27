@@ -380,7 +380,7 @@ export function createActions(
         analysisModal.update(modal => ({ ...modal, isOpen: false }));
     }
 
-    // Создать анализ (копировать на диапазон дат)
+    // Создать анализ (копировать на диапазон д ат)
     async function createAnalysis(startDate: string, endDate: string) {
         analysisModal.update(modal => ({ ...modal, isLoading: true }));
         
