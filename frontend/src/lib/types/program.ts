@@ -80,6 +80,16 @@ export interface ProgramModeData {
         nOna: number;
         nPpi: number;
     };
+
+    omiData?: {
+        id: number;
+        idMain: number;
+        numOmi: number;    
+        typeOmi: number;   
+        dateNach: string; 
+        dateCon: string;  
+        dlit: number;      
+    };
 }
 
 export interface PpiAssignment {

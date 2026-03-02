@@ -195,7 +195,7 @@ export function createActions(
         intervals.set(currentIntervals.filter(interval => interval.id !== intervalId));
 
         const currentPrograms = get(createdPrograms);
-        createdPrograms.set(currentPrograms.filter(program => program.tempId !== intervalId));
+        createdPrograms.set(currentPrograms.filter(program => program.timeInterval.id !== intervalId));
         
         const currentEditingInterval = get(editingInterval);
         if (currentEditingInterval?.id === intervalId) {
@@ -212,6 +212,11 @@ export function createActions(
     }
 
     function handleIntervalUpdate(formData: ModeCreationForm) {
+        console.log(`✏️ handleIntervalUpdate для интервала:`, {
+            editingId: get(editingInterval)?.id,
+            formData: formData
+        });
+
         const currentEditingInterval = get(editingInterval);
         if (!currentEditingInterval) return;
 
@@ -236,7 +241,7 @@ export function createActions(
         
         if (sameModeOverlap.overlaps) {
             alert(`Ошибка: интервал пересекается с существующим интервалом\n` +
-                  `Время конфликта: ${sameModeOverlap.conflictingInterval?.startTime} - ${sameModeOverlap.conflictingInterval?.endTime}`);
+                `Время конфликта: ${sameModeOverlap.conflictingInterval?.startTime} - ${sameModeOverlap.conflictingInterval?.endTime}`);
             return;
         }
         
@@ -251,9 +256,17 @@ export function createActions(
         
         createdPrograms.update(current =>
             current.map(program => {
-                if (program.tempId === currentEditingInterval.id) {
-                    const modeData = createProgramModeData(formData, currentEditingInterval.id);
-                    return { ...program, modeData, timeInterval: updatedInterval };
+                if (program.timeInterval.id === currentEditingInterval.id) {
+                    const modeData = createProgramModeData(formData, program.tempId); // сохраняем тот же tempId
+                    console.log(`  📝 Обновляем programData:`, {
+                        old: program.modeData,
+                        new: modeData
+                    });
+                    return { 
+                        ...program, 
+                        modeData, 
+                        timeInterval: updatedInterval 
+                    };
                 }
                 return program;
             })
@@ -958,28 +971,31 @@ export function createActions(
 
     // Форматирование tooltip для интервала
     function getIntervalTooltip(interval: TimeInterval): string {
+        console.log(`🔍 getIntervalTooltip для интервала:`, {
+            id: interval.id,
+            mode: interval.mode,
+            startTime: interval.startTime,
+            dlit: interval.dlit
+        });
+        
         const programData = get(createdPrograms).find(p => p.timeInterval.id === interval.id);
         
         if (programData) {
+            console.log(`  ✅ Найден programData:`, {
+                tempId: programData.tempId,
+                modeData: programData.modeData,
+                tsData: programData.modeData.tsData
+            });
             return TooltipFormatter.formatTooltip(interval, programData.modeData);
         }
         
-        let ppiNum: number | undefined;
-    
-        if (interval.id.startsWith('kvd_')) {
-            const kvdId = parseInt(interval.id.replace('kvd_', ''));
-            const assignment = get(ppiAssignments).find(a => 
-                a.recordId === kvdId && a.recordType === 'kvd'
-            );
-            ppiNum = assignment?.ppiNum;
-        }
+        console.log(`  ❌ programData НЕ НАЙДЕН для interval.id:`, interval.id);
+        console.log(`  Доступные createdPrograms:`, get(createdPrograms).map(p => ({
+            tempId: p.tempId,
+            intervalId: p.timeInterval.id
+        })));
         
-        return TooltipFormatter.formatTooltip(
-            interval, 
-            undefined, 
-            get(operatorData), 
-            ppiNum
-        );
+        return interval.title || '';
     }
 
     return {

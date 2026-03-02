@@ -53,6 +53,8 @@ export interface ModeCreationForm {
     msu1Config: TsMsuConfig;
     msu2Config: TsMsuConfig;
     nOna?: number;
+    tip?: number;
+    reg?: number;
 }
 
 export interface PpiSelectionModal {

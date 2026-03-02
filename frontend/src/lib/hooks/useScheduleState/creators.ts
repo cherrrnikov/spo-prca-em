@@ -144,14 +144,16 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
         } else if (formData.modeType === 8) {
             const msu1Config = formData.msu1Config || getDefaultMsuConfig();
             const msu2Config = formData.msu2Config || getDefaultMsuConfig();
-            
+            const tip = (formData as any).tip || 1;  
+            const reg = (formData as any).reg || 1;
+
             return {
                 ...baseData,
                 tsData: {
                     id: 0,
                     idMain: mainId,
-                    tip: 1,
-                    reg: 1,
+                    tip: tip,
+                    reg: reg,
                     dlit: baseData.dlit,
                     prMsu1: msu1Config.prMsu || 0,
                     vd1Msu1: msu1Config.vd1 || 0,
@@ -165,16 +167,16 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     ik9Msu1: msu1Config.ik9 || 0,
                     ik10Msu1: msu1Config.ik10 || 0,
                     prMsu2: msu2Config.prMsu || 0,
-                    vd1Msu2: msu1Config.vd1 || 0,
-                    vd2Msu2: msu1Config.vd2 || 0,
-                    vd3Msu2: msu1Config.vd3 || 0,
-                    ik4Msu2: msu1Config.ik4 || 0,
-                    ik5Msu2: msu1Config.ik5 || 0,
-                    ik6Msu2: msu1Config.ik6 || 0,
-                    ik7Msu2: msu1Config.ik7 || 0,
-                    ik8Msu2: msu1Config.ik8 || 0,
-                    ik9Msu2: msu1Config.ik9 || 0,
-                    ik10Msu2: msu1Config.ik10 || 0,
+                    vd1Msu2: msu2Config.vd1 || 0,
+                    vd2Msu2: msu2Config.vd2 || 0,
+                    vd3Msu2: msu2Config.vd3 || 0,
+                    ik4Msu2: msu2Config.ik4 || 0,
+                    ik5Msu2: msu2Config.ik5 || 0,
+                    ik6Msu2: msu2Config.ik6 || 0,
+                    ik7Msu2: msu2Config.ik7 || 0,
+                    ik8Msu2: msu2Config.ik8 || 0,
+                    ik9Msu2: msu2Config.ik9 || 0,
+                    ik10Msu2: msu2Config.ik10 || 0,
                     prBssd: 1,
                     prZg: 1,
                     prOtklZgBssd: 0

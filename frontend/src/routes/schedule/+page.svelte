@@ -3,6 +3,7 @@
     
     import {
     	CITIES,
+    	CUSTOMER_CODES,
     	WORK_MODES
     } from '$lib/constants/schedule';
     
@@ -20,8 +21,9 @@
     import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
     import { TimeUtils } from '$lib/utils/time';
     
-    import type { OperatorData, PpiAssignment } from '$lib/types';
+    import type { CreatedProgramData, OperatorData, PpiAssignment, ProgramModeData, TimeInterval } from '$lib/types';
     import { checkAllConflicts } from '$lib/utils/interval/index';
+    import { ModeUtils } from '$lib/utils/mode';
     import AnalysisModal from '../../features/schedule-creation/components/AnalysisModal.svelte';
     import ProgramsSelector from '../../features/schedule-creation/components/ProgramsSelector.svelte';
 
@@ -135,18 +137,29 @@
 
             const hasAstro = await ScheduleApiService.hasAstrocorrectionData(date);
             
+            // Создаём интервалы из ИД06
             const newIntervals = ScheduleCreationService.convertToTimeIntervals(
                 newOperatorData,
                 newPpiAssignments,
                 workModes
             );
             
+            // 👇 СОЗДАЁМ createdPrograms ДЛЯ ВСЕХ ИНТЕРВАЛОВ ИЗ ИД06
+            const newCreatedPrograms = createProgramsFromOperatorData(
+                newOperatorData,
+                newPpiAssignments,
+                date,
+                newIntervals
+            );
+            
+            // Добавляем астрокоррекции
             const intervalsWithAstro = AstrocorrectionService.mergeAstrocorrection(
                 newIntervals, 
                 date, 
                 hasAstro
             );
 
+            // Проверяем конфликты
             const intervalsWithConflicts = checkAllConflicts(
                 intervalsWithAstro, 
                 $zasvetkaIntervals, 
@@ -156,8 +169,215 @@
             );
 
             intervals.set(intervalsWithConflicts);
+            createdPrograms.set(newCreatedPrograms); // 👈 СОХРАНЯЕМ
             isEditing.set(false);
         }
+    }
+
+    // Функция создания createdPrograms из ИД06
+    function createProgramsFromOperatorData(
+        operatorData: OperatorData,
+        ppiAssignments: PpiAssignment[],
+        date: string,
+        intervals: TimeInterval[]
+    ): CreatedProgramData[] {
+        const programs: CreatedProgramData[] = [];
+        const mainId = operatorData.main.id;
+        const numKa = operatorData.main.n_ka;
+        
+        // КВД
+        if (operatorData.kvd_list) {
+            operatorData.kvd_list.forEach((kvd: any) => {
+                const assignment = ppiAssignments.find(a => 
+                    a.recordId === kvd.id && a.recordType === 'kvd'
+                );
+                
+                if (assignment) {
+                    const modeData: ProgramModeData = {
+                        numRp: 0,
+                        numKa: numKa,
+                        dateOn: kvd.dn,
+                        dateOff: kvd.dk,
+                        kodMode: 7,
+                        numPpi: assignment.ppiNum,
+                        dlit: TimeUtils.calculateDuration(kvd.dn, kvd.dk),
+                        zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, operatorData.main?.k_zajv || 5),
+                        kvdData: {
+                            id: kvd.id,
+                            idMain: mainId,
+                            prMsu: kvd.pr_msu,
+                            prBssd: kvd.pr_bssd,
+                            prZg: kvd.pr_zg
+                        }
+                    };
+                    
+                    const timeInterval = intervals.find(i => 
+                        i.id === `kvd_${kvd.id}`
+                    );
+                    
+                    if (timeInterval) {
+                        programs.push({
+                            tempId: `kvd_${kvd.id}`,
+                            modeData,
+                            timeInterval
+                        });
+                    }
+                }
+            });
+        }
+        
+        // ТНП
+        if (operatorData.tnp_list) {
+            operatorData.tnp_list.forEach((tnp: any) => {
+                const assignment = ppiAssignments.find(a => 
+                    a.recordId === tnp.id && a.recordType === 'tnp'
+                );
+                
+                if (assignment) {
+                    const modeData: ProgramModeData = {
+                        numRp: 0,
+                        numKa: numKa,
+                        dateOn: tnp.dn,
+                        dateOff: tnp.dk,
+                        kodMode: 4,
+                        numPpi: assignment.ppiNum,
+                        dlit: tnp.dlit,
+                        zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, operatorData.main?.k_zajv || 5),
+                        tnpData: {
+                            id: tnp.id,
+                            idMain: mainId,
+                            prMsu: 1,  // заглушка
+                            prBssd: 1,  // заглушка
+                            prZg: 1     // заглушка
+                        }
+                    };
+                    
+                    const timeInterval = intervals.find(i => 
+                        i.id === `tnp_${tnp.id}`
+                    );
+                    
+                    if (timeInterval) {
+                        programs.push({
+                            tempId: `tnp_${tnp.id}`,
+                            modeData,
+                            timeInterval
+                        });
+                    }
+                }
+            });
+        }
+        
+        // ТС
+        if (operatorData.ts_list) {
+            operatorData.ts_list.forEach((ts: any) => {
+                const assignment = ppiAssignments.find(a => 
+                    a.recordId === ts.id && a.recordType === 'ts'
+                );
+                
+                if (assignment) {
+                    // Находим все подынтервалы для этого ТС
+                    const tsSubIntervals = intervals.filter(i => 
+                        i.id.startsWith(`ts_${ts.id}`)
+                    );
+                    
+                    tsSubIntervals.forEach((subInterval, idx) => {
+                        const modeData: ProgramModeData = {
+                            numRp: 0,
+                            numKa: numKa,
+                            dateOn: `${date}T${subInterval.startTime}`,
+                            dateOff: `${date}T${subInterval.endTime}`,
+                            kodMode: 8,
+                            numPpi: assignment.ppiNum,
+                            dlit: subInterval.dlit || 420,
+                            zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, operatorData.main?.k_zajv || 5),
+                            tsData: {
+                                id: ts.id,
+                                idMain: mainId,
+                                tip: ts.tip,
+                                reg: ts.reg,
+                                dlit: subInterval.dlit || 420,
+                                prMsu1: ts.pr_msu1,
+                                vd1Msu1: ts.pr_vd1_1,
+                                vd2Msu1: ts.pr_vd2_1,
+                                vd3Msu1: ts.pr_vd3_1,
+                                ik4Msu1: ts.pr_ik4_1,
+                                ik5Msu1: ts.pr_ik5_1,
+                                ik6Msu1: ts.pr_ik6_1,
+                                ik7Msu1: ts.pr_ik7_1,
+                                ik8Msu1: ts.pr_ik8_1,
+                                ik9Msu1: ts.pr_ik9_1,
+                                ik10Msu1: ts.pr_ik10_1,
+                                prMsu2: ts.pr_msu2,
+                                vd1Msu2: ts.pr_vd1_2,
+                                vd2Msu2: ts.pr_vd2_2,
+                                vd3Msu2: ts.pr_vd3_2,
+                                ik4Msu2: ts.pr_ik4_2,
+                                ik5Msu2: ts.pr_ik5_2,
+                                ik6Msu2: ts.pr_ik6_2,
+                                ik7Msu2: ts.pr_ik7_2,
+                                ik8Msu2: ts.pr_ik8_2,
+                                ik9Msu2: ts.pr_ik9_2,
+                                ik10Msu2: ts.pr_ik10_2,
+                                prBssd: 0,
+                                prZg: 0,
+                                prOtklZgBssd: ts.pr_otkl_zg
+                            }
+                        };
+                        
+                        programs.push({
+                            tempId: `ts_${ts.id}_${idx}`,
+                            modeData,
+                            timeInterval: subInterval
+                        });
+                    });
+                }
+            });
+        }
+        
+        // ОНА
+        if (operatorData.ona_list) {
+            operatorData.ona_list.forEach((ona: any) => {
+                const assignment = ppiAssignments.find(a => 
+                    a.recordId === ona.id && a.recordType === 'ona'
+                );
+                
+                if (assignment) {
+                    const modeData: ProgramModeData = {
+                        numRp: 0,
+                        numKa: numKa,
+                        dateOn: ona.dn,
+                        dateOff: ona.dk,
+                        kodMode: 6,
+                        numPpi: assignment.ppiNum,
+                        dlit: ona.dlit,
+                        zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, operatorData.main?.k_zajv || 5),
+                        onaData: {
+                            id: ona.id,
+                            idMain: ona.id_main,
+                            typeOmi: 1,
+                            dN: ona.dn,
+                            dK: ona.dk,
+                            nOna: ona.n_ona,
+                            nPpi: assignment.ppiNum
+                        }
+                    };
+                    
+                    const timeInterval = intervals.find(i => 
+                        i.id === `ona_${ona.id}`
+                    );
+                    
+                    if (timeInterval) {
+                        programs.push({
+                            tempId: `ona_${ona.id}`,
+                            modeData,
+                            timeInterval
+                        });
+                    }
+                }
+            });
+        }
+        
+        return programs;
     }
 
     function formatDate(dateString: string): string {
