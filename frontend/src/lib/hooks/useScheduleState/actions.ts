@@ -212,11 +212,6 @@ export function createActions(
     }
 
     function handleIntervalUpdate(formData: ModeCreationForm) {
-        console.log(`✏️ handleIntervalUpdate для интервала:`, {
-            editingId: get(editingInterval)?.id,
-            formData: formData
-        });
-
         const currentEditingInterval = get(editingInterval);
         if (!currentEditingInterval) return;
 
@@ -258,10 +253,7 @@ export function createActions(
             current.map(program => {
                 if (program.timeInterval.id === currentEditingInterval.id) {
                     const modeData = createProgramModeData(formData, program.tempId); // сохраняем тот же tempId
-                    console.log(`  📝 Обновляем programData:`, {
-                        old: program.modeData,
-                        new: modeData
-                    });
+
                     return { 
                         ...program, 
                         modeData, 
@@ -971,29 +963,11 @@ export function createActions(
 
     // Форматирование tooltip для интервала
     function getIntervalTooltip(interval: TimeInterval): string {
-        console.log(`🔍 getIntervalTooltip для интервала:`, {
-            id: interval.id,
-            mode: interval.mode,
-            startTime: interval.startTime,
-            dlit: interval.dlit
-        });
-        
         const programData = get(createdPrograms).find(p => p.timeInterval.id === interval.id);
         
         if (programData) {
-            console.log(`  ✅ Найден programData:`, {
-                tempId: programData.tempId,
-                modeData: programData.modeData,
-                tsData: programData.modeData.tsData
-            });
             return TooltipFormatter.formatTooltip(interval, programData.modeData);
         }
-        
-        console.log(`  ❌ programData НЕ НАЙДЕН для interval.id:`, interval.id);
-        console.log(`  Доступные createdPrograms:`, get(createdPrograms).map(p => ({
-            tempId: p.tempId,
-            intervalId: p.timeInterval.id
-        })));
         
         return interval.title || '';
     }

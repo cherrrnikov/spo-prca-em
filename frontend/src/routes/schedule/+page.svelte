@@ -201,7 +201,7 @@
                         kodMode: 7,
                         numPpi: assignment.ppiNum,
                         dlit: TimeUtils.calculateDuration(kvd.dn, kvd.dk),
-                        zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, operatorData.main?.k_zajv || 5),
+                        zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
                         kvdData: {
                             id: kvd.id,
                             idMain: mainId,
@@ -216,6 +216,7 @@
                     );
                     
                     if (timeInterval) {
+                        timeInterval.customerCode = 1;
                         programs.push({
                             tempId: `kvd_${kvd.id}`,
                             modeData,
@@ -242,7 +243,7 @@
                         kodMode: 4,
                         numPpi: assignment.ppiNum,
                         dlit: tnp.dlit,
-                        zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, operatorData.main?.k_zajv || 5),
+                        zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
                         tnpData: {
                             id: tnp.id,
                             idMain: mainId,
@@ -257,6 +258,7 @@
                     );
                     
                     if (timeInterval) {
+                        timeInterval.customerCode = 1;
                         programs.push({
                             tempId: `tnp_${tnp.id}`,
                             modeData,
@@ -281,6 +283,8 @@
                     );
                     
                     tsSubIntervals.forEach((subInterval, idx) => {
+                        subInterval.customerCode = 1;
+
                         const modeData: ProgramModeData = {
                             numRp: 0,
                             numKa: numKa,
@@ -289,7 +293,7 @@
                             kodMode: 8,
                             numPpi: assignment.ppiNum,
                             dlit: subInterval.dlit || 420,
-                            zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, operatorData.main?.k_zajv || 5),
+                            zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
                             tsData: {
                                 id: ts.id,
                                 idMain: mainId,
@@ -350,7 +354,7 @@
                         kodMode: 6,
                         numPpi: assignment.ppiNum,
                         dlit: ona.dlit,
-                        zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, operatorData.main?.k_zajv || 5),
+                        zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
                         onaData: {
                             id: ona.id,
                             idMain: ona.id_main,
@@ -367,6 +371,7 @@
                     );
                     
                     if (timeInterval) {
+                        timeInterval.customerCode = 1;
                         programs.push({
                             tempId: `ona_${ona.id}`,
                             modeData,

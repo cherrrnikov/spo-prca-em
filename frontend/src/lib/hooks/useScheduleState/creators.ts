@@ -87,6 +87,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             dlit: formData.duration,
             city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
             color: ScheduleCreationService.getColorByPpi(formData.ppiNum),
+            customerCode: formData.customerCode,
         };
         
         if (formData.modeType === 7 && formData.kvdConfig) {
