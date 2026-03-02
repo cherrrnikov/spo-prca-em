@@ -64,7 +64,6 @@
         loadAstroEvents,
         
         getIntervalColor,
-        getIntervalTitle,
         getIntervalTooltip,
         setContextDate,
 
@@ -459,7 +458,6 @@
             rotationIntervals={$rotationIntervals}
             onModeSelect={handleModeSelect}
             getIntervalColor={getIntervalColor}
-            getIntervalTitle={getIntervalTitle}
             getIntervalTooltip={getIntervalTooltip}
             onIntervalClick={handleIntervalClick}
             onIntervalDelete={handleIntervalDelete}

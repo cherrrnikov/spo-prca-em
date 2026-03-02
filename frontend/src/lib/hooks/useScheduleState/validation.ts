@@ -16,7 +16,10 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
         shadowIntervals,
         zasvetkaIntervals,
         vkiIntervals,
-        rotationIntervals
+        rotationIntervals,
+        programsList,
+        activeProgramId,
+        createdPrograms
     } = stores;
 
     function checkAndUpdateAllConflictsForNewInterval(newInterval: TimeInterval) {
@@ -135,8 +138,41 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
         );
     }
 
+    function syncCurrentProgramWithStore() {
+        const currentActiveId = get(activeProgramId);
+        if (!currentActiveId) return;
+        
+        const currentIntervals = get(intervals);
+        const currentOperator = get(operatorData);
+        const currentPpi = get(ppiAssignments);
+        const currentCreated = get(createdPrograms);
+        const currentShadows = get(shadowIntervals);
+        const currentZasvetki = get(zasvetkaIntervals);
+        const currentVki = get(vkiIntervals);
+        const currentRotations = get(rotationIntervals);
+        
+        programsList.update(list => 
+            list.map(program => 
+                program.id === currentActiveId 
+                    ? {
+                        ...program,
+                        intervals: [...currentIntervals],
+                        operatorData: currentOperator ? { ...currentOperator } : null,
+                        ppiAssignments: [...currentPpi],
+                        createdPrograms: [...currentCreated],
+                        shadowIntervals: [...currentShadows],
+                        zasvetkaIntervals: [...currentZasvetki],
+                        vkiIntervals: [...currentVki],
+                        rotationIntervals: [...currentRotations]
+                    }
+                    : program
+            )
+        );
+    }
+
     return {
         checkAndUpdateAllConflictsForNewInterval,
-        updateAllConflicts
+        updateAllConflicts,
+        syncCurrentProgramWithStore
     };
 }
