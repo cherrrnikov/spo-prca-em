@@ -12,12 +12,13 @@ import type {
 } from '$lib/types';
 import type { AnalysisModalState, ProgramsListItem } from '$lib/types/analysis';
 import type { UserResponse } from '$lib/types/auth';
-import { writable } from 'svelte/store';
+import { derived, writable } from 'svelte/store';
 
 export function createStores() {
     // Данные пользователя
     const userData = writable<UserResponse | null>(null);
     const isEditing = writable(true);
+
     // Режим создания
     const creationMode = writable<'operator' | 'reference' | null>(null);
 
@@ -57,6 +58,15 @@ export function createStores() {
     const programsList = writable<ProgramsListItem[]>([]);
     const activeProgramId = writable<string | null>(null);
     const isAnalysisMode = writable<boolean>(false);
+
+    const activeProgramDate = derived(
+        [programsList, activeProgramId],
+        ([$programsList, $activeProgramId]) => {
+            if (!$activeProgramId) return '';
+            const program = $programsList.find(p => p.id === $activeProgramId);
+            return program?.date || '';
+        }
+    );
 
     const analysisModal = writable<AnalysisModalState>({
         isOpen: false,
@@ -109,6 +119,7 @@ export function createStores() {
         programsList,
         activeProgramId,
         isAnalysisMode,
-        analysisModal
+        analysisModal,
+        activeProgramDate
     };
 }

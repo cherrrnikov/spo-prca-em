@@ -51,6 +51,7 @@
         programsList,
         activeProgramId,
         isAnalysisMode,
+        activeProgramDate,
         analysisModal,
         
         loadUserData,
@@ -419,8 +420,15 @@
                 />
                 <div class="program-date-info">
                     <h2 class="program-date-title">
-                        Программа работы БЦА действует с <strong>{formatDate($selectedProgramDate)}</strong> 
-                        по <strong>{formatDate($selectedProgramDate)} 23:59:59</strong>
+                        {#if $isAnalysisMode && $activeProgramId}
+                            Программа работы БЦА действует с 
+                            <strong>{formatDate($activeProgramDate)}</strong> 
+                            по <strong>{formatDate($activeProgramDate)} 23:59:59</strong>
+                        {:else}
+                            Программа работы БЦА действует с 
+                            <strong>{formatDate($selectedProgramDate)}</strong> 
+                            по <strong>{formatDate($selectedProgramDate)} 23:59:59</strong>
+                        {/if}
                     </h2>
                 </div>
             </div>
