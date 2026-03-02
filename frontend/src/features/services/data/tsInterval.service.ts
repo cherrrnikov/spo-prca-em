@@ -45,8 +45,6 @@ export class TsIntervalService {
                 endTime: formatTime(subEndTime),
                 city,
                 color,
-                title: `Техн. съёмка (tip=${tsRecord.tip}, ППИ ${ppiNum})`,
-                description: `Технологическая съемка, тип: ${tsRecord.tip}, режим: ${tsRecord.reg}`,
                 ppi: ppiNum,
                 dlit: subIntervalDuration * 60, 
                 customerCode: 5, 

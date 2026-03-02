@@ -260,14 +260,14 @@ export function createAnalysisActions(
         let createdProgramsForDate: CreatedProgramData[] = [];
         
         if (operatorDataForDate) {
-            console.log(`✅ Есть данные ИД06 для ${date}, создаём интервалы из них`);
+            console.log(`Есть данные ИД06 для ${date}, создаём интервалы из них`);
             
             const hasKvd = operatorDataForDate.kvd_list?.length > 0;
             const hasTnp = operatorDataForDate.tnp_list?.length > 0;
             const hasTs = operatorDataForDate.ts_list?.length > 0;
             const hasOna = operatorDataForDate.ona_list?.length > 0;
             
-            console.log(`  📊 Типы в ИД06: КВД:${hasKvd}, ТНП:${hasTnp}, ТС:${hasTs}, ОНА:${hasOna}`);
+            console.log(`Типы в ИД06: КВД:${hasKvd}, ТНП:${hasTnp}, ТС:${hasTs}, ОНА:${hasOna}`);
             
             const intervalsFromId06 = ScheduleCreationService.convertToTimeIntervals(
                 operatorDataForDate,
@@ -283,10 +283,26 @@ export function createAnalysisActions(
                 if (interval.isAstrocorrection) return;
                 
                 let shouldCopy = false;
-                if (interval.mode === 7 && !hasKvd) shouldCopy = true;
-                else if (interval.mode === 4 && !hasTnp) shouldCopy = true;
-                else if (interval.mode === 8 && !hasTs) shouldCopy = true;
-                else if (interval.mode === 6 && !hasOna) shouldCopy = true;
+                let typeName = '';
+                if (interval.mode === 7 && !hasKvd) {
+                    shouldCopy = true;
+                    typeName = 'КВД';
+                } else if (interval.mode === 4 && !hasTnp) {
+                    shouldCopy = true;
+                    typeName = 'ТНП';
+                } else if (interval.mode === 8 && !hasTs) {
+                    shouldCopy = true;
+                    typeName = 'ТС';
+                } else if (interval.mode === 6 && !hasOna) {
+                    shouldCopy = true;
+                    typeName = 'ОНА';
+                } else if (interval.mode === 1 && !hasTs) { // Обычные съемки (mode 1)
+                    shouldCopy = true;
+                    typeName = 'Съемка';
+                } else if (interval.mode === 2 && !hasTnp) { // ОМИ (mode 2)
+                    shouldCopy = true;
+                    typeName = 'ОМИ';
+                }
                 
                 if (shouldCopy) {
                     const newInterval = {
@@ -304,9 +320,46 @@ export function createAnalysisActions(
                         );
                         
                         if (originalProgram) {
+                            // 👇 ВАЖНО: обновляем даты в modeData для всех типов
+                            const newModeData = { ...originalProgram.modeData };
+                            
+                            // Обновляем основные поля дат
+                            newModeData.dateOn = originalProgram.modeData.dateOn.replace(
+                                originalProgram.timeInterval.date, 
+                                date
+                            );
+                            newModeData.dateOff = originalProgram.modeData.dateOff.replace(
+                                originalProgram.timeInterval.date, 
+                                date
+                            );
+                            
+                            // Обновляем даты в специализированных полях если они есть
+                            if (newModeData.onaData) {
+                                newModeData.onaData.dN = newModeData.onaData.dN.replace(
+                                    originalProgram.timeInterval.date, 
+                                    date
+                                );
+                                newModeData.onaData.dK = newModeData.onaData.dK.replace(
+                                    originalProgram.timeInterval.date, 
+                                    date
+                                );
+                            }
+                            
+                            if (newModeData.omiData) {
+                                newModeData.omiData.dateNach = newModeData.omiData.dateNach.replace(
+                                    originalProgram.timeInterval.date, 
+                                    date
+                                );
+                                newModeData.omiData.dateCon = newModeData.omiData.dateCon.replace(
+                                    originalProgram.timeInterval.date, 
+                                    date
+                                );
+                            }
+                            
                             createdProgramsForDate.push({
                                 ...originalProgram,
                                 tempId: `${originalProgram.tempId}_${date.replace(/-/g, '')}`,
+                                modeData: newModeData,
                                 timeInterval: newInterval
                             });
                         }
@@ -363,7 +416,7 @@ export function createAnalysisActions(
             if (operatorDataForDate.tnp_list) {
                 operatorDataForDate.tnp_list.forEach((tnp: any) => {
                     const assignment = currentProgram.ppiAssignments.find(a => 
-                        a.recordId === tnp.id && a.recordType === 'tnp'
+                        a.recordType === 'ts'
                     );
                     
                     if (assignment) {
@@ -402,12 +455,10 @@ export function createAnalysisActions(
             
             // ТС
             if (operatorDataForDate.ts_list) {
+                const tsAssignment = currentProgram.ppiAssignments.find(a => a.recordType === 'ts');
+
                 for (const ts of operatorDataForDate.ts_list) {
-                    const assignment = currentProgram.ppiAssignments.find(a => 
-                        a.recordId === ts.id && a.recordType === 'ts'
-                    );
-                    
-                    if (assignment) {
+                    if (tsAssignment) {
                         const tsSubIntervals = intervalsForDate.filter(i => 
                             i.id.startsWith(`ts_${ts.id}`)
                         );
@@ -419,7 +470,7 @@ export function createAnalysisActions(
                                 dateOn: `${date}T${subInterval.startTime}`,
                                 dateOff: `${date}T${subInterval.endTime}`,
                                 kodMode: 8,
-                                numPpi: assignment.ppiNum,
+                                numPpi: tsAssignment.ppiNum,
                                 dlit: subInterval.dlit || 420,
                                 tsData: {
                                     id: ts.id,
@@ -462,7 +513,7 @@ export function createAnalysisActions(
                                 timeInterval: subInterval
                             });
                         });
-                    }
+                    } 
                 }
             }
             
@@ -511,6 +562,7 @@ export function createAnalysisActions(
             
         } else {
             console.log(`⚠️ Нет данных ИД06 для ${date}, копируем всё из исходной ПРЦА`);
+            console.log(`  Исходная дата: ${currentProgram.date}, новая дата: ${date}`);
             
             intervalsForDate = currentProgram.intervals.map(interval => ({
                 ...interval,
@@ -518,15 +570,22 @@ export function createAnalysisActions(
                 date: date
             }));
             
-            createdProgramsForDate = currentProgram.createdPrograms.map(p => ({
-                ...p,
-                tempId: `${p.tempId}_${date.replace(/-/g, '')}`,
-                timeInterval: {
-                    ...p.timeInterval,
-                    id: `${p.timeInterval.id}_${date.replace(/-/g, '')}`,
-                    date: date
-                }
-            }));
+            createdProgramsForDate = currentProgram.createdPrograms.map(p => {
+                return {
+                    ...p,
+                    tempId: `${p.tempId}_${date.replace(/-/g, '')}`,
+                    modeData: {
+                        ...p.modeData,
+                        dateOn: p.modeData.dateOn.replace(p.timeInterval.date, date),
+                        dateOff: p.modeData.dateOff.replace(p.timeInterval.date, date)
+                    },
+                    timeInterval: {
+                        ...p.timeInterval,
+                        id: `${p.timeInterval.id}_${date.replace(/-/g, '')}`,
+                        date: date
+                    }
+                };
+            });
         }
         
         return { intervalsForDate, createdProgramsForDate };
