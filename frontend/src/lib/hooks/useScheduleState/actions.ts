@@ -337,7 +337,7 @@ export function createActions(
         const currentRotations = get(rotationIntervals);
 
         // Генерируем имя для ПРЦА
-        const programName = `ПРЦА ${TimeUtils.formatDate(currentDate)} ${new Date().toLocaleTimeString()}`;
+        const programName = `ПРЦА ${TimeUtils.formatDate(currentDate)}`;
         
         const programItem: ProgramsListItem = {
             id: `program_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
