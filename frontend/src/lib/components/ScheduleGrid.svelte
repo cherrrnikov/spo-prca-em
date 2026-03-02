@@ -19,6 +19,7 @@
         onModeSelect,
         getIntervalColor,
         getIntervalTitle,
+        getIntervalTooltip,
         onIntervalClick,
         onIntervalDelete,
         selectedIntervalId = null,
@@ -33,6 +34,7 @@
         onModeSelect?: (modeId: number) => void;
         getIntervalColor?: (interval: TimeInterval) => string;
         getIntervalTitle?: (interval: TimeInterval) => string;
+        getIntervalTooltip?: (interval: TimeInterval) => string;
         onIntervalClick?: (interval: TimeInterval) => void;
         onIntervalDelete?: (intervalId: string) => void;
         selectedIntervalId?: string | null;
@@ -192,7 +194,12 @@
             }
             
             const color = getIntervalColor?.(interval) || interval.color;
-            const title = getIntervalTitle?.(interval) || interval.title || '';
+            let title = '';
+            if (getIntervalTooltip) {
+                title = getIntervalTooltip(interval);
+            } else {
+                title = getIntervalTitle?.(interval) || interval.title || '';
+            }
             
             const intervalType: 'schedule' | 'astrocorrection' = interval.isAstrocorrection 
                 ? 'astrocorrection' 
@@ -211,7 +218,7 @@
                     true
                 ),
                 className: getIntervalClassName(interval),
-                title: `${title} ${interval.startTime}-${interval.endTime}`,
+                title: title,
                 data: interval
             };
             

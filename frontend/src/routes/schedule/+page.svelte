@@ -62,6 +62,7 @@
         
         getIntervalColor,
         getIntervalTitle,
+        getIntervalTooltip,
         setContextDate,
 
         saveCurrentProgramToAnalysis,
@@ -226,6 +227,7 @@
             onModeSelect={handleModeSelect}
             getIntervalColor={getIntervalColor}
             getIntervalTitle={getIntervalTitle}
+            getIntervalTooltip={getIntervalTooltip}
             onIntervalClick={handleIntervalClick}
             onIntervalDelete={handleIntervalDelete}
             selectedIntervalId={$selectedIntervalId}

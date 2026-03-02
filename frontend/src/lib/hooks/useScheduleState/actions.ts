@@ -15,6 +15,7 @@ import { checkAllConflicts } from '$lib/utils/interval';
 import { checkIntervalOverlap } from '$lib/utils/interval/conflicts';
 import { IntervalValidationService } from '$lib/utils/intervalValidation';
 import { TimeUtils } from '$lib/utils/time';
+import { TooltipFormatter } from '$lib/utils/tooltipFormatter';
 import { get } from 'svelte/store';
 import { ScheduleApiService } from '../../../features/services/api/scheduleApi.service';
 import { ScheduleConverterService } from '../../../features/services/data/scheduleConverter.service';
@@ -955,6 +956,32 @@ export function createActions(
         return title;
     }
 
+    // Форматирование tooltip для интервала
+    function getIntervalTooltip(interval: TimeInterval): string {
+        const programData = get(createdPrograms).find(p => p.timeInterval.id === interval.id);
+        
+        if (programData) {
+            return TooltipFormatter.formatTooltip(interval, programData.modeData);
+        }
+        
+        let ppiNum: number | undefined;
+    
+        if (interval.id.startsWith('kvd_')) {
+            const kvdId = parseInt(interval.id.replace('kvd_', ''));
+            const assignment = get(ppiAssignments).find(a => 
+                a.recordId === kvdId && a.recordType === 'kvd'
+            );
+            ppiNum = assignment?.ppiNum;
+        }
+        
+        return TooltipFormatter.formatTooltip(
+            interval, 
+            undefined, 
+            get(operatorData), 
+            ppiNum
+        );
+    }
+
     return {
         loadUserData,
         loadBortData,
@@ -969,6 +996,7 @@ export function createActions(
         handleModeFormCancel,
         getIntervalColor,
         getIntervalTitle,
+        getIntervalTooltip,
         saveCurrentProgramToAnalysis,
         openAnalysisModal,
         closeAnalysisModal,
