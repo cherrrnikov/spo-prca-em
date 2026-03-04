@@ -67,7 +67,7 @@
         getIntervalTooltip,
         setContextDate,
 
-        saveCurrentProgramToAnalysis,
+        // saveCurrentProgramToAnalysis,
         openAnalysisModal,
         closeAnalysisModal,
         createAnalysis,
@@ -436,7 +436,7 @@
                     userData={$userData}
                     onOperatorCreate={startOperatorCreation}
                     onReferenceCreate={startReferenceCreation}
-                    onAnalysisClick={saveCurrentProgramToAnalysis}
+                    onAnalysisClick={openAnalysisModal}
                     isAnalysisMode={$isAnalysisMode}
                     isOperatorMode={$creationMode === 'operator'}
                     intervals={$intervals}
@@ -464,7 +464,7 @@
                 userData={$userData}
                 onOperatorCreate={startOperatorCreation}
                 onReferenceCreate={startReferenceCreation}
-                onAnalysisClick={saveCurrentProgramToAnalysis}
+                onAnalysisClick={openAnalysisModal}
                 isAnalysisMode={$isAnalysisMode}
                 isOperatorMode={$creationMode === 'operator'}
                 intervals={$intervals}

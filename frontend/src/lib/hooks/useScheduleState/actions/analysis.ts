@@ -35,42 +35,7 @@ export function createAnalysisActions(
 
     const { syncCurrentProgramWithStore } = validation;
 
-    function saveCurrentProgramToAnalysis() {
-        const currentBortData = get(bortData);
-        const currentIntervals = get(intervals);
-        const currentDate = get(selectedProgramDate);
-        const currentOperator = get(operatorData);
-        const currentPpi = get(ppiAssignments);
-        const currentCreated = get(createdPrograms);
-        const currentShadows = get(shadowIntervals);
-        const currentZasvetki = get(zasvetkaIntervals);
-        const currentVki = get(vkiIntervals);
-        const currentRotations = get(rotationIntervals);
-
-        const programName = `ПРЦА ${TimeUtils.formatDate(currentDate)}`;
-        
-        const programItem: ProgramsListItem = {
-            id: `program_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-            name: programName,
-            date: currentDate,
-            intervals: [...currentIntervals],
-            operatorData: currentOperator ? { ...currentOperator } : null,
-            bortData: currentBortData ? {...currentBortData} : null,
-            ppiAssignments: [...currentPpi],
-            createdPrograms: [...currentCreated],
-            shadowIntervals: [...currentShadows],
-            zasvetkaIntervals: [...currentZasvetki],
-            vkiIntervals: [...currentVki],
-            rotationIntervals: [...currentRotations]
-        };
-        
-        programsList.update(list => [...list, programItem]);
-        activeProgramId.set(programItem.id);
-        isAnalysisMode.set(true);
-        
-        openAnalysisModal(currentDate);
-    }
-
+    // Управление модалкой
     function openAnalysisModal(date?: string) {
         const currentDate = date || get(selectedProgramDate) || get(contextDate);
         analysisModal.set({
@@ -85,83 +50,138 @@ export function createAnalysisActions(
         analysisModal.update(modal => ({ ...modal, isOpen: false }));
     }
 
+    // Создание анализа
     async function createAnalysis(startDate: string, endDate: string) {
         analysisModal.update(modal => ({ ...modal, isLoading: true }));
         
         try {
-            const currentProgram = get(programsList).find(p => p.id === get(activeProgramId));
-            if (!currentProgram) throw new Error("Нет активной ПРЦА");
+            // 1. Сохраняем текущую ПРЦА как исходную
+            const sourceProgram = createSourceProgram();
             
-            console.log("Исходная ПРЦА:", currentProgram.name);
-            console.log("Диапазон дат:", startDate, "→", endDate);
+            // 2. Добавляем исходную ПРЦА в список и входим в режим анализа
+            programsList.update(list => [...list, sourceProgram]);
+            activeProgramId.set(sourceProgram.id);
+            isAnalysisMode.set(true);
             
-            const dates = TimeUtils.generateDateRange(startDate, endDate);
-            console.log("Даты для копирования:", dates);
+            // 3. Генерируем остальные ПРЦА для выбранного диапазона
+            const newPrograms = await generateProgramsForRange(sourceProgram, startDate, endDate);
             
-            const newPrograms: ProgramsListItem[] = [];
-            
-            for (const date of dates) {
-                if (date === currentProgram.date) continue;
-                
-                console.log(`\n--- Обработка даты: ${date} ---`);
-                
-                // Загружаем данные для даты
-                const { operatorDataForDate, bortDataForDate, forecastDataForDate, vkiDataForDate, rotationDataForDate } = 
-                    await loadDataForDate(date);
-                
-                // Конвертируем данные в интервалы
-                const { shadowsForDate, zasvetkiForDate } = convertForecast(forecastDataForDate);
-                const { vkiForDate, rotationsForDate } = convertAstroEvents(vkiDataForDate, rotationDataForDate, date);
-                
-                // Создаём интервалы и createdPrograms для даты
-                const { intervalsForDate, createdProgramsForDate } = await createProgramsForDate(
-                    date,
-                    currentProgram,
-                    operatorDataForDate
-                );
-                
-                // Добавляем астрокоррекции
-                const isFullAstroMode = determineAstroMode(vkiDataForDate, rotationDataForDate, date);
-                const intervalsWithAstro = AstrocorrectionService.mergeAstrocorrection(
-                    intervalsForDate,
-                    date,
-                    isFullAstroMode
-                );
-                
-                // Проверяем конфликты
-                const intervalsWithConflicts = checkAllConflicts(
-                    intervalsWithAstro,
-                    zasvetkiForDate,
-                    shadowsForDate,
-                    vkiForDate,
-                    rotationsForDate
-                );
-                
-                newPrograms.push(createProgramsListItem(
-                    date,
-                    intervalsWithConflicts,
-                    operatorDataForDate,
-                    bortDataForDate,
-                    currentProgram.ppiAssignments,
-                    createdProgramsForDate,
-                    shadowsForDate,
-                    zasvetkiForDate,
-                    vkiForDate,
-                    rotationsForDate
-                ));
-            }
-            
+            // 4. Добавляем все созданные ПРЦА в список
             programsList.update(list => [...list, ...newPrograms]);
-            console.log(`\n=== ИТОГО: создано ${newPrograms.length} ПРЦА для анализа ===`);
+            
             alert(`Создано ${newPrograms.length} ПРЦА для анализа`);
             
         } catch (error) {
             console.error("Ошибка при создании анализа:", error);
+            resetAnalysisState();
         } finally {
             analysisModal.update(modal => ({ ...modal, isLoading: false, isOpen: false }));
         }
     }
 
+    // Создание объекта исходной ПРЦА из текущих сторов
+    function createSourceProgram(): ProgramsListItem {
+        const currentOperatorData = get(operatorData);
+        const currentBortData = get(bortData);
+
+        return {
+            id: `program_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            name: `ПРЦА ${TimeUtils.formatDate(get(selectedProgramDate))}`,
+            date: get(selectedProgramDate),
+            intervals: [...get(intervals)],
+            operatorData: currentOperatorData ? JSON.parse(JSON.stringify(currentOperatorData)) : null,
+            bortData: currentBortData ? JSON.parse(JSON.stringify(currentBortData)) : null,
+            ppiAssignments: [...get(ppiAssignments)],
+            createdPrograms: [...get(createdPrograms)],
+            shadowIntervals: [...get(shadowIntervals)],
+            zasvetkaIntervals: [...get(zasvetkaIntervals)],
+            vkiIntervals: [...get(vkiIntervals)],
+            rotationIntervals: [...get(rotationIntervals)]
+        };
+    }
+
+    // Генерация ПРЦА для всего диапазона дат
+    async function generateProgramsForRange(
+        sourceProgram: ProgramsListItem,
+        startDate: string,
+        endDate: string
+    ): Promise<ProgramsListItem[]> {
+        const dates = TimeUtils.generateDateRange(startDate, endDate);
+        const newPrograms: ProgramsListItem[] = [];
+        
+        for (const date of dates) {
+            if (date === sourceProgram.date) continue;
+            
+            console.log(`\n--- Обработка даты: ${date} ---`);
+            
+            const program = await generateProgramForDate(date, sourceProgram);
+            if (program) newPrograms.push(program);
+        }
+        
+        return newPrograms;
+    }
+
+    // Генерация одной ПРЦА для конкретной даты
+    async function generateProgramForDate(
+        date: string,
+        sourceProgram: ProgramsListItem
+    ): Promise<ProgramsListItem | null> {
+        // Загружаем данные для даты
+        const { operatorDataForDate, bortDataForDate, forecastDataForDate, vkiDataForDate, rotationDataForDate } = 
+            await loadDataForDate(date);
+        
+        // Конвертируем прогнозные данные
+        const { shadowsForDate, zasvetkiForDate } = convertForecast(forecastDataForDate);
+        
+        // Конвертируем астрособытия
+        const { vkiForDate, rotationsForDate } = convertAstroEvents(vkiDataForDate, rotationDataForDate, date);
+        
+        // Создаём интервалы и createdPrograms для даты
+        const { intervalsForDate, createdProgramsForDate } = await createProgramsForDate(
+            date,
+            sourceProgram,
+            operatorDataForDate
+        );
+        
+        // Добавляем астрокоррекции
+        const isFullAstroMode = determineAstroMode(vkiDataForDate, rotationDataForDate, date);
+        const intervalsWithAstro = AstrocorrectionService.mergeAstrocorrection(
+            intervalsForDate,
+            date,
+            isFullAstroMode
+        );
+        
+        // Проверяем конфликты
+        const intervalsWithConflicts = checkAllConflicts(
+            intervalsWithAstro,
+            zasvetkiForDate,
+            shadowsForDate,
+            vkiForDate,
+            rotationsForDate
+        );
+        
+        return createProgramsListItem(
+            date,
+            intervalsWithConflicts,
+            operatorDataForDate,
+            bortDataForDate,
+            sourceProgram.ppiAssignments,
+            createdProgramsForDate,
+            shadowsForDate,
+            zasvetkiForDate,
+            vkiForDate,
+            rotationsForDate
+        );
+    }
+
+    // Сброс состояния при ошибке
+    function resetAnalysisState() {
+        isAnalysisMode.set(false);
+        activeProgramId.set(null);
+        programsList.set([]);
+    }
+
+    // Управление ПРЦА в анализе
     function selectProgram(programId: string) {
         syncCurrentProgramWithStore();
 
@@ -203,7 +223,7 @@ export function createAnalysisActions(
         });
     }
 
-    // Вспомогательные функции для createAnalysis
+    // Вспомогательные функции
     async function loadDataForDate(date: string) {
         const [operator, bort, forecast, vki, rotation] = await Promise.allSettled([
             ScheduleApiService.loadOperatorData(date).catch(() => null),
@@ -251,6 +271,7 @@ export function createAnalysisActions(
         return false;
     }
 
+    // Основная логика создания интервалов и createdPrograms для одной даты
     async function createProgramsForDate(
         date: string,
         currentProgram: ProgramsListItem,
@@ -273,12 +294,12 @@ export function createAnalysisActions(
                 operatorDataForDate,
                 currentProgram.ppiAssignments,
                 WORK_MODES,
-                1 // дефолтный ППИ на случай, если в ppiAssignments ничего нет
+                1
             );
             intervalsForDate = [...intervalsFromId06];
             const existingIds = new Set(intervalsFromId06.map(i => i.id));
             
-            // 2. Добавляем типы из исходной ПРЦА
+            // Добавляем типы из исходной ПРЦА, которых нет в ИД06
             currentProgram.intervals.forEach(interval => {
                 if (interval.isAstrocorrection) return;
                 
@@ -366,14 +387,13 @@ export function createAnalysisActions(
                 }
             });
             
-            // 3. Создаём createdPrograms для интервалов из ИД06
+            // Создаём createdPrograms для интервалов из ИД06
             const mainId = operatorDataForDate.main?.id || 0;
             const numKa = operatorDataForDate.main?.n_ka || 1;
             
             // КВД
             if (operatorDataForDate.kvd_list) {
                 operatorDataForDate.kvd_list.forEach((kvd: any) => {
-                    // Находим соответствующий интервал, созданный на шаге 1
                     const timeInterval = intervalsForDate.find(i => 
                         i.id.includes(`kvd_${kvd.id}`)
                     );
@@ -385,7 +405,7 @@ export function createAnalysisActions(
                             dateOn: kvd.dn,
                             dateOff: kvd.dk,
                             kodMode: 7,
-                            numPpi: timeInterval.ppi || 1, // Берем ППИ из интервала
+                            numPpi: timeInterval.ppi || 1,
                             dlit: TimeUtils.calculateDuration(kvd.dn, kvd.dk),
                             kvdData: {
                                 id: kvd.id,
@@ -582,7 +602,6 @@ export function createAnalysisActions(
     }
 
     return {
-        saveCurrentProgramToAnalysis,
         openAnalysisModal,
         closeAnalysisModal,
         createAnalysis,

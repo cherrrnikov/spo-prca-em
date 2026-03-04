@@ -92,7 +92,6 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: #f8fafc;
         margin-bottom: 0.5rem;
     }
     
