@@ -209,12 +209,38 @@ export function createAnalysisActions(
         programsList.update(list => {
             const newList = list.filter(p => p.id !== programId);
             
+            // СЛУЧАЙ 1: Если после удаления не осталось ПРЦА
+            if (newList.length === 0) {
+                resetToInitialState();
+                return [];
+            }
+            
+            // СЛУЧАЙ 2: Если после удаления осталась ровно одна ПРЦА
+            if (newList.length === 1) {
+                const lastProgram = newList[0];
+                
+                // Делаем эту ПРЦА активной и выходим из анализа
+                intervals.set(lastProgram.intervals);
+                operatorData.set(lastProgram.operatorData);
+                ppiAssignments.set(lastProgram.ppiAssignments);
+                createdPrograms.set(lastProgram.createdPrograms);
+                shadowIntervals.set(lastProgram.shadowIntervals);
+                zasvetkaIntervals.set(lastProgram.zasvetkaIntervals);
+                vkiIntervals.set(lastProgram.vkiIntervals);
+                rotationIntervals.set(lastProgram.rotationIntervals);
+                contextDate.set(lastProgram.date);
+                selectedProgramDate.set(lastProgram.date);
+                
+                isAnalysisMode.set(false);
+                activeProgramId.set(null);
+                
+                return [];
+            }
+            
+            // СЛУЧАЙ 3: Если удаляем активную ПРЦА и осталось несколько
             if (get(activeProgramId) === programId) {
-                if (newList.length > 0) {
-                    selectProgram(newList[0].id);
-                } else {
-                    resetToInitialState();
-                }
+                // Переключаемся на первую в списке
+                selectProgram(newList[0].id);
             }
             
             return newList;

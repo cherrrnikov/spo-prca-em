@@ -28,8 +28,8 @@
             return false;
         }
         
-        if (new Date(startDate) > new Date(endDate)) {
-            alert('Дата начала не может быть позже даты окончания');
+        if (new Date(startDate) >= new Date(endDate)) {
+            alert('Дата окончания должна быть позже даты начала');
             return false;
         }
         
