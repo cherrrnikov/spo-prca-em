@@ -10,11 +10,12 @@ import type {
 export class ScheduleApiService {
     private static BASE_URL = '/api';
 
-    static async loadOperatorData(date: string): Promise<OperatorData> {
+    static async loadOperatorData(date: string): Promise<OperatorData | null> {
         const response = await fetch(`${this.BASE_URL}/schedule/proxy?date=${date}`);
         if (!response.ok) {
             if (response.status === 404) {
-                throw new Error("Нет данных для выбранной даты");
+                console.log(`Нет данных ИД06 для даты ${date}`);
+                return null; // возвращаем null вместо ошибки
             }
             throw new Error(`Ошибка сервера: ${response.status}`);
         }

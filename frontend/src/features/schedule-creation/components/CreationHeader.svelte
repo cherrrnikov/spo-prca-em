@@ -63,7 +63,38 @@
             operatorData = await ScheduleCreationService.loadOperatorData(selectedDate);
             console.log('ИД06:', operatorData);
 
-            await processAllRecords();
+            if (operatorData) {
+                // Есть данные - запрашиваем ППИ
+                await processAllRecords();
+            } else {
+                // Нет данных - сразу создаём пустую ПРЦА
+                console.log('Нет данных ИД06, создаём пустую ПРЦА');
+                
+                // Создаём пустой объект OperatorData
+                const emptyOperatorData: OperatorData = {
+                    main: {
+                        id: 0,
+                        n_ka: 1,
+                        d_np: selectedDate,
+                        data_zap: new Date().toISOString(),
+                        rnf: 0,
+                        n_sp: 0,
+                        dsf: '',
+                        k_zajv: 5,
+                        n_form_id: 0,
+                        used: 0
+                    },
+                    kvd_list: [],
+                    tnp_list: [],
+                    ts_list: [],
+                    ona_list: [],
+                    total_intervals: 0
+                };
+                
+                // Передаём пустые данные
+                onDataProcessed?.(emptyOperatorData, []);
+                resetFormState();
+            }
         } catch (error) {
             console.error('Ошибка при загрузке данных:', error);
             alert('Ошибка при загрузке данных: ' + (error as Error).message);
