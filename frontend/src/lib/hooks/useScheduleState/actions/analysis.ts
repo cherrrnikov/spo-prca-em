@@ -30,7 +30,12 @@ export function createAnalysisActions(
         isAnalysisMode,
         analysisModal,
         selectedProgramDate,
-        contextDate
+        contextDate,
+        creationMode,
+        operatorDataLoaded,
+        selectedMode,
+        editingInterval,
+        selectedIntervalId
     } = stores;
 
     const { syncCurrentProgramWithStore } = validation;
@@ -200,12 +205,6 @@ export function createAnalysisActions(
         activeProgramId.set(programId);
     }
 
-    function exitAnalysisMode() {
-        isAnalysisMode.set(false);
-        activeProgramId.set(null);
-        programsList.set([]);
-    }
-
     function deleteProgramFromAnalysis(programId: string) {
         programsList.update(list => {
             const newList = list.filter(p => p.id !== programId);
@@ -214,13 +213,46 @@ export function createAnalysisActions(
                 if (newList.length > 0) {
                     selectProgram(newList[0].id);
                 } else {
-                    isAnalysisMode.set(false);
-                    activeProgramId.set(null);
+                    resetToInitialState();
                 }
             }
             
             return newList;
         });
+    }
+
+    function exitAnalysisMode() {
+        resetToInitialState();
+    }
+
+    function resetToInitialState() {
+        // Сбрасываем режим анализа
+        isAnalysisMode.set(false);
+        activeProgramId.set(null);
+        programsList.set([]);
+        
+        // Очищаем все данные ПРЦА
+        intervals.set([]);
+        operatorData.set(null);
+        ppiAssignments.set([]);
+        createdPrograms.set([]);
+        shadowIntervals.set([]);
+        zasvetkaIntervals.set([]);
+        vkiIntervals.set([]);
+        rotationIntervals.set([]);
+        
+        // Сбрасываем режим создания
+        creationMode.set(null);
+        operatorDataLoaded.set(false);
+        
+        // Сбрасываем редактирование
+        selectedMode.set(null);
+        editingInterval.set(null);
+        selectedIntervalId.set(null);
+        
+        // Сбрасываем дату (чтобы заголовок исчез)
+        selectedProgramDate.set('');
+        contextDate.set('');
     }
 
     // Вспомогательные функции

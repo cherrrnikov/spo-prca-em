@@ -47,13 +47,12 @@
         <div class="modal-container">
             <div class="modal-header">
                 <h2>Создание анализа</h2>
-                <button class="close-button" on:click={onClose}>×</button>
+                <!-- <button class="close-button" on:click={onClose}>×</button> -->
             </div>
             
             <div class="modal-content">
                 <p class="description">
-                    Выберите диапазон дат для копирования текущей ПРЦА.
-                    Для каждой даты будут загружены актуальные данные (тени, засветки, ВКИ).
+                    Выберите диапазон дат для создания анализа на основе текущей ПРЦА.
                 </p>
                 
                 <div class="date-range">
@@ -126,7 +125,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 1rem 1.5rem;
-        background: #667eea;
+        background: #4299e1;
         color: white;
     }
     
