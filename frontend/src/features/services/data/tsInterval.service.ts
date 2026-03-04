@@ -1,18 +1,13 @@
-import type { Id06TsDto, PpiAssignment, TimeInterval, TsMsuConfig } from '$lib/types';
+import type { Id06TsDto, TimeInterval, TsMsuConfig } from '$lib/types';
 import { CityService } from '../utils/cities.service';
 
 export class TsIntervalService {
     static convertTsToSubIntervals(
         tsRecord: Id06TsDto,
-        ppiAssignments: PpiAssignment[]
+        ppiNum: number 
     ): TimeInterval[] {
         const subIntervals: TimeInterval[] = [];
         
-        const assignment = ppiAssignments.find(
-            a => a.recordId === tsRecord.id && a.recordType === 'ts'
-        );
-        
-        const ppiNum = assignment?.ppiNum || 1;
         const city = CityService.getCityByPpi(ppiNum);
         const color = CityService.getColorByPpi(ppiNum);
         

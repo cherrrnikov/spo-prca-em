@@ -3,7 +3,6 @@ import type {
     CreateProgramRequest,
     ForecastData,
     Id06OnaDto,
-    Id06TsDto,
     Kr01DataResponse,
     OperatorData,
     PpiAssignment,
@@ -68,53 +67,60 @@ export class ScheduleCreationService {
         );
     }
 
+    // Вспомогательная функция для получения номера ППИ
+    private static getPpiNumber(
+        recordId: number, 
+        recordType: string, 
+        ppiAssignments: PpiAssignment[],
+        defaultPpi?: number
+    ): number {
+        // Если есть конкретное назначение - используем его
+        const assignment = ppiAssignments.find(a => 
+            a.recordId === recordId && a.recordType === recordType
+        );
+        if (assignment) return assignment.ppiNum;
+        
+        // Если есть дефолтное значение - используем его
+        if (defaultPpi !== undefined) return defaultPpi;
+        
+        // Если ничего нет - возвращаем 1
+        return 1;
+    }
+
     static convertToTimeIntervals(
         operatorData: OperatorData,
         ppiAssignments: PpiAssignment[],
-        workModes: WorkMode[]
+        workModes: WorkMode[],
+        defaultPpi?: number 
     ): TimeInterval[] {
         const intervals: TimeInterval[] = [];
         
         if (operatorData.kvd_list?.length) {
             operatorData.kvd_list.forEach(kvd => {
-                const assignment = ppiAssignments.find(a => 
-                    a.recordId === kvd.id && a.recordType === 'kvd'
-                );
-                
-                if (assignment) {
-                    intervals.push(this.createKvdInterval(kvd, assignment, operatorData.main?.k_zajv));
-                }
+                const ppiNum = this.getPpiNumber(kvd.id, 'kvd', ppiAssignments, defaultPpi);
+                intervals.push(this.createKvdInterval(kvd, ppiNum, operatorData.main?.k_zajv));
             });
         }
         
         if (operatorData.tnp_list?.length) {
             operatorData.tnp_list.forEach(tnp => {
-                const assignment = ppiAssignments.find(a => 
-                    a.recordId === tnp.id && a.recordType === 'tnp'
-                );
-                
-                if (assignment) {
-                    intervals.push(this.createTnpInterval(tnp, assignment, operatorData.main?.k_zajv));
-                }
+                const ppiNum = this.getPpiNumber(tnp.id, 'tnp', ppiAssignments, defaultPpi);
+                intervals.push(this.createTnpInterval(tnp, ppiNum, operatorData.main?.k_zajv));
             });
         }
         
         if (operatorData.ts_list?.length) {
             operatorData.ts_list.forEach(ts => {
-                const tsSubIntervals = TsIntervalService.convertTsToSubIntervals(ts, ppiAssignments);
+                const ppiNum = this.getPpiNumber(ts.id, 'ts', ppiAssignments, defaultPpi);
+                const tsSubIntervals = TsIntervalService.convertTsToSubIntervals(ts, ppiNum);
                 intervals.push(...tsSubIntervals);
             });
         }
 
         if (operatorData.ona_list?.length) {
             operatorData.ona_list.forEach(ona => {
-                const assignment = ppiAssignments.find(a => 
-                    a.recordId === ona.id && a.recordType === 'ona'
-                );
-                
-                if (assignment) {
-                    intervals.push(this.createOnaInterval(ona, assignment, operatorData.main?.k_zajv));
-                }
+                const ppiNum = this.getPpiNumber(ona.id, 'ona', ppiAssignments, defaultPpi);
+                intervals.push(this.createOnaInterval(ona, ppiNum, operatorData.main?.k_zajv));
             });
         }
         
@@ -149,13 +155,6 @@ export class ScheduleCreationService {
         return TimeUtils.formatTimeOnly(dateStr);
     }
 
-    static convertTsToSubIntervals(
-        tsRecord: Id06TsDto,
-        ppiAssignments: PpiAssignment[]
-    ): TimeInterval[] {
-        return TsIntervalService.convertTsToSubIntervals(tsRecord, ppiAssignments);
-    }
-
     static getDefaultMsuConfig() {
         return ScheduleConverterService.getDefaultMsuConfig();
     }
@@ -188,20 +187,19 @@ export class ScheduleCreationService {
         return ScheduleConverterService.convertRotationToIntervals(rotationData, targetDate);
     }
 
-    private static createKvdInterval(kvd: any, assignment: PpiAssignment, customerCode?: number): TimeInterval {
+    private static createKvdInterval(kvd: any, ppiNum: number, customerCode?: number): TimeInterval {
         const date = kvd.dn.split('T')[0];
-
         return {
             id: `kvd_${kvd.id}`,
             mode: 7,
             date: date,
             startTime: TimeUtils.extractTimeFromTimestamp(kvd.dn), 
             endTime: TimeUtils.extractTimeFromTimestamp(kvd.dk),
-            city: this.getCityByPpi(assignment.ppiNum),
-            color: this.getColorByPpi(assignment.ppiNum),
-            title: `Калибровка ВД (ППИ ${assignment.ppiNum})`,
+            city: this.getCityByPpi(ppiNum),
+            color: this.getColorByPpi(ppiNum),
+            title: `Калибровка ВД (ППИ ${ppiNum})`,
             description: `Калибровка ВД, ID: ${kvd.id}`,
-            ppi: assignment.ppiNum,
+            ppi: ppiNum,
             dlit: this.calculateDuration(kvd.dn, kvd.dk),
             customerCode: customerCode || 5,
             hasConflict: false,
@@ -213,20 +211,19 @@ export class ScheduleCreationService {
         };
     }
 
-    private static createTnpInterval(tnp: any, assignment: PpiAssignment, customerCode?: number): TimeInterval {
+    private static createTnpInterval(tnp: any, ppiNum: number, customerCode?: number): TimeInterval {
         const date = tnp.dn.split('T')[0];
-
         return {
             id: `tnp_${tnp.id}`,
             mode: 4,
             date: date,
             startTime: TimeUtils.extractTimeFromTimestamp(tnp.dn), 
             endTime: TimeUtils.extractTimeFromTimestamp(tnp.dk), 
-            city: this.getCityByPpi(assignment.ppiNum),
-            color: this.getColorByPpi(assignment.ppiNum),
-            title: `ТНП (ППИ ${assignment.ppiNum})`,
+            city: this.getCityByPpi(ppiNum),
+            color: this.getColorByPpi(ppiNum),
+            title: `ТНП (ППИ ${ppiNum})`,
             description: `Режим ТНП, длительность: ${tnp.dlit} сек`,
-            ppi: assignment.ppiNum,
+            ppi: ppiNum,
             dlit: tnp.dlit,
             customerCode: customerCode || 5,
             hasConflict: false,
@@ -240,22 +237,21 @@ export class ScheduleCreationService {
 
     private static createOnaInterval(
         ona: Id06OnaDto,
-        assignment: PpiAssignment,
+        ppiNum: number,
         customerCode?: number
     ): TimeInterval {
         const date = ona.dn.split('T')[0];
-
         return {
             id: `ona_${ona.id}`,
             mode: 6,  
             date: date,
             startTime: TimeUtils.extractTimeFromTimestamp(ona.dn),
             endTime: TimeUtils.extractTimeFromTimestamp(ona.dk),
-            city: this.getCityByPpi(assignment.ppiNum),
-            color: this.getColorByPpi(assignment.ppiNum),
+            city: this.getCityByPpi(ppiNum),
+            color: this.getColorByPpi(ppiNum),
             title: `Юстировка ОНА (Антенна ${ona.n_ona})`,
             description: `Юстировка ОНА, длительность: ${ona.dlit} сек`,
-            ppi: assignment.ppiNum,
+            ppi: ppiNum,
             dlit: ona.dlit,
             nOna: ona.n_ona,  
             customerCode: customerCode || 5,

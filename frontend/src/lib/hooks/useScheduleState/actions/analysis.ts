@@ -272,13 +272,13 @@ export function createAnalysisActions(
             const intervalsFromId06 = ScheduleCreationService.convertToTimeIntervals(
                 operatorDataForDate,
                 currentProgram.ppiAssignments,
-                WORK_MODES
+                WORK_MODES,
+                1 // дефолтный ППИ на случай, если в ppiAssignments ничего нет
             );
-            
             intervalsForDate = [...intervalsFromId06];
             const existingIds = new Set(intervalsFromId06.map(i => i.id));
             
-            // Добавляем недостающие типы из исходной ПРЦА
+            // 2. Добавляем типы из исходной ПРЦА
             currentProgram.intervals.forEach(interval => {
                 if (interval.isAstrocorrection) return;
                 
@@ -296,10 +296,10 @@ export function createAnalysisActions(
                 } else if (interval.mode === 6 && !hasOna) {
                     shouldCopy = true;
                     typeName = 'ОНА';
-                } else if (interval.mode === 1 && !hasTs) { // Обычные съемки (mode 1)
+                } else if (interval.mode === 1 && !hasTs) {
                     shouldCopy = true;
                     typeName = 'Съемка';
-                } else if (interval.mode === 2 && !hasTnp) { // ОМИ (mode 2)
+                } else if (interval.mode === 2 && !hasTnp) {
                     shouldCopy = true;
                     typeName = 'ОМИ';
                 }
@@ -320,7 +320,6 @@ export function createAnalysisActions(
                         );
                         
                         if (originalProgram) {
-                            // 👇 ВАЖНО: обновляем даты в modeData для всех типов
                             const newModeData = { ...originalProgram.modeData };
                             
                             // Обновляем основные поля дат
@@ -333,7 +332,7 @@ export function createAnalysisActions(
                                 date
                             );
                             
-                            // Обновляем даты в специализированных полях если они есть
+                            // Обновляем даты в специализированных полях
                             if (newModeData.onaData) {
                                 newModeData.onaData.dN = newModeData.onaData.dN.replace(
                                     originalProgram.timeInterval.date, 
@@ -367,25 +366,26 @@ export function createAnalysisActions(
                 }
             });
             
-            // Создаём createdPrograms из ИД06
+            // 3. Создаём createdPrograms для интервалов из ИД06
             const mainId = operatorDataForDate.main?.id || 0;
             const numKa = operatorDataForDate.main?.n_ka || 1;
             
             // КВД
             if (operatorDataForDate.kvd_list) {
                 operatorDataForDate.kvd_list.forEach((kvd: any) => {
-                    const assignment = currentProgram.ppiAssignments.find(a => 
-                        a.recordId === kvd.id && a.recordType === 'kvd'
+                    // Находим соответствующий интервал, созданный на шаге 1
+                    const timeInterval = intervalsForDate.find(i => 
+                        i.id.includes(`kvd_${kvd.id}`)
                     );
                     
-                    if (assignment) {
+                    if (timeInterval) {
                         const modeData: ProgramModeData = {
                             numRp: 0,
                             numKa: numKa,
                             dateOn: kvd.dn,
                             dateOff: kvd.dk,
                             kodMode: 7,
-                            numPpi: assignment.ppiNum,
+                            numPpi: timeInterval.ppi || 1, // Берем ППИ из интервала
                             dlit: TimeUtils.calculateDuration(kvd.dn, kvd.dk),
                             kvdData: {
                                 id: kvd.id,
@@ -397,17 +397,7 @@ export function createAnalysisActions(
                         };
                         
                         const tempId = `kvd_${kvd.id}_${date.replace(/-/g, '')}`;
-                        const timeInterval = intervalsForDate.find(i => 
-                            i.id.includes(`kvd_${kvd.id}`)
-                        );
-                        
-                        if (timeInterval) {
-                            createdProgramsForDate.push({
-                                tempId,
-                                modeData,
-                                timeInterval
-                            });
-                        }
+                        createdProgramsForDate.push({ tempId, modeData, timeInterval });
                     }
                 });
             }
@@ -415,18 +405,18 @@ export function createAnalysisActions(
             // ТНП
             if (operatorDataForDate.tnp_list) {
                 operatorDataForDate.tnp_list.forEach((tnp: any) => {
-                    const assignment = currentProgram.ppiAssignments.find(a => 
-                        a.recordType === 'ts'
+                    const timeInterval = intervalsForDate.find(i => 
+                        i.id.includes(`tnp_${tnp.id}`)
                     );
                     
-                    if (assignment) {
+                    if (timeInterval) {
                         const modeData: ProgramModeData = {
                             numRp: 0,
                             numKa: numKa,
                             dateOn: tnp.dn,
                             dateOff: tnp.dk,
                             kodMode: 4,
-                            numPpi: assignment.ppiNum,
+                            numPpi: timeInterval.ppi || 1,
                             dlit: tnp.dlit,
                             tnpData: {
                                 id: tnp.id,
@@ -438,100 +428,82 @@ export function createAnalysisActions(
                         };
                         
                         const tempId = `tnp_${tnp.id}_${date.replace(/-/g, '')}`;
-                        const timeInterval = intervalsForDate.find(i => 
-                            i.id.includes(`tnp_${tnp.id}`)
-                        );
-                        
-                        if (timeInterval) {
-                            createdProgramsForDate.push({
-                                tempId,
-                                modeData,
-                                timeInterval
-                            });
-                        }
+                        createdProgramsForDate.push({ tempId, modeData, timeInterval });
                     }
                 });
             }
             
             // ТС
             if (operatorDataForDate.ts_list) {
-                const tsAssignment = currentProgram.ppiAssignments.find(a => a.recordType === 'ts');
-
                 for (const ts of operatorDataForDate.ts_list) {
-                    if (tsAssignment) {
-                        const tsSubIntervals = intervalsForDate.filter(i => 
-                            i.id.startsWith(`ts_${ts.id}`)
-                        );
-                        
-                        tsSubIntervals.forEach((subInterval, idx) => {
-                            const modeData: ProgramModeData = {
-                                numRp: 0,
-                                numKa: numKa,
-                                dateOn: `${date}T${subInterval.startTime}`,
-                                dateOff: `${date}T${subInterval.endTime}`,
-                                kodMode: 8,
-                                numPpi: tsAssignment.ppiNum,
+                    const tsSubIntervals = intervalsForDate.filter(i => 
+                        i.id.startsWith(`ts_${ts.id}`)
+                    );
+                    
+                    tsSubIntervals.forEach((subInterval, idx) => {
+                        const modeData: ProgramModeData = {
+                            numRp: 0,
+                            numKa: numKa,
+                            dateOn: `${date}T${subInterval.startTime}`,
+                            dateOff: `${date}T${subInterval.endTime}`,
+                            kodMode: 8,
+                            numPpi: subInterval.ppi || 1,
+                            dlit: subInterval.dlit || 420,
+                            tsData: {
+                                id: ts.id,
+                                idMain: mainId,
+                                tip: ts.tip,
+                                reg: ts.reg,
                                 dlit: subInterval.dlit || 420,
-                                tsData: {
-                                    id: ts.id,
-                                    idMain: mainId,
-                                    tip: ts.tip,
-                                    reg: ts.reg,
-                                    dlit: subInterval.dlit || 420,
-                                    prMsu1: ts.pr_msu1,
-                                    vd1Msu1: ts.pr_vd1_1,
-                                    vd2Msu1: ts.pr_vd2_1,
-                                    vd3Msu1: ts.pr_vd3_1,
-                                    ik4Msu1: ts.pr_ik4_1,
-                                    ik5Msu1: ts.pr_ik5_1,
-                                    ik6Msu1: ts.pr_ik6_1,
-                                    ik7Msu1: ts.pr_ik7_1,
-                                    ik8Msu1: ts.pr_ik8_1,
-                                    ik9Msu1: ts.pr_ik9_1,
-                                    ik10Msu1: ts.pr_ik10_1,
-                                    prMsu2: ts.pr_msu2,
-                                    vd1Msu2: ts.pr_vd1_2,
-                                    vd2Msu2: ts.pr_vd2_2,
-                                    vd3Msu2: ts.pr_vd3_2,
-                                    ik4Msu2: ts.pr_ik4_2,
-                                    ik5Msu2: ts.pr_ik5_2,
-                                    ik6Msu2: ts.pr_ik6_2,
-                                    ik7Msu2: ts.pr_ik7_2,
-                                    ik8Msu2: ts.pr_ik8_2,
-                                    ik9Msu2: ts.pr_ik9_2,
-                                    ik10Msu2: ts.pr_ik10_2,
-                                    prBssd: 0,
-                                    prZg: 0,
-                                    prOtklZgBssd: ts.pr_otkl_zg
-                                }
-                            };
-                            
-                            const tempId = `ts_${ts.id}_${idx}_${date.replace(/-/g, '')}`;
-                            createdProgramsForDate.push({
-                                tempId,
-                                modeData,
-                                timeInterval: subInterval
-                            });
-                        });
-                    } 
+                                prMsu1: ts.pr_msu1,
+                                vd1Msu1: ts.pr_vd1_1,
+                                vd2Msu1: ts.pr_vd2_1,
+                                vd3Msu1: ts.pr_vd3_1,
+                                ik4Msu1: ts.pr_ik4_1,
+                                ik5Msu1: ts.pr_ik5_1,
+                                ik6Msu1: ts.pr_ik6_1,
+                                ik7Msu1: ts.pr_ik7_1,
+                                ik8Msu1: ts.pr_ik8_1,
+                                ik9Msu1: ts.pr_ik9_1,
+                                ik10Msu1: ts.pr_ik10_1,
+                                prMsu2: ts.pr_msu2,
+                                vd1Msu2: ts.pr_vd1_2,
+                                vd2Msu2: ts.pr_vd2_2,
+                                vd3Msu2: ts.pr_vd3_2,
+                                ik4Msu2: ts.pr_ik4_2,
+                                ik5Msu2: ts.pr_ik5_2,
+                                ik6Msu2: ts.pr_ik6_2,
+                                ik7Msu2: ts.pr_ik7_2,
+                                ik8Msu2: ts.pr_ik8_2,
+                                ik9Msu2: ts.pr_ik9_2,
+                                ik10Msu2: ts.pr_ik10_2,
+                                prBssd: 0,
+                                prZg: 0,
+                                prOtklZgBssd: ts.pr_otkl_zg
+                            }
+                        };
+                        
+                        const tempId = `ts_${ts.id}_${idx}_${date.replace(/-/g, '')}`;
+                        createdProgramsForDate.push({ tempId, modeData, timeInterval: subInterval });
+                    });
                 }
             }
             
             // ОНА
             if (operatorDataForDate.ona_list) {
                 operatorDataForDate.ona_list.forEach((ona: any) => {
-                    const assignment = currentProgram.ppiAssignments.find(a => 
-                        a.recordId === ona.id && a.recordType === 'ona'
+                    const timeInterval = intervalsForDate.find(i => 
+                        i.id.includes(`ona_${ona.id}`)
                     );
                     
-                    if (assignment) {
+                    if (timeInterval) {
                         const modeData: ProgramModeData = {
                             numRp: 0,
                             numKa: numKa,
                             dateOn: ona.dn,
                             dateOff: ona.dk,
                             kodMode: 6,
-                            numPpi: assignment.ppiNum,
+                            numPpi: timeInterval.ppi || 1,
                             dlit: ona.dlit,
                             onaData: {
                                 id: ona.id,
@@ -540,22 +512,12 @@ export function createAnalysisActions(
                                 dN: ona.dn,
                                 dK: ona.dk,
                                 nOna: ona.n_ona,
-                                nPpi: assignment.ppiNum
+                                nPpi: timeInterval.ppi || 1
                             }
                         };
                         
                         const tempId = `ona_${ona.id}_${date.replace(/-/g, '')}`;
-                        const timeInterval = intervalsForDate.find(i => 
-                            i.id.includes(`ona_${ona.id}`)
-                        );
-                        
-                        if (timeInterval) {
-                            createdProgramsForDate.push({
-                                tempId,
-                                modeData,
-                                timeInterval
-                            });
-                        }
+                        createdProgramsForDate.push({ tempId, modeData, timeInterval });
                     }
                 });
             }
