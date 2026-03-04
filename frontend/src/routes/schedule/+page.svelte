@@ -88,6 +88,34 @@
 
     // Создание ПРЦА
     function startOperatorCreation() {
+        // Проверяем, есть ли уже загруженные данные
+        if ($operatorDataLoaded && $intervals.length > 0) {
+            const confirm = window.confirm(
+                'Текущая ПРЦА не будет сохранена. Продолжить?'
+            );
+            if (!confirm) return;
+            
+            intervals.set([]);
+            operatorData.set(null);
+            ppiAssignments.set([]);
+            createdPrograms.set([]);
+            shadowIntervals.set([]);
+            zasvetkaIntervals.set([]);
+            vkiIntervals.set([]);
+            rotationIntervals.set([]);
+            
+            operatorDataLoaded.set(false);
+            selectedMode.set(null);
+            editingInterval.set(null);
+            selectedIntervalId.set(null);
+            selectedProgramDate.set(''); 
+        }
+        
+        // Если мы в режиме анализа - выходим из него
+        if ($isAnalysisMode) {
+            exitAnalysisMode();
+        }
+        
         creationMode.set('operator');
     }
     
@@ -144,7 +172,7 @@
                 workModes
             );
             
-            // 👇 СОЗДАЁМ createdPrograms ДЛЯ ВСЕХ ИНТЕРВАЛОВ ИЗ ИД06
+            // СОЗДАЁМ createdPrograms ДЛЯ ВСЕХ ИНТЕРВАЛОВ ИЗ ИД06
             const newCreatedPrograms = createProgramsFromOperatorData(
                 newOperatorData,
                 newPpiAssignments,
@@ -169,7 +197,7 @@
             );
 
             intervals.set(intervalsWithConflicts);
-            createdPrograms.set(newCreatedPrograms); // 👈 СОХРАНЯЕМ
+            createdPrograms.set(newCreatedPrograms); 
             isEditing.set(false);
         }
     }
