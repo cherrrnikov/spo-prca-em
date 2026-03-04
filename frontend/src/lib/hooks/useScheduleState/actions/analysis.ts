@@ -233,7 +233,7 @@ export function createAnalysisActions(
                 
                 isAnalysisMode.set(false);
                 activeProgramId.set(null);
-                
+
                 return [];
             }
             

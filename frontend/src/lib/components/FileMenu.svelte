@@ -265,7 +265,7 @@
         <button onclick={handleExport} class="menu-item">
           Отчет
         </button>
-        {#if isOperatorMode && operatorData && intervals && intervals.length > 0}
+        {#if isOperatorMode && intervals && intervals.length > 0 && !isAnalysisMode}
           <button onclick={handleAnalysis} class="menu-item analysis">
             Анализ
           </button>
