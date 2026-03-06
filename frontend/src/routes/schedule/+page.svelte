@@ -247,6 +247,13 @@
                     
                     if (timeInterval) {
                         timeInterval.customerCode = 1;
+
+                        timeInterval.kvdConfig = {
+                            prMsu: kvd.pr_msu,
+                            prBssd: kvd.pr_bssd,
+                            prZg: kvd.pr_zg
+                        };
+                        
                         programs.push({
                             tempId: `kvd_${kvd.id}`,
                             modeData,

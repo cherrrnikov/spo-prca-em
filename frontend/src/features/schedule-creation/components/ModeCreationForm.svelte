@@ -279,7 +279,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label>БССД:</label>
+                        <label>Признак вкл комплекта БССД:</label>
                         <div class="radio-group">
                             <label class="radio-label">
                                 <input 
@@ -289,7 +289,7 @@
                                     checked={localFormData.kvdConfig.prBssd === 0}
                                     on:change={() => localFormData.kvdConfig.prBssd = 0}
                                 />
-                                <span>БССД1</span>
+                                <span>0 - БССД1</span>
                             </label>
                             <label class="radio-label">
                                 <input 
@@ -299,17 +299,18 @@
                                     checked={localFormData.kvdConfig.prBssd === 1}
                                     on:change={() => localFormData.kvdConfig.prBssd = 1}
                                 />
-                                <span>БССД2</span>
+                                <span>1 - БССД2</span>
                             </label>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label>ЗГ:</label>
+                        <label>Признак включения ЗГ:</label>
                         <select bind:value={localFormData.kvdConfig.prZg}>
-                            {#each zgOptions as zg}
-                                <option value={zg.value}>{zg.label}</option>
-                            {/each}
+                            <option value={0}>0 - ЗГ1</option>
+                            <option value={1}>1 - ЗГ2</option>
+                            <option value={2}>2 - ЗГ3</option>
+                            <option value={3}>3 - ЗГ4</option>
                         </select>
                     </div>
                 </div>
@@ -338,7 +339,6 @@
             {#if isEditMode}
                 <div class="form-section">
                     <div class="form-grid">
-                        <!-- Признак вкл комплекта БССД (из ИД02) -->
                         <div class="form-group">
                             <label>Признак вкл комплекта БССД:</label>
                             <div class="radio-group">
@@ -365,7 +365,6 @@
                             </div>
                         </div>
 
-                        <!-- Признак включения ЗГ (из ИД02) -->
                         <div class="form-group">
                             <label>Признак включения ЗГ:</label>
                             <select bind:value={localFormData.prZg}>
@@ -376,7 +375,6 @@
                             </select>
                         </div>
 
-                        <!-- Признак откл ЗГ БССД (из ИД06) -->
                         <div class="form-group">
                             <label>Признак откл ЗГ БССД:</label>
                             <div class="radio-group">
