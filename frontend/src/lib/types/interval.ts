@@ -23,6 +23,39 @@ export interface TimeInterval {
         prZg: number; // 0-ЗГ1, 1-ЗГ2, 2-ЗГ3, 3-ЗГ4
     };
     
+    tsData?: {
+        id: number;
+        idMain: number;
+        tip: number;
+        reg: number;
+        dlit: number;
+        prMsu1: number;
+        vd1Msu1: number;
+        vd2Msu1: number;
+        vd3Msu1: number;
+        ik4Msu1: number;
+        ik5Msu1: number;
+        ik6Msu1: number;
+        ik7Msu1: number;
+        ik8Msu1: number;
+        ik9Msu1: number;
+        ik10Msu1: number;
+        prMsu2: number;
+        vd1Msu2: number;
+        vd2Msu2: number;
+        vd3Msu2: number;
+        ik4Msu2: number;
+        ik5Msu2: number;
+        ik6Msu2: number;
+        ik7Msu2: number;
+        ik8Msu2: number;
+        ik9Msu2: number;
+        ik10Msu2: number;
+        prBssd: number;
+        prZg: number;
+        prOtklZgBssd: number;
+    };
+
     msu1Config?: TsMsuConfig;
     msu2Config?: TsMsuConfig;
     
@@ -55,6 +88,9 @@ export interface ModeCreationForm {
     nOna?: number;
     tip?: number;
     reg?: number;
+    prBssd?: number;   
+    prZg?: number;        
+    prOtklZg?: number;
 }
 
 export interface PpiSelectionModal {

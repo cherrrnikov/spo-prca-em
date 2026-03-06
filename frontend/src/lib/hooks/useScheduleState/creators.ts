@@ -97,6 +97,40 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
         if (formData.modeType === 8) {
             updatedInterval.msu1Config = { ...formData.msu1Config };
             updatedInterval.msu2Config = { ...formData.msu2Config };
+
+            updatedInterval.tsData = {
+                id: editingInterval.tsData?.id ?? 0,
+                idMain: editingInterval.tsData?.idMain ?? 0,
+                tip: editingInterval.tsData?.tip ?? 1,
+                reg: editingInterval.tsData?.reg ?? 1,
+                dlit: editingInterval.tsData?.dlit ?? formData.duration,
+                prMsu1: editingInterval.tsData?.prMsu1 ?? 0,
+                vd1Msu1: editingInterval.tsData?.vd1Msu1 ?? 0,
+                vd2Msu1: editingInterval.tsData?.vd2Msu1 ?? 0,
+                vd3Msu1: editingInterval.tsData?.vd3Msu1 ?? 0,
+                ik4Msu1: editingInterval.tsData?.ik4Msu1 ?? 0,
+                ik5Msu1: editingInterval.tsData?.ik5Msu1 ?? 0,
+                ik6Msu1: editingInterval.tsData?.ik6Msu1 ?? 0,
+                ik7Msu1: editingInterval.tsData?.ik7Msu1 ?? 0,
+                ik8Msu1: editingInterval.tsData?.ik8Msu1 ?? 0,
+                ik9Msu1: editingInterval.tsData?.ik9Msu1 ?? 0,
+                ik10Msu1: editingInterval.tsData?.ik10Msu1 ?? 0,
+                prMsu2: editingInterval.tsData?.prMsu2 ?? 0,
+                vd1Msu2: editingInterval.tsData?.vd1Msu2 ?? 0,
+                vd2Msu2: editingInterval.tsData?.vd2Msu2 ?? 0,
+                vd3Msu2: editingInterval.tsData?.vd3Msu2 ?? 0,
+                ik4Msu2: editingInterval.tsData?.ik4Msu2 ?? 0,
+                ik5Msu2: editingInterval.tsData?.ik5Msu2 ?? 0,
+                ik6Msu2: editingInterval.tsData?.ik6Msu2 ?? 0,
+                ik7Msu2: editingInterval.tsData?.ik7Msu2 ?? 0,
+                ik8Msu2: editingInterval.tsData?.ik8Msu2 ?? 0,
+                ik9Msu2: editingInterval.tsData?.ik9Msu2 ?? 0,
+                ik10Msu2: editingInterval.tsData?.ik10Msu2 ?? 0,
+                
+                prBssd: formData.prBssd ?? 0,
+                prZg: formData.prZg ?? 0,
+                prOtklZgBssd: formData.prOtklZg ?? 0
+            };
         }
 
         if (formData.modeType === 6) {
@@ -178,8 +212,8 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     ik8Msu2: msu2Config.ik8 || 0,
                     ik9Msu2: msu2Config.ik9 || 0,
                     ik10Msu2: msu2Config.ik10 || 0,
-                    prBssd: 1,
-                    prZg: 1,
+                    prBssd: 0,
+                    prZg: 0,
                     prOtklZgBssd: 0
                 }
             };

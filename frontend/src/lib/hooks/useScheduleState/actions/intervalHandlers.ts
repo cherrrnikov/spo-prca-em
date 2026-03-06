@@ -121,6 +121,10 @@ export function createIntervalHandlers(
             current.map(program => {
                 if (program.timeInterval.id === currentEditingInterval.id) {
                     const modeData = createProgramModeData(formData, program.tempId);
+                    if (modeData.kodMode === 8) {
+                        console.log('=== ОБНОВЛЕННЫЙ modeData.tsData ===');
+                        console.log('Новые данные в modeData.tsData:', modeData.tsData);
+                    }
                     return { 
                         ...program, 
                         modeData, 

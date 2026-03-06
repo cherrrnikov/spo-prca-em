@@ -22,13 +22,15 @@
         onSubmit,
         onCancel,
         editingInterval = null,
-        onUpdate
+        onUpdate,
+        bortData = null
     } = $props<{
         selectedMode: number;
         onSubmit: (data: ModeCreationForm) => void;
         onCancel: () => void;
         editingInterval?: TimeInterval | null;
         onUpdate?: (data: ModeCreationForm) => void;
+        bortData?: any;
     }>();
 
     const isPriorityInShadow = $derived(
@@ -69,7 +71,10 @@
                 prBssd: 0,
                 prZg: 0
             },
-            nOna: 1
+            nOna: 1,
+            prBssd: 0,
+            prZg: 0,
+            prOtklZg: 0
         };
     }
 
@@ -93,6 +98,19 @@
         } else if (interval.mode === 8) {
             localFormData.msu1Config = interval.msu1Config || getDefaultMsuConfig();
             localFormData.msu2Config = interval.msu2Config || getDefaultMsuConfig();
+
+            console.log('=== РЕДАКТИРОВАНИЕ ТС ===');
+            console.log('ДО редактирования - tsData из интервала:', {
+                prBssd: interval.tsData?.prBssd,
+                prZg: interval.tsData?.prZg,
+                prOtklZg: interval.tsData?.prOtklZgBssd
+            });
+
+            if (interval.tsData) {
+                localFormData.prBssd = interval.tsData.prBssd ?? 0;
+                localFormData.prZg = interval.tsData.prZg ?? 0;
+                localFormData.prOtklZg = interval.tsData.prOtklZgBssd ?? 0;
+            }
         }
     }
 
@@ -166,11 +184,23 @@
                 prMsu: 0,
                 prBssd: 0,
                 prZg: 0
-            }
+            },
+            prBssd: localFormData.prBssd,
+            prZg: localFormData.prZg,
+            prOtklZg: localFormData.prOtklZg
         };
         
         if (localFormData.modeType === 6) {
             submitData.nOna = localFormData.nOna || 1;
+        }
+
+        if (localFormData.modeType === 8) {
+            console.log('=== СОХРАНЕНИЕ ТС ===');
+            console.log('ПОСЛЕ редактирования - новые значения из формы:', {
+                prBssd: localFormData.prBssd,
+                prZg: localFormData.prZg,
+                prOtklZg: localFormData.prOtklZg
+            });
         }
         
         return submitData;
@@ -305,6 +335,76 @@
                     disableVd={isPriorityInShadow}
                 />
             </div>
+            {#if isEditMode}
+                <div class="form-section">
+                    <div class="form-grid">
+                        <!-- Признак вкл комплекта БССД (из ИД02) -->
+                        <div class="form-group">
+                            <label>Признак вкл комплекта БССД:</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input 
+                                        type="radio"
+                                        name="ts-bssd"
+                                        value="0"
+                                        checked={localFormData.prBssd === 0}
+                                        on:change={() => localFormData.prBssd = 0}
+                                    />
+                                    <span>0 - БП БССД1</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input 
+                                        type="radio"
+                                        name="ts-bssd"
+                                        value="1"
+                                        checked={localFormData.prBssd === 1}
+                                        on:change={() => localFormData.prBssd = 1}
+                                    />
+                                    <span>1 - БП БССД2</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Признак включения ЗГ (из ИД02) -->
+                        <div class="form-group">
+                            <label>Признак включения ЗГ:</label>
+                            <select bind:value={localFormData.prZg}>
+                                <option value={0}>0 - ЗГ1</option>
+                                <option value={1}>1 - ЗГ2</option>
+                                <option value={2}>2 - ЗГ3</option>
+                                <option value={3}>3 - ЗГ4</option>
+                            </select>
+                        </div>
+
+                        <!-- Признак откл ЗГ БССД (из ИД06) -->
+                        <div class="form-group">
+                            <label>Признак откл ЗГ БССД:</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input 
+                                        type="radio"
+                                        name="ts-otkl-zg"
+                                        value="0"
+                                        checked={localFormData.prOtklZg === 0}
+                                        on:change={() => localFormData.prOtklZg = 0}
+                                    />
+                                    <span>0 - выкл.</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input 
+                                        type="radio"
+                                        name="ts-otkl-zg"
+                                        value="1"
+                                        checked={localFormData.prOtklZg === 1}
+                                        on:change={() => localFormData.prOtklZg = 1}
+                                    />
+                                    <span>1 - вкл.</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {/if}
         {:else if selectedMode === 6}
             <div class="form-section">
                 <div class="kvd-config-grid">
@@ -439,13 +539,18 @@
         color: #4a5568;
     }
 
-    .form-group select,
-    .form-group input {
+    .form-group select {
         padding: 0.5rem;
         border: 1px solid #cbd5e0;
         border-radius: 4px;
         font-size: 0.875rem;
         width: 100%;
+    }
+    .form-group input {
+        padding: 0.5rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 4px;
+        font-size: 0.875rem;
     }
 
     .radio-group {

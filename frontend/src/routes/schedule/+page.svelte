@@ -24,6 +24,7 @@
     import type { CreatedProgramData, OperatorData, PpiAssignment, ProgramModeData, TimeInterval } from '$lib/types';
     import { checkAllConflicts } from '$lib/utils/interval/index';
     import { ModeUtils } from '$lib/utils/mode';
+    import { get } from 'svelte/store';
     import AnalysisModal from '../../features/schedule-creation/components/AnalysisModal.svelte';
     import ProgramsSelector from '../../features/schedule-creation/components/ProgramsSelector.svelte';
 
@@ -53,6 +54,7 @@
         isAnalysisMode,
         activeProgramDate,
         analysisModal,
+        bortData,
         
         loadUserData,
         handleIntervalClick,
@@ -309,9 +311,50 @@
                     const tsSubIntervals = intervals.filter(i => 
                         i.id.startsWith(`ts_${ts.id}`)
                     );
+
+                    const currentBortData = get(bortData);
                     
                     tsSubIntervals.forEach((subInterval, idx) => {
                         subInterval.customerCode = 1;
+
+                        if (!subInterval.tsData) {
+                            subInterval.tsData = {
+                                id: 0,
+                                idMain: 0,
+                                tip: 0,
+                                reg: 0,
+                                dlit: 0,
+                                prMsu1: 0,
+                                vd1Msu1: 0,
+                                vd2Msu1: 0,
+                                vd3Msu1: 0,
+                                ik4Msu1: 0,
+                                ik5Msu1: 0,
+                                ik6Msu1: 0,
+                                ik7Msu1: 0,
+                                ik8Msu1: 0,
+                                ik9Msu1: 0,
+                                ik10Msu1: 0,
+                                prMsu2: 0,
+                                vd1Msu2: 0,
+                                vd2Msu2: 0,
+                                vd3Msu2: 0,
+                                ik4Msu2: 0,
+                                ik5Msu2: 0,
+                                ik6Msu2: 0,
+                                ik7Msu2: 0,
+                                ik8Msu2: 0,
+                                ik9Msu2: 0,
+                                ik10Msu2: 0,
+                                prBssd: 0,
+                                prZg: 0,
+                                prOtklZgBssd: 0
+                            };
+                        }
+
+                        subInterval.tsData.prBssd = currentBortData?.pr_bssd ?? 0;
+                        subInterval.tsData.prZg = currentBortData?.pr_zg ?? 0;
+                        subInterval.tsData.prOtklZgBssd = ts.pr_otkl_zg;
 
                         const modeData: ProgramModeData = {
                             numRp: 0,
@@ -350,11 +393,21 @@
                                 ik8Msu2: ts.pr_ik8_2,
                                 ik9Msu2: ts.pr_ik9_2,
                                 ik10Msu2: ts.pr_ik10_2,
-                                prBssd: 0,
-                                prZg: 0,
-                                prOtklZgBssd: ts.pr_otkl_zg
+
+                                // ИД02
+                                prBssd: subInterval.tsData.prBssd,
+                                prZg: subInterval.tsData.prZg,
+
+                                // ИД06
+                                prOtklZgBssd: subInterval.tsData.prOtklZgBssd
                             }
                         };
+
+                        console.log('tsData:', modeData.tsData);
+                        console.log('ИД02 данные:', {
+                            prBssd: currentBortData?.pr_bssd,
+                            prZg: currentBortData?.pr_zg
+                        });
                         
                         programs.push({
                             tempId: `ts_${ts.id}_${idx}`,
