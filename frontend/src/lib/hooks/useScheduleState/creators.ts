@@ -94,7 +94,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             updatedInterval.kvdConfig = { ...formData.kvdConfig };
         }
         
-        if (formData.modeType === 8) {
+        if (formData.modeType === 8 || formData.modeType === 1) {
             updatedInterval.msu1Config = { ...formData.msu1Config };
             updatedInterval.msu2Config = { ...formData.msu2Config };
 

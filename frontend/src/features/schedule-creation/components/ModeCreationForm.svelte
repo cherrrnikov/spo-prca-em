@@ -96,7 +96,7 @@
                 : { prMsu: 0, prBssd: 0, prZg: 0 };
         } else if (interval.mode === 6) {
             localFormData.nOna = interval.nOna || 1;
-        } else if (interval.mode === 8) {
+        } else if (interval.mode === 8 || interval.mode === 1) {
             localFormData.msu1Config = interval.msu1Config || getDefaultMsuConfig();
             localFormData.msu2Config = interval.msu2Config || getDefaultMsuConfig();
 
@@ -321,7 +321,7 @@
                 </div>
             </div>
 
-        {:else if selectedMode === 8}
+        {:else if selectedMode === 8 || selectedMode === 1}
             <div class="form-section">
                 <span class="form-section_title">Комплект МСУ-ГС 1</span>
                 <TsCheckboxGroup 
