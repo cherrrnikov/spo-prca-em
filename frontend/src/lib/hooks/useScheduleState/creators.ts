@@ -102,7 +102,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                 id: editingInterval.tsData?.id ?? 0,
                 idMain: editingInterval.tsData?.idMain ?? 0,
                 tip: editingInterval.tsData?.tip ?? 1,
-                reg: editingInterval.tsData?.reg ?? 1,
+                // reg: editingInterval.tsData?.reg ?? 1,
                 dlit: editingInterval.tsData?.dlit ?? formData.duration,
                 prMsu1: editingInterval.tsData?.prMsu1 ?? 0,
                 vd1Msu1: editingInterval.tsData?.vd1Msu1 ?? 0,
@@ -129,7 +129,8 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                 
                 prBssd: formData.prBssd ?? 0,
                 prZg: formData.prZg ?? 0,
-                prOtklZgBssd: formData.prOtklZg ?? 0
+                prOtklZgBssd: formData.prOtklZg ?? 0,
+                reg: formData.reg ?? 0
             };
         }
 

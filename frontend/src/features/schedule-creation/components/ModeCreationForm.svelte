@@ -74,7 +74,8 @@
             nOna: 1,
             prBssd: 0,
             prZg: 0,
-            prOtklZg: 0
+            prOtklZg: 0,
+            reg: 0
         };
     }
 
@@ -103,13 +104,15 @@
             console.log('ДО редактирования - tsData из интервала:', {
                 prBssd: interval.tsData?.prBssd,
                 prZg: interval.tsData?.prZg,
-                prOtklZg: interval.tsData?.prOtklZgBssd
+                prOtklZg: interval.tsData?.prOtklZgBssd,
+                reg: interval.tsData?.reg
             });
 
             if (interval.tsData) {
                 localFormData.prBssd = interval.tsData.prBssd ?? 0;
                 localFormData.prZg = interval.tsData.prZg ?? 0;
                 localFormData.prOtklZg = interval.tsData.prOtklZgBssd ?? 0;
+                localFormData.reg = interval.tsData.reg ?? 0;
             }
         }
     }
@@ -187,7 +190,8 @@
             },
             prBssd: localFormData.prBssd,
             prZg: localFormData.prZg,
-            prOtklZg: localFormData.prOtklZg
+            prOtklZg: localFormData.prOtklZg,
+            reg: localFormData.reg
         };
         
         if (localFormData.modeType === 6) {
@@ -199,7 +203,8 @@
             console.log('ПОСЛЕ редактирования - новые значения из формы:', {
                 prBssd: localFormData.prBssd,
                 prZg: localFormData.prZg,
-                prOtklZg: localFormData.prOtklZg
+                prOtklZg: localFormData.prOtklZg,
+                reg: localFormData.reg
             });
         }
         
@@ -375,7 +380,7 @@
                             </select>
                         </div>
 
-                        <div class="form-group">
+                         <div class="form-group">
                             <label>Признак откл ЗГ БССД:</label>
                             <div class="radio-group">
                                 <label class="radio-label">
@@ -399,6 +404,16 @@
                                     <span>1 - вкл.</span>
                                 </label>
                             </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Режим съёмки:</label>
+                            <select bind:value={localFormData.reg}>
+                                <option value={0}>0 - ДС (дневная съемка)</option>
+                                <option value={1}>1 - НС (ночная съемка)</option>
+                                <option value={10}>10 - СР1</option>
+                                <option value={11}>11 - СР2</option>
+                                <option value={100}>100 - СР3</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -528,7 +543,7 @@
     .form-group {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.2rem;
     }
 
     .form-group label {
