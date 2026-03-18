@@ -247,7 +247,6 @@
                     
                     if (timeInterval) {
                         timeInterval.customerCode = 1;
-
                         timeInterval.kvdConfig = {
                             prMsu: kvd.pr_msu,
                             prBssd: kvd.pr_bssd,
@@ -324,44 +323,42 @@
                     tsSubIntervals.forEach((subInterval, idx) => {
                         subInterval.customerCode = 1;
 
-                        if (!subInterval.tsData) {
-                            subInterval.tsData = {
-                                id: 0,
-                                idMain: 0,
-                                tip: 0,
-                                reg: 0,
-                                dlit: 0,
-                                prMsu1: 0,
-                                vd1Msu1: 0,
-                                vd2Msu1: 0,
-                                vd3Msu1: 0,
-                                ik4Msu1: 0,
-                                ik5Msu1: 0,
-                                ik6Msu1: 0,
-                                ik7Msu1: 0,
-                                ik8Msu1: 0,
-                                ik9Msu1: 0,
-                                ik10Msu1: 0,
-                                prMsu2: 0,
-                                vd1Msu2: 0,
-                                vd2Msu2: 0,
-                                vd3Msu2: 0,
-                                ik4Msu2: 0,
-                                ik5Msu2: 0,
-                                ik6Msu2: 0,
-                                ik7Msu2: 0,
-                                ik8Msu2: 0,
-                                ik9Msu2: 0,
-                                ik10Msu2: 0,
-                                prBssd: 0,
-                                prZg: 0,
-                                prOtklZgBssd: 0
-                            };
-                        }
+                        const tsData = {
+                            id: ts.id,
+                            idMain: mainId,
+                            tip: ts.tip ?? 1,                   
+                            reg: ts.reg ?? 0,
+                            dlit: subInterval.dlit || 420,
+                            prMsu1: ts.pr_msu1,
+                            vd1Msu1: ts.pr_vd1_1,
+                            vd2Msu1: ts.pr_vd2_1,
+                            vd3Msu1: ts.pr_vd3_1,
+                            ik4Msu1: ts.pr_ik4_1,
+                            ik5Msu1: ts.pr_ik5_1,
+                            ik6Msu1: ts.pr_ik6_1,
+                            ik7Msu1: ts.pr_ik7_1,
+                            ik8Msu1: ts.pr_ik8_1,
+                            ik9Msu1: ts.pr_ik9_1,
+                            ik10Msu1: ts.pr_ik10_1,
+                            prMsu2: ts.pr_msu2,
+                            vd1Msu2: ts.pr_vd1_2,
+                            vd2Msu2: ts.pr_vd2_2,
+                            vd3Msu2: ts.pr_vd3_2,
+                            ik4Msu2: ts.pr_ik4_2,
+                            ik5Msu2: ts.pr_ik5_2,
+                            ik6Msu2: ts.pr_ik6_2,
+                            ik7Msu2: ts.pr_ik7_2,
+                            ik8Msu2: ts.pr_ik8_2,
+                            ik9Msu2: ts.pr_ik9_2,
+                            ik10Msu2: ts.pr_ik10_2,
+                            // ИД02
+                            prBssd: currentBortData?.pr_bssd ?? 0,
+                            prZg: currentBortData?.pr_zg ?? 0,
+                            // ИД06
+                            prOtklZgBssd: ts.pr_otkl_zg
+                        };
 
-                        subInterval.tsData.prBssd = currentBortData?.pr_bssd ?? 0;
-                        subInterval.tsData.prZg = currentBortData?.pr_zg ?? 0;
-                        subInterval.tsData.prOtklZgBssd = ts.pr_otkl_zg;
+                        subInterval.tsData = tsData;
 
                         const modeData: ProgramModeData = {
                             numRp: 0,
@@ -372,42 +369,7 @@
                             numPpi: assignment.ppiNum,
                             dlit: subInterval.dlit || 420,
                             zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
-                            tsData: {
-                                id: ts.id,
-                                idMain: mainId,
-                                tip: ts.tip,
-                                reg: ts.reg,
-                                dlit: subInterval.dlit || 420,
-                                prMsu1: ts.pr_msu1,
-                                vd1Msu1: ts.pr_vd1_1,
-                                vd2Msu1: ts.pr_vd2_1,
-                                vd3Msu1: ts.pr_vd3_1,
-                                ik4Msu1: ts.pr_ik4_1,
-                                ik5Msu1: ts.pr_ik5_1,
-                                ik6Msu1: ts.pr_ik6_1,
-                                ik7Msu1: ts.pr_ik7_1,
-                                ik8Msu1: ts.pr_ik8_1,
-                                ik9Msu1: ts.pr_ik9_1,
-                                ik10Msu1: ts.pr_ik10_1,
-                                prMsu2: ts.pr_msu2,
-                                vd1Msu2: ts.pr_vd1_2,
-                                vd2Msu2: ts.pr_vd2_2,
-                                vd3Msu2: ts.pr_vd3_2,
-                                ik4Msu2: ts.pr_ik4_2,
-                                ik5Msu2: ts.pr_ik5_2,
-                                ik6Msu2: ts.pr_ik6_2,
-                                ik7Msu2: ts.pr_ik7_2,
-                                ik8Msu2: ts.pr_ik8_2,
-                                ik9Msu2: ts.pr_ik9_2,
-                                ik10Msu2: ts.pr_ik10_2,
-
-                                // ИД02
-                                prBssd: subInterval.tsData.prBssd,
-                                prZg: subInterval.tsData.prZg,
-
-                                // ИД06
-                                prOtklZgBssd: subInterval.tsData.prOtklZgBssd
-                            }
+                            tsData: tsData
                         };
 
                         console.log('tsData:', modeData.tsData);
@@ -595,7 +557,7 @@
         flex-direction: column;
         height: 100vh;
         background: #f5f7fa;
-        overflow: auto;
+        overflow: hidden;
     }
 
     .schedule-header {
@@ -620,6 +582,8 @@
         display: flex;
         justify-content: center;
         align-items: flex-start;
+        overflow-y: auto;
+        min-height: 0;
     }
 
     .forms-container {
@@ -641,6 +605,7 @@
         flex-shrink: 0;
         background: white;
         border-top: 1px solid #e1e5e9;
+        margin-top: auto;
     }
 
     .creation-form-container {

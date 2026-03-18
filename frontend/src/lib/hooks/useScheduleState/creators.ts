@@ -68,6 +68,18 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             interval.nOna = formData.nOna || 1;
         }
 
+        if (formData.modeType === 2) {
+            interval.omiData = {
+                id: 0,
+                idMain: 0,
+                numOmi: 1,
+                typeOmi: formData.typeOmi ?? 1,
+                dateNach: `${currentContextDate}T${formData.startTime}`,
+                dateCon: `${currentContextDate}T${endTime}`,
+                dlit: formData.duration
+            };
+        }
+
         return interval;
     }
 
@@ -101,41 +113,57 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             updatedInterval.tsData = {
                 id: editingInterval.tsData?.id ?? 0,
                 idMain: editingInterval.tsData?.idMain ?? 0,
-                tip: editingInterval.tsData?.tip ?? 1,
-                // reg: editingInterval.tsData?.reg ?? 1,
-                dlit: editingInterval.tsData?.dlit ?? formData.duration,
-                prMsu1: editingInterval.tsData?.prMsu1 ?? 0,
-                vd1Msu1: editingInterval.tsData?.vd1Msu1 ?? 0,
-                vd2Msu1: editingInterval.tsData?.vd2Msu1 ?? 0,
-                vd3Msu1: editingInterval.tsData?.vd3Msu1 ?? 0,
-                ik4Msu1: editingInterval.tsData?.ik4Msu1 ?? 0,
-                ik5Msu1: editingInterval.tsData?.ik5Msu1 ?? 0,
-                ik6Msu1: editingInterval.tsData?.ik6Msu1 ?? 0,
-                ik7Msu1: editingInterval.tsData?.ik7Msu1 ?? 0,
-                ik8Msu1: editingInterval.tsData?.ik8Msu1 ?? 0,
-                ik9Msu1: editingInterval.tsData?.ik9Msu1 ?? 0,
-                ik10Msu1: editingInterval.tsData?.ik10Msu1 ?? 0,
-                prMsu2: editingInterval.tsData?.prMsu2 ?? 0,
-                vd1Msu2: editingInterval.tsData?.vd1Msu2 ?? 0,
-                vd2Msu2: editingInterval.tsData?.vd2Msu2 ?? 0,
-                vd3Msu2: editingInterval.tsData?.vd3Msu2 ?? 0,
-                ik4Msu2: editingInterval.tsData?.ik4Msu2 ?? 0,
-                ik5Msu2: editingInterval.tsData?.ik5Msu2 ?? 0,
-                ik6Msu2: editingInterval.tsData?.ik6Msu2 ?? 0,
-                ik7Msu2: editingInterval.tsData?.ik7Msu2 ?? 0,
-                ik8Msu2: editingInterval.tsData?.ik8Msu2 ?? 0,
-                ik9Msu2: editingInterval.tsData?.ik9Msu2 ?? 0,
-                ik10Msu2: editingInterval.tsData?.ik10Msu2 ?? 0,
                 
+                // ВСЕ редактируемые поля берем ИЗ ФОРМЫ
+                tip: formData.tip ?? 1,
+                reg: formData.reg ?? 0,
+                dlit: formData.duration,
+                
+                // Настройки МСУ - из formData.msu1Config/msu2Config
+                prMsu1: formData.msu1Config.prMsu || 0,
+                vd1Msu1: formData.msu1Config.vd1 || 0,
+                vd2Msu1: formData.msu1Config.vd2 || 0,
+                vd3Msu1: formData.msu1Config.vd3 || 0,
+                ik4Msu1: formData.msu1Config.ik4 || 0,
+                ik5Msu1: formData.msu1Config.ik5 || 0,
+                ik6Msu1: formData.msu1Config.ik6 || 0,
+                ik7Msu1: formData.msu1Config.ik7 || 0,
+                ik8Msu1: formData.msu1Config.ik8 || 0,
+                ik9Msu1: formData.msu1Config.ik9 || 0,
+                ik10Msu1: formData.msu1Config.ik10 || 0,
+                prMsu2: formData.msu2Config.prMsu || 0,
+                vd1Msu2: formData.msu2Config.vd1 || 0,
+                vd2Msu2: formData.msu2Config.vd2 || 0,
+                vd3Msu2: formData.msu2Config.vd3 || 0,
+                ik4Msu2: formData.msu2Config.ik4 || 0,
+                ik5Msu2: formData.msu2Config.ik5 || 0,
+                ik6Msu2: formData.msu2Config.ik6 || 0,
+                ik7Msu2: formData.msu2Config.ik7 || 0,
+                ik8Msu2: formData.msu2Config.ik8 || 0,
+                ik9Msu2: formData.msu2Config.ik9 || 0,
+                ik10Msu2: formData.msu2Config.ik10 || 0,
+                
+                // Параметры БССД/ЗГ из формы
                 prBssd: formData.prBssd ?? 0,
                 prZg: formData.prZg ?? 0,
-                prOtklZgBssd: formData.prOtklZg ?? 0,
-                reg: formData.reg ?? 0
+                prOtklZgBssd: formData.prOtklZg ?? 0
             };
         }
 
         if (formData.modeType === 6) {
             updatedInterval.nOna = formData.nOna || editingInterval.nOna || 1;
+        }
+
+        if (formData.modeType === 2) {
+            updatedInterval.omiData = {
+                id: editingInterval.omiData?.id ?? 0,
+                idMain: editingInterval.omiData?.idMain ?? 0,
+                numOmi: editingInterval.omiData?.numOmi ?? 1,
+                typeOmi: formData.typeOmi ?? 1,
+                dateNach: editingInterval.omiData?.dateNach ?? `${currentContextDate}T${formData.startTime}`,
+                dateCon: editingInterval.omiData?.dateCon ?? `${currentContextDate}T${endTime}`,
+                dlit: formData.duration
+            };
         }
 
         return updatedInterval;
@@ -240,6 +268,19 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     dK: dateOff,
                     nOna: formData.nOna || 1,
                     nPpi: formData.ppiNum
+                }
+            };
+        } else if (formData.modeType === 2) {
+            return {
+                ...baseData,
+                omiData: {
+                    id: 0,
+                    idMain: mainId,
+                    numOmi: 1, 
+                    typeOmi: formData.typeOmi ?? 1,
+                    dateNach: dateOn,
+                    dateCon: dateOff,
+                    dlit: formData.duration
                 }
             };
         } else {

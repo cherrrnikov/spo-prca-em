@@ -27,9 +27,6 @@ public class ProgramsModeOna {
     @JoinColumn(name = "id_programs_mode")
     private ProgramsMode programsMode;
 
-    @Column(name = "type_omi")
-    private Integer typeOmi;
-
     @Column(name = "d_n")
     private LocalDateTime dN;
 

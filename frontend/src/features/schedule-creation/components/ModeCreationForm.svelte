@@ -75,7 +75,9 @@
             prBssd: 0,
             prZg: 0,
             prOtklZg: 0,
-            reg: 0
+            reg: 0,
+            tip: 1,
+            typeOmi: 1
         };
     }
 
@@ -100,19 +102,16 @@
             localFormData.msu1Config = interval.msu1Config || getDefaultMsuConfig();
             localFormData.msu2Config = interval.msu2Config || getDefaultMsuConfig();
 
-            console.log('=== РЕДАКТИРОВАНИЕ ТС ===');
-            console.log('ДО редактирования - tsData из интервала:', {
-                prBssd: interval.tsData?.prBssd,
-                prZg: interval.tsData?.prZg,
-                prOtklZg: interval.tsData?.prOtklZgBssd,
-                reg: interval.tsData?.reg
-            });
-
             if (interval.tsData) {
                 localFormData.prBssd = interval.tsData.prBssd ?? 0;
                 localFormData.prZg = interval.tsData.prZg ?? 0;
                 localFormData.prOtklZg = interval.tsData.prOtklZgBssd ?? 0;
                 localFormData.reg = interval.tsData.reg ?? 0;
+                localFormData.tip = interval.tsData.tip ?? 1;
+            }
+        } else if (interval.mode === 2) {
+            if (interval.omiData) {
+                localFormData.typeOmi = interval.omiData.typeOmi ?? 1;
             }
         }
     }
@@ -127,7 +126,6 @@
         }
 
         localFormData = newFormData;
-        console.log('Новая запись:', localFormData);
     }
 
     function handleSubmit() {
@@ -136,7 +134,6 @@
         }
 
         const dataToSubmit = prepareSubmitData();
-        console.log('Отправляемые данные:', dataToSubmit);
         
         if (isEditMode) {
             onUpdate?.(dataToSubmit);
@@ -191,7 +188,8 @@
             prBssd: localFormData.prBssd,
             prZg: localFormData.prZg,
             prOtklZg: localFormData.prOtklZg,
-            reg: localFormData.reg
+            reg: localFormData.reg,
+            typeOmi: localFormData.typeOmi
         };
         
         if (localFormData.modeType === 6) {
@@ -320,7 +318,19 @@
                     </div>
                 </div>
             </div>
-
+        {:else if selectedMode === 2}
+            <div class="form-section">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Вид ОМИ:</label>
+                        <select bind:value={localFormData.typeOmi}>
+                            <option value={1}>1 - LRIT</option>
+                            <option value={2}>2 - HRIT</option>
+                            <option value={3}>3 - ОМИ</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
         {:else if selectedMode === 8 || selectedMode === 1}
             <div class="form-section">
                 <span class="form-section_title">Комплект МСУ-ГС 1</span>
@@ -341,6 +351,7 @@
                     disableVd={isPriorityInShadow}
                 />
             </div>
+
             {#if isEditMode}
                 <div class="form-section">
                     <div class="form-grid">
@@ -481,6 +492,33 @@
                         on:change={handleDurationChange}
                     />
                 </div>
+                {#if selectedMode === 8 || selectedMode === 1}
+                <div class="form-group">
+                    <label>Тип съёмки:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input 
+                                type="radio"
+                                name="tip"
+                                value="1"
+                                checked={localFormData.tip === 1}
+                                on:change={() => localFormData.tip = 1}
+                            />
+                            <span>1 - Штатная</span>
+                        </label>
+                        <label class="radio-label">
+                            <input 
+                                type="radio"
+                                name="tip"
+                                value="2"
+                                checked={localFormData.tip === 2}
+                                on:change={() => localFormData.tip = 2}
+                            />
+                            <span>2 - Учащенная</span>
+                        </label>
+                    </div>
+                </div>
+                {/if}
             </div>
         </div>  
     </div>
@@ -517,7 +555,7 @@
     .form-content {
         display: flex;
         /* flex-direction: column; */
-        gap: 1.5rem;
+        gap: 1rem;
     }
 
     .form-section {
@@ -543,7 +581,7 @@
     .form-group {
         display: flex;
         flex-direction: column;
-        gap: 0.2rem;
+        gap: 0.1rem;
     }
 
     .form-group label {
