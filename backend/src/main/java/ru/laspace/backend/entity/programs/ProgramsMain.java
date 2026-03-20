@@ -24,7 +24,7 @@ public class ProgramsMain {
     private Long id;
 
     @Column(name = "num_rp", nullable = false)
-    private Integer numRp;
+    private Integer numRp; // Начинается с 1 а не с 0
 
     @Column(name = "num_ka", nullable = false)
     private Integer numKa;
@@ -36,7 +36,7 @@ public class ProgramsMain {
     private LocalDateTime dateOff;
 
     @Column(name = "type_rp")
-    private Integer typeRp; // 3-основная, 5-корректирующая
+    private Integer typeRp; // 3-основная, !5-корректирующая
 
     @Column(name = "pr_otpr")
     private Integer prOtpr; // 0-не отправлена, 1-отправлена, -1 отменена; ...
