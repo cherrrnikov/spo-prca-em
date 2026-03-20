@@ -96,10 +96,15 @@ export class ProgramPreparerService {
             scheduleStatus
         );
         
+        // Добавляем только те createdPrograms, у которых willBeSaved = true
         createdPrograms.forEach(created => {
-            baseRequest.modes.push(created.modeData);
+            if (created.timeInterval.willBeSaved === true) {
+                baseRequest.modes.push(created.modeData);
+            } else {
+                console.log(`Пропускаем интервал ${created.tempId}: willBeSaved = false`);
+            }
         });
-
+        
         return baseRequest;
     }
 
@@ -217,23 +222,8 @@ export class ProgramPreparerService {
         selectedDate: string,
         selectedTime: string
     ): string {
-        let latestDate = new Date(`${selectedDate}T${selectedTime}:00`);
-
-        const allRecords = [
-            ...(operatorData.kvd_list || []),
-            ...(operatorData.tnp_list || []),
-            ...(operatorData.ts_list || []),
-            ...(operatorData.ona_list || [])
-        ];
-
-        allRecords.forEach(record => {
-            const endDate = new Date(record.dk);
-            if (endDate > latestDate) {
-                latestDate = endDate;
-            }
-        });
-
-        return latestDate.toISOString();
+        // Всегда конец суток
+        return `${selectedDate}T23:59:59`;
     }
 
     public static generateProgramNumber(): number {

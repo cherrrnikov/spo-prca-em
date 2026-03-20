@@ -3,20 +3,47 @@ package ru.laspace.backend.dto.programs;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import lombok.Data;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE, creatorVisibility = Visibility.NONE)
+@EqualsAndHashCode
+@ToString
+@Schema(description = "Запрос на создание ПРЦА")
 public class ProgramCreateRequest {
+
+    @Schema(description = "Основные данные ПРЦА")
     private MainData mainData;
+
+    @Schema(description = "Список режимов")
     private List<ModeData> modes;
 
-    @Data
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE, creatorVisibility = Visibility.NONE)
+    @EqualsAndHashCode
+    @ToString
     public static class MainData {
         private Integer numRp;
         private Integer numKa;
@@ -31,8 +58,15 @@ public class ProgramCreateRequest {
         private Integer prOtpr;
     }
 
-    @Data
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE, creatorVisibility = Visibility.NONE)
+    @EqualsAndHashCode
+    @ToString
     public static class ModeData {
         private Integer numRp;
         private Integer numKa;
@@ -55,8 +89,15 @@ public class ProgramCreateRequest {
         private OmiData omiData;
     }
 
-    @Data
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE, creatorVisibility = Visibility.NONE)
+    @EqualsAndHashCode
+    @ToString
     public static class KvdData {
         private Long id;
         private Long idMain;
@@ -65,8 +106,15 @@ public class ProgramCreateRequest {
         private Integer prZg;
     }
 
-    @Data
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE, creatorVisibility = Visibility.NONE)
+    @EqualsAndHashCode
+    @ToString
     public static class TnpData {
         private Long id;
         private Long idMain;
@@ -75,8 +123,15 @@ public class ProgramCreateRequest {
         private Integer prZg;
     }
 
-    @Data
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE, creatorVisibility = Visibility.NONE)
+    @EqualsAndHashCode
+    @ToString
     public static class TsData {
         private Long id;
         private Long idMain;
@@ -110,8 +165,15 @@ public class ProgramCreateRequest {
         private Integer prOtklZgBssd;
     }
 
-    @Data
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE, creatorVisibility = Visibility.NONE)
+    @EqualsAndHashCode
+    @ToString
     public static class OnaData {
         private Long id;
         private Long idMain;
@@ -127,8 +189,15 @@ public class ProgramCreateRequest {
         private Integer nPpi;
     }
 
-    @Data
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE, creatorVisibility = Visibility.NONE)
+    @EqualsAndHashCode
+    @ToString
     public static class OmiData {
         private Long id;
         private Long idMain;

@@ -41,7 +41,7 @@ export class ScheduleApiService {
     }
 
     static async saveProgram(programData: CreateProgramRequest): Promise<any> {
-        const response = await fetch(`${this.BASE_URL}/programs/create`, {
+        const response = await fetch(`http://localhost:8081/api/programs/create`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(programData)
@@ -51,7 +51,8 @@ export class ScheduleApiService {
             throw new Error(`Ошибка сохранения: ${response.status}`);
         }
 
-        return await response.json();
+        const text = await response.text();
+        return text ? JSON.parse(text) : null;
     }
 
     static async loadModeDurations(): Promise<Record<string, number>> {

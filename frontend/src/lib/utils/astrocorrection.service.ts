@@ -43,7 +43,8 @@ export class AstrocorrectionService {
             inShadow: false,
             willBeSavedInShadow: false,
             shadowPriority: 0,
-            isAstrocorrection: true
+            isAstrocorrection: true,
+            willBeSaved: false
         }));
     }
 
