@@ -88,24 +88,32 @@ export class ProgramPreparerService {
         selectedTime: string,
         scheduleStatus: ScheduleStatus
     ): CreateProgramRequest {
-        const baseRequest = this.prepareProgramData(
-            operatorData,
-            ppiAssignments,
-            selectedDate,
-            selectedTime,
-            scheduleStatus
-        );
-        
-        // Добавляем только те createdPrograms, у которых willBeSaved = true
+        const numRp = this.generateProgramNumber();
+        const numKa = operatorData.main.n_ka;
+
+        const mainData = {
+            numRp,
+            numKa,
+            dateOn: `${selectedDate}T${selectedTime}:00`,
+            dateOff: `${selectedDate}T23:59:59`,
+            typeRp: scheduleStatus === 'main' ? 3 : 5,
+            prOtpr: 0
+        };
+
+        const modes: ProgramModeData[] = [];
+
+        // Добавляем ТОЛЬКО из createdPrograms, где willBeSaved = true
         createdPrograms.forEach(created => {
             if (created.timeInterval.willBeSaved === true) {
-                baseRequest.modes.push(created.modeData);
-            } else {
-                console.log(`Пропускаем интервал ${created.tempId}: willBeSaved = false`);
+                // Копируем modeData, но обновляем numRp
+                const modeData = { ...created.modeData, numRp, numKa };
+                modes.push(modeData);
             }
         });
-        
-        return baseRequest;
+
+        console.log(`Подготовлено ${modes.length} режимов для сохранения (только из createdPrograms)`);
+
+        return { mainData, modes };
     }
 
     private static createKvdModeData(numRp: number, numKa: number, kvd: any, assignment: PpiAssignment): ProgramModeData {

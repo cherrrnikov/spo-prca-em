@@ -75,7 +75,9 @@
         createAnalysis,
         selectProgram,
         exitAnalysisMode,
-        deleteProgramFromAnalysis
+        deleteProgramFromAnalysis,
+
+        updateAllConflicts
     } = useScheduleState();
 
     onMount(() => {
@@ -466,6 +468,7 @@
                     ppiAssignments={$ppiAssignments}
                     selectedProgramDate={$selectedProgramDate}
                     createdPrograms={$createdPrograms}
+                    updateAllConflicts={updateAllConflicts} 
                 />
                 <div class="program-date-info">
                     <h2 class="program-date-title">
@@ -494,6 +497,7 @@
                 ppiAssignments={$ppiAssignments}
                 selectedProgramDate={$selectedProgramDate}
                 createdPrograms={$createdPrograms}
+                updateAllConflicts={updateAllConflicts} 
             />
         {/if}
     </header>

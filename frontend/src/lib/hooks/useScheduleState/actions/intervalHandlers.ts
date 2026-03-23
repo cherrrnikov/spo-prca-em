@@ -53,8 +53,13 @@ export function createIntervalHandlers(
     }
 
     function handleIntervalDelete(intervalId: string) {
+        console.log('=== УДАЛЕНИЕ ИНТЕРВАЛА ===');
+        console.log('intervalId:', intervalId);
+
         const currentIntervals = get(intervals);
         const intervalToDelete = currentIntervals.find(i => i.id === intervalId);
+
+        console.log('Удаляемый интервал:', intervalToDelete);
 
         if (intervalToDelete?.isAstrocorrection) {
             alert("Попытка удалить астрокоррекцию - операция запрещена");
@@ -64,7 +69,12 @@ export function createIntervalHandlers(
         intervals.set(currentIntervals.filter(interval => interval.id !== intervalId));
 
         const currentPrograms = get(createdPrograms);
-        createdPrograms.set(currentPrograms.filter(program => program.timeInterval.id !== intervalId));
+
+        console.log('Было createdPrograms:', currentPrograms.length);
+
+        const filteredPrograms = currentPrograms.filter(program => program.timeInterval.id !== intervalId);
+        console.log('Стало createdPrograms:', filteredPrograms.length);
+        createdPrograms.set(filteredPrograms);
         
         const currentEditingInterval = get(editingInterval);
         if (currentEditingInterval?.id === intervalId) {

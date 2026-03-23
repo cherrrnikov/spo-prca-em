@@ -3,6 +3,7 @@
   import { goto } from '$app/navigation';
   import type { TimeInterval } from '$lib/types';
   import type { UserResponse } from '$lib/types/auth';
+  import { mergeMsuIntervals } from '$lib/utils/interval/mergeMsuIntervals';
   import { onMount } from 'svelte';
   
   let isOpen = $state(false);
@@ -20,7 +21,8 @@
     createdPrograms = [],
     onAnalysisClick,
     isAnalysisMode = false,
-    isOperatorMode = false
+    isOperatorMode = false,
+    updateAllConflicts
   } = $props<{
     userData: UserResponse | null;
     onOperatorCreate?: () => void;
@@ -33,6 +35,7 @@
     onAnalysisClick?: () => void;
     isAnalysisMode?: boolean;
     isOperatorMode?: boolean; 
+    updateAllConflicts?: () => void;
   }>();
 
   function handleClickOutside(event: MouseEvent) {
@@ -98,12 +101,16 @@
           const { ScheduleCreationService } = await import('../../features/services/scheduleCreation.service');
           
           console.log("=== ПОДГОТОВКА ДАННЫХ ДЛЯ СОХРАНЕНИЯ ===");
-          
+          await updateAllConflicts();
+
+          const mergedCreatedPrograms = mergeMsuIntervals(createdPrograms);
+          console.log(`После объединения: ${mergedCreatedPrograms.length} интервалов (было ${createdPrograms.length})`);
+
           // Подготавливаем данные программы
           const programRequest = ScheduleCreationService.prepareFullProgramData(
               operatorData,
               ppiAssignments,
-              createdPrograms,
+              mergedCreatedPrograms,
               selectedProgramDate,
               "00:00",
               'main'
@@ -214,6 +221,7 @@
                 `Сохранено режимов: ${programRequest.modes.length}\n` +
                 `(КВД: ${kvdCount}, ТНП: ${tnpCount}, ТС: ${tsCount} - временно пропускаются, ОМИ: ${omiCount}, ОНА: ${onaCount})`);
           
+
       } catch (error) {
           console.error("❌ ОШИБКА ПРИ СОХРАНЕНИИ:", error);
           alert(`❌ Ошибка сохранения ПРЦА:\n${error.message}\n\nПодробности в консоли (F12)`);

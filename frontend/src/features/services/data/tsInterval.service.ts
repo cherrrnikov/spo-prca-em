@@ -11,7 +11,7 @@ export class TsIntervalService {
         const city = CityService.getCityByPpi(ppiNum);
         const color = CityService.getColorByPpi(ppiNum);
         
-        const stepMinutes = tsRecord.tip === 0 ? 30 : 15;
+        const stepMinutes = tsRecord.tip === 1 ? 30 : 15;
         const subIntervalDuration = 7; 
         
         const startDate = new Date(tsRecord.dn);

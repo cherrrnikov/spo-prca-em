@@ -23,6 +23,7 @@ export function createActions(
         ...intervalHandlers,
         ...modeHandlers,
         ...analysisActions,
-        ...uiHelpers
+        ...uiHelpers,
+        updateAllConflicts: validation.updateAllConflicts
     };
 }

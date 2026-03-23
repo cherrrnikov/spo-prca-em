@@ -53,12 +53,13 @@ public class ProgramsServiceImpl implements ProgramsService {
         for (ModeData modeData : request.getModes()) {
             Integer kodMode = modeData.getKodMode();
 
-            // Временно пропускаем ТС до реализации объединения подинтервалов
-            if (kodMode == 8) {
-                log.warn("ТС (kodMode=8) временно пропускаем, ждем реализации объединения интервалов");
-                skippedCount++;
-                continue;
-            }
+            // // Временно пропускаем ТС до реализации объединения подинтервалов
+            // if (kodMode == 8) {
+            // log.warn("ТС (kodMode=8) временно пропускаем, ждем реализации объединения
+            // интервалов");
+            // skippedCount++;
+            // continue;
+            // }
 
             try {
                 saveMode(savedMain, modeData);
@@ -107,8 +108,8 @@ public class ProgramsServiceImpl implements ProgramsService {
 
         if (kodMode == 7 && modeData.getKvdData() != null) {
             saveKvdData(savedMode, modeData.getKvdData());
-        } else if (kodMode == 1 && modeData.getTsData() != null) {
-            // Обычные съемки (1) с детальными параметрами МСУ
+        } else if ((kodMode == 8 || kodMode == 1) && modeData.getTsData() != null) {
+            // ТС (8) и обычные съемки (1) — сохраняем в programs_mode_msu
             saveMsuData(savedMode, modeData.getTsData());
         } else if (kodMode == 2 && modeData.getOmiData() != null) {
             saveOmiData(savedMode, modeData.getOmiData());

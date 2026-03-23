@@ -136,6 +136,28 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
                 return interval;
             })
         );
+
+        const currentCreatedPrograms = get(createdPrograms);
+        const updatedCreatedPrograms = currentCreatedPrograms.map(program => {
+            const updatedInterval = intervalsWithConflicts.find(i => i.id === program.timeInterval.id);
+            if (updatedInterval) {
+                return {
+                    ...program,
+                    timeInterval: {
+                        ...program.timeInterval,
+                        willBeSaved: updatedInterval.willBeSaved,
+                        hasConflict: updatedInterval.hasConflict,
+                        constraintViolations: updatedInterval.constraintViolations,
+                        inShadow: updatedInterval.inShadow,
+                        willBeSavedInShadow: updatedInterval.willBeSavedInShadow,
+                        nearZasvetka: updatedInterval.nearZasvetka,
+                        zasvetkaConflict: updatedInterval.zasvetkaConflict
+                    }
+                };
+            }
+            return program;
+        });
+        createdPrograms.set(updatedCreatedPrograms);
     }
 
     function syncCurrentProgramWithStore() {

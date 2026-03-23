@@ -59,7 +59,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             interval.kvdConfig = { ...formData.kvdConfig };
         }
         
-        if (formData.modeType === 8) {
+        if (formData.modeType === 8 || formData.modeType === 1) {
             interval.msu1Config = { ...formData.msu1Config };
             interval.msu2Config = { ...formData.msu2Config };
         }
@@ -205,7 +205,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     prZg: kvdConfig.prZg
                 }
             };
-        } else if (formData.modeType === 8) {
+        } else if (formData.modeType === 8 || formData.modeType === 1) {
             const msu1Config = formData.msu1Config || getDefaultMsuConfig();
             const msu2Config = formData.msu2Config || getDefaultMsuConfig();
             const tip = (formData as any).tip || 1;  
@@ -241,9 +241,9 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     ik8Msu2: msu2Config.ik8 || 0,
                     ik9Msu2: msu2Config.ik9 || 0,
                     ik10Msu2: msu2Config.ik10 || 0,
-                    prBssd: 0,
-                    prZg: 0,
-                    prOtklZgBssd: 0
+                    prBssd: formData.prBssd ?? 0,
+                    prZg: formData.prZg ?? 0,
+                    prOtklZgBssd: formData.prOtklZg ?? 0
                 }
             };
         } else if (formData.modeType === 4) {

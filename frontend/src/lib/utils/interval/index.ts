@@ -95,14 +95,31 @@ export function checkAllConflicts(
     withConstraints.forEach(interval => {
         if (interval.inShadow) {
             interval.willBeSaved = interval.willBeSavedInShadow || false;
+            if (!interval.willBeSaved) {
+                console.log(`[ТЕНЬ] Интервал ${interval.id} (${interval.startTime}-${interval.endTime}) не будет сохранен: в тени, не победитель`);
+            }
         } else {
             interval.willBeSaved = true;
             
-            if (interval.hasConflict) interval.willBeSaved = false;
-            else if (interval.zasvetkaConflict) interval.willBeSaved = false;
-            else if (interval.nearZasvetka) interval.willBeSaved = false;
-            else if (interval.constraintViolations && interval.constraintViolations.length > 0) {
+            let reason = null;
+            if (interval.hasConflict) {
                 interval.willBeSaved = false;
+                reason = 'hasConflict';
+            } else if (interval.zasvetkaConflict) {
+                interval.willBeSaved = false;
+                reason = 'zasvetkaConflict';
+            } else if (interval.nearZasvetka) {
+                interval.willBeSaved = false;
+                reason = 'nearZasvetka';
+            } else if (interval.constraintViolations && interval.constraintViolations.length > 0) {
+                interval.willBeSaved = false;
+                reason = `constraintViolations: ${interval.constraintViolations.map(v => v.constraintId).join(',')}`;
+            }
+            
+            if (!interval.willBeSaved) {
+                console.log(`[ОГРАНИЧЕНИЕ] Интервал ${interval.id} (${interval.startTime}-${interval.endTime}) не будет сохранен: ${reason}`);
+            } else {
+                console.log(`[СОХРАНЯЕТСЯ] Интервал ${interval.id} (${interval.startTime}-${interval.endTime}) будет сохранен`);
             }
         }
     });

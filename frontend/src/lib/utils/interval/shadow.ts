@@ -56,7 +56,7 @@ export function checkShadowPriority(
         
         winner.willBeSavedInShadow = true;
 
-        if (winner.mode === 8) {
+        if (winner.mode === 8 || winner.mode === 1) {
             if (winner.msu1Config) {
                 winner.msu1Config.prVdMsu = 0;
                 winner.msu1Config.vd1 = 0;
@@ -66,7 +66,7 @@ export function checkShadowPriority(
             
             if (winner.msu2Config) {
                 winner.msu2Config.prVdMsu = 0;
-                winner.msu2Config.vd2 = 0;
+                winner.msu2Config.vd1 = 0;
                 winner.msu2Config.vd2 = 0;
                 winner.msu2Config.vd3 = 0;
             }
