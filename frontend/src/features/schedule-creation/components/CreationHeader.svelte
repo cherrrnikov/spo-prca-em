@@ -19,9 +19,10 @@
         { id: 10, name: '9 - Москва (НИЦ "Планета")', numPpi: 10 }
     ];
 
-    let { onCancel: onCancelProp, onDataProcessed } = $props<{
+    let { onCancel: onCancelProp, onDataProcessed, numKa = $bindable(1525) } = $props<{
 		onCancel: () => void;
         onDataProcessed?: (operatorData: OperatorData, ppiAssignments: PpiAssignment[]) => void;
+        numKa?: number;
 	}>();
 
     let isLoading = $state(false);
@@ -74,7 +75,7 @@
                 const emptyOperatorData: OperatorData = {
                     main: {
                         id: 0,
-                        n_ka: 1,
+                        n_ka: numKa,
                         d_np: selectedDate,
                         data_zap: new Date().toISOString(),
                         rnf: 0,
@@ -263,6 +264,7 @@
         bind:selectedTime
         bind:shootingMode
         bind:msuGsType
+        bind:numKa
         {isLoading}
         onSubmit={handleFormSubmit}
         onCancel={handleCancelCreation}

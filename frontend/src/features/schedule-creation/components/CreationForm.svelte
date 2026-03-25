@@ -11,6 +11,7 @@
         selectedTime = $bindable(''),
         shootingMode = $bindable('default'),
         msuGsType = $bindable('msu_gs_1'),
+        numKa = $bindable(1525),
         isLoading = false,
         onSubmit,
         onCancel
@@ -20,6 +21,7 @@
         selectedTime?: string;
         shootingMode?: ShootingMode;
         msuGsType?: MsuGsType;
+        numKa?: number;
         isLoading?: boolean;
         onSubmit: () => Promise<void>;
         onCancel: () => void;
@@ -35,118 +37,144 @@
         <h3 class="creation-title">Создание ПРЦА по данным оператора</h3>
     </div>
     <div class="form-block">
-         <div class="form-group">
-        <label class="form-label">Статус ПРЦА:</label>
-        <div class="radio-group">
-            <label class="radio-label">
-                <input 
-                    type="radio" 
-                    name="scheduleStatus"
-                    value="main"
-                    checked={scheduleStatus === 'main'}
-                    on:change={(e) => scheduleStatus = e.target.value as ScheduleStatus}
-                />
-                <span>Основная</span>
-            </label>
-            <label class="radio-label">
-                <input 
-                    type="radio" 
-                    name="scheduleStatus"
-                    value="corrective"
-                    checked={scheduleStatus === 'corrective'}
-                    on:change={(e) => scheduleStatus = e.target.value as ScheduleStatus}
-                />
-                <span>Корректирующая</span>
-            </label>
+        <div class="form-group">
+            <label class="form-label">Статус ПРЦА:</label>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input 
+                        type="radio" 
+                        name="scheduleStatus"
+                        value="main"
+                        checked={scheduleStatus === 'main'}
+                        on:change={(e) => scheduleStatus = e.target.value as ScheduleStatus}
+                    />
+                    <span>Основная</span>
+                </label>
+                <!-- <label class="radio-label">
+                    <input 
+                        type="radio" 
+                        name="scheduleStatus"
+                        value="corrective"
+                        checked={scheduleStatus === 'corrective'}
+                        on:change={(e) => scheduleStatus = e.target.value as ScheduleStatus}
+                    />
+                    <span>Корректирующая</span>
+                </label> -->
+            </div>
         </div>
-    </div>
 
-    <div class="form-group">
-        <label class="form-label">Дата планирования:</label>
-        <div class="datetime-inputs">
-            <input 
-                type="date" 
-                value={selectedDate}
-                on:input={(e) => selectedDate = e.target.value}
-                class="date-input"
-            />
-            <input 
-                type="time" 
-                value={selectedTime}
-                disabled
-                on:input={(e) => selectedTime = e.target.value}
-                class="time-input"
-            />
+        <div class="form-group">
+            <label class="form-label">Номер КА:</label>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input 
+                        type="radio" 
+                        name="numKa"
+                        value="1525"
+                        checked={numKa === 1525}
+                        on:change={(e) => numKa = parseInt(e.target.value)}
+                    />
+                    <span>1525</span>
+                </label>
+                <label class="radio-label">
+                    <input 
+                        type="radio" 
+                        name="numKa"
+                        value="1526"
+                        checked={numKa === 1526}
+                        on:change={(e) => numKa = parseInt(e.target.value)}
+                    />
+                    <span>1526</span>
+                </label>
+            </div>
         </div>
-    </div>
 
-    <div class="form-group">
-        <label class="form-label">Штатные съемки:</label>
-        <div class="radio-group">
-            <label class="radio-label">
+        <div class="form-group">
+            <label class="form-label">Дата планирования:</label>
+            <div class="datetime-inputs">
                 <input 
-                    type="radio" 
-                    name="shootingMode"
-                    value="default"
-                    checked={shootingMode === 'default'}
-                    on:change={(e) => shootingMode = e.target.value as ShootingMode}
+                    type="date" 
+                    value={selectedDate}
+                    on:input={(e) => selectedDate = e.target.value}
+                    class="date-input"
                 />
-                <span>По умолчанию</span>
-            </label>
-            <label class="radio-label">
                 <input 
-                    type="radio" 
-                    name="shootingMode"
-                    value="no_shooting"
-                    checked={shootingMode === 'no_shooting'}
-                    on:change={(e) => shootingMode = e.target.value as ShootingMode}
+                    type="time" 
+                    value={selectedTime}
+                    disabled
+                    on:input={(e) => selectedTime = e.target.value}
+                    class="time-input"
                 />
-                <span>Без съемки</span>
-            </label>
+            </div>
         </div>
-    </div>
 
-    <div class="form-group">
-        <label class="form-label">Признак МСУ ГС:</label>
-        <div class="radio-group">
-            <label class="radio-label">
-                <input 
-                    type="radio" 
-                    name="msuGsType"
-                    value="msu_gs_1"
-                    checked={msuGsType === 'msu_gs_1'}
-                    on:change={(e) => msuGsType = e.target.value as MsuGsType}
-                />
-                <span>Комплект МСУ ГС 1</span>
-            </label>
-            <label class="radio-label">
-                <input 
-                    type="radio" 
-                    name="msuGsType"
-                    value="msu_gs_2"
-                    checked={msuGsType === 'msu_gs_2'}
-                    on:change={(e) => msuGsType = e.target.value as MsuGsType}
-                />
-                <span>Комплект МСУ ГС 2</span>
-            </label>
+        <div class="form-group">
+            <label class="form-label">Штатные съемки:</label>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input 
+                        type="radio" 
+                        name="shootingMode"
+                        value="default"
+                        checked={shootingMode === 'default'}
+                        on:change={(e) => shootingMode = e.target.value as ShootingMode}
+                    />
+                    <span>По умолчанию</span>
+                </label>
+                <label class="radio-label">
+                    <input 
+                        type="radio" 
+                        name="shootingMode"
+                        value="no_shooting"
+                        checked={shootingMode === 'no_shooting'}
+                        on:change={(e) => shootingMode = e.target.value as ShootingMode}
+                    />
+                    <span>Без съемки</span>
+                </label>
+            </div>
         </div>
-    </div>
 
-    <div class="form-actions">
-        <button 
-            on:click={handleSubmit}
-            class="create-button"
-            disabled={isLoading || !selectedDate}
-        >
-            {isLoading ? 'Загрузка...' : 'Загрузить данные'}
-        </button>
-        <button 
-            on:click={onCancel}
-            class="cancel-button"
-        >
-            Отмена
-        </button>
-    </div>
+        <div class="form-group">
+            <label class="form-label">Признак МСУ ГС:</label>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input 
+                        type="radio" 
+                        name="msuGsType"
+                        value="msu_gs_1"
+                        checked={msuGsType === 'msu_gs_1'}
+                        on:change={(e) => msuGsType = e.target.value as MsuGsType}
+                    />
+                    <span>Комплект МСУ ГС 1</span>
+                </label>
+                <label class="radio-label">
+                    <input 
+                        type="radio" 
+                        name="msuGsType"
+                        value="msu_gs_2"
+                        checked={msuGsType === 'msu_gs_2'}
+                        on:change={(e) => msuGsType = e.target.value as MsuGsType}
+                    />
+                    <span>Комплект МСУ ГС 2</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button 
+                on:click={handleSubmit}
+                class="create-button"
+                disabled={isLoading || !selectedDate}
+            >
+                {isLoading ? 'Загрузка...' : 'Загрузить данные'}
+            </button>
+            <button 
+                on:click={onCancel}
+                class="cancel-button"
+            >
+                Отмена
+            </button>
+        </div>
     </div>
 </div>
 
@@ -175,7 +203,7 @@
         display: flex;
         flex-direction: column;
         gap: 0.375rem;
-        min-width: 180px;
+        min-width: 120px;
     }
 
     .form-label {
