@@ -88,6 +88,7 @@ export interface ModeCreationForm {
     duration: number;
     customerCode: number;
     startTime: string;
+    endTime?: string;
     kvdConfig: {
         prMsu: number;
         prBssd: number;

@@ -528,6 +528,7 @@
                 onSubmit={handleModeFormSubmit}
                 onCancel={handleModeFormCancel}
                 onUpdate={handleIntervalUpdate}
+                contextDate={$contextDate}
             />
         {/if}
 

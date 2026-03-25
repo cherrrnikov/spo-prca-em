@@ -7,8 +7,10 @@
     } from "$lib/constants/schedule";
     import type { ModeCreationForm, TimeInterval, TsMsuConfig } from "$lib/types";
     import { IntervalValidationService } from "$lib/utils/intervalValidation";
+    import { TimeUtils } from "$lib/utils/time";
     import { onMount } from "svelte";
     import { ScheduleConverterService } from "../../services/data/scheduleConverter.service";
+    import { ManualIntervalSplitService } from '../../services/utils/manualIntervalSplit.service';
     import { ModeDurationService } from "../../services/utils/modeDuration.service";
     import TsCheckboxGroup from "./TsCheckboxGroup.svelte";
 
@@ -23,14 +25,16 @@
         onCancel,
         editingInterval = null,
         onUpdate,
-        bortData = null
+        bortData = null,
+        contextDate = ''
     } = $props<{
         selectedMode: number;
-        onSubmit: (data: ModeCreationForm) => void;
+        onSubmit: (data: ModeCreationForm | TimeInterval[]) => void;
         onCancel: () => void;
         editingInterval?: TimeInterval | null;
         onUpdate?: (data: ModeCreationForm) => void;
         bortData?: any;
+        contextDate?: string;
     }>();
 
     const isPriorityInShadow = $derived(
@@ -64,6 +68,7 @@
             duration: 300,
             customerCode: 1,
             startTime: '10:00:00',
+            endTime: '23:00:00',
             msu1Config: getDefaultMsuConfig(),
             msu2Config: getDefaultMsuConfig(),
             kvdConfig: {
@@ -90,6 +95,7 @@
         localFormData.ppiNum = interval.ppi || 1;
         localFormData.duration = interval.dlit || 300;
         localFormData.startTime = interval.startTime;
+        localFormData.startTime = interval.endTime;
         localFormData.customerCode = interval.customerCode || 1;
         
         if (interval.mode === 7) {
@@ -136,9 +142,36 @@
         const dataToSubmit = prepareSubmitData();
         
         if (isEditMode) {
+            // Редактирование — один интервал
             onUpdate?.(dataToSubmit);
         } else {
-            onSubmit(dataToSubmit);
+            // Создание
+            if (selectedMode === 8 || selectedMode === 1) {
+                // Для съемок — разбиваем на несколько интервалов
+                const currentDate = contextDate; // или получить из пропса
+                
+                if (!currentDate) {
+                    alert('Не выбрана дата');
+                    return;
+                }
+                
+                const subIntervals = ManualIntervalSplitService.splitInterval(
+                    dataToSubmit,
+                    currentDate,
+                    `manual_${dataToSubmit.modeType}`
+                );
+                
+                if (subIntervals.length === 0) {
+                    alert('В указанном диапазоне не помещается ни один интервал с заданной длительностью');
+                    return;
+                }
+                
+                // Передаем массив интервалов
+                onSubmit(subIntervals);
+            } else {
+                // Для остальных режимов — один интервал
+                onSubmit(dataToSubmit);
+            }
             resetForm();
         }
     }
@@ -147,6 +180,26 @@
         if (!localFormData.startTime || localFormData.duration <= 0) {
             alert('Укажите время начала и длительность');
             return false;
+        }
+
+        if (selectedMode === 8 || selectedMode === 1) {
+            if (!localFormData.endTime) {
+                alert('Укажите время окончания диапазона');
+                return false;
+            }
+            
+            const startSeconds = TimeUtils.timeToSeconds(localFormData.startTime);
+            const endSeconds = TimeUtils.timeToSeconds(localFormData.endTime);
+            
+            if (endSeconds <= startSeconds) {
+                alert('Время окончания диапазона должно быть позже времени начала');
+                return false;
+            }
+            
+            if (localFormData.duration > (endSeconds - startSeconds)) {
+                alert('Длительность интервала больше, чем весь диапазон');
+                return false;
+            }
         }
 
         const validation = IntervalValidationService.validateTimeInput(
@@ -472,55 +525,114 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label>Время начала:</label>
-                    <input 
-                        type="time" 
-                        bind:value={localFormData.startTime}
-                        step="1"
-                    />
-                </div>
-                
-                <div class="form-group">
-                    <label>Длительность (сек):</label>
-                    <input 
-                        type="number" 
-                        bind:value={localFormData.duration}
-                        min="60"
-                        step="60"
-                        disabled={selectedMode === 8}
-                        on:change={handleDurationChange}
-                    />
-                </div>
-                {#if selectedMode === 8 || selectedMode === 1}
-                <div class="form-group">
-                    <label>Тип съёмки:</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input 
-                                type="radio"
-                                name="tip"
-                                value="1"
-                                checked={localFormData.tip === 1}
-                                on:change={() => localFormData.tip = 1}
-                            />
-                            <span>1 - Штатная</span>
-                        </label>
-                        <label class="radio-label">
-                            <input 
-                                type="radio"
-                                name="tip"
-                                value="2"
-                                checked={localFormData.tip === 2}
-                                on:change={() => localFormData.tip = 2}
-                            />
-                            <span>2 - Учащенная</span>
-                        </label>
+                <!-- Режим редактирования — показываем старую форму -->
+                {#if isEditMode}
+                    <div class="form-group">
+                        <label>Время начала:</label>
+                        <input 
+                            type="time" 
+                            bind:value={localFormData.startTime}
+                            step="1"
+                        />
                     </div>
-                </div>
+                    
+                    <div class="form-group">
+                        <label>Длительность (сек):</label>
+                        <input 
+                            type="number" 
+                            bind:value={localFormData.duration}
+                            min="60"
+                            step="60"
+                            disabled={selectedMode === 8}
+                            on:change={handleDurationChange}
+                        />
+                    </div>
+                {:else}
+                    <!-- Режим создания -->
+                    {#if selectedMode === 8 || selectedMode === 1}
+                        <!-- Для съемок (1 и 8) — два инпута в одной строке -->
+                        <div class="form-group">
+                            <label>Диапазон времени:</label>
+                            <div class="time-range-group">
+                                <input 
+                                    type="time" 
+                                    bind:value={localFormData.startTime}
+                                    step="1"
+                                    placeholder="Начало"
+                                />
+                                <input 
+                                    type="time" 
+                                    bind:value={localFormData.endTime}
+                                    step="1"
+                                    placeholder="Конец"
+                                />
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Длительность (сек):</label>
+                            <input 
+                                type="number" 
+                                bind:value={localFormData.duration}
+                                min="60"
+                                step="60"
+                                disabled={selectedMode === 8}
+                                on:change={handleDurationChange}
+                            />
+                        </div>
+                    {:else}
+                        <!-- Для остальных режимов при создании — один инпут времени -->
+                        <div class="form-group">
+                            <label>Время начала:</label>
+                            <input 
+                                type="time" 
+                                bind:value={localFormData.startTime}
+                                step="1"
+                            />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Длительность (сек):</label>
+                            <input 
+                                type="number" 
+                                bind:value={localFormData.duration}
+                                min="60"
+                                step="60"
+                                on:change={handleDurationChange}
+                            />
+                        </div>
+                    {/if}
+                {/if}
+                
+                {#if selectedMode === 8 || selectedMode === 1}
+                    <div class="form-group">
+                        <label>Тип съёмки:</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input 
+                                    type="radio"
+                                    name="tip"
+                                    value="1"
+                                    checked={localFormData.tip === 1}
+                                    on:change={() => localFormData.tip = 1}
+                                />
+                                <span>1 - Штатная</span>
+                            </label>
+                            <label class="radio-label">
+                                <input 
+                                    type="radio"
+                                    name="tip"
+                                    value="2"
+                                    checked={localFormData.tip === 2}
+                                    on:change={() => localFormData.tip = 2}
+                                />
+                                <span>2 - Учащенная</span>
+                            </label>
+                        </div>
+                    </div>
                 {/if}
             </div>
-        </div>  
+        </div>
     </div>
 
     <div class="form-actions">
@@ -554,7 +666,6 @@
 
     .form-content {
         display: flex;
-        /* flex-direction: column; */
         gap: 1rem;
     }
 
@@ -576,6 +687,24 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 1rem;
+    }
+
+    /* Группа для двух инпутов времени в одной строке внутри одной ячейки */
+    .time-range-group {
+        display: flex;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .time-range-group .form-group {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .time-range-group .form-group input {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
     }
 
     .form-group {
