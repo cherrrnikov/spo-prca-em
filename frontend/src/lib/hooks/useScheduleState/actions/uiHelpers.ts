@@ -39,6 +39,10 @@ export function createUiHelpers(stores: ReturnType<typeof createStores>) {
         if (programData) {
             return TooltipFormatter.formatTooltip(interval, programData.modeData);
         }
+
+        if (interval.isAstrocorrection) {
+            return `Астрокоррекция ${interval.startTime} - ${interval.endTime}`;
+        }
         
         return interval.title || '';
     }
