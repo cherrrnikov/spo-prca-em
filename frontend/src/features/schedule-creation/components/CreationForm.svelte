@@ -38,7 +38,7 @@
     </div>
     <div class="form-block">
         <div class="form-group">
-            <label class="form-label">Статус ПРЦА:</label>
+            <label class="form-label">Тип рабочей программы:</label>
             <div class="radio-group">
                 <label class="radio-label">
                     <input 

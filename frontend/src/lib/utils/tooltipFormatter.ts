@@ -1,5 +1,11 @@
+import { PPI_LIST } from '$lib/constants/schedule';
 import type { ProgramModeData, TimeInterval } from '$lib/types';
 import { TimeUtils } from '$lib/utils/time';
+
+function getPpiDisplay(ppiNum: number): string {
+    const ppi = PPI_LIST.find(p => p.numPpi === ppiNum);
+    return ppi?.name || `ППИ ${ppiNum}`;
+}
 
 export class TooltipFormatter {
     // КВД (mode 7)
@@ -8,7 +14,7 @@ export class TooltipFormatter {
             `КАЛИБРОВКА ВД`,
             `Номер КА: ${modeData.numKa}`,
             `Номер ПРЦА: ${modeData.numRp}`,
-            `ППИ: ${modeData.numPpi}`,
+            `ППИ: ${getPpiDisplay(modeData.numPpi)}`,
             `Длительность: ${modeData.dlit} сек`,
             `Заказчик: ${modeData.zakazchik || 'не указан'}`,
             ``,
@@ -29,7 +35,7 @@ export class TooltipFormatter {
             `РЕЖИМ ТНП`,
             `Номер КА: ${modeData.numKa}`,
             `Номер ПРЦА: ${modeData.numRp}`,
-            `ППИ: ${modeData.numPpi}`,
+            `ППИ: ${getPpiDisplay(modeData.numPpi)}`,
             `Длительность: ${modeData.dlit} сек`,
             `Заказчик: ${modeData.zakazchik || 'не указан'}`,
             ``,
@@ -52,7 +58,7 @@ export class TooltipFormatter {
             title,
             `Номер КА: ${modeData.numKa}`,
             `Номер ПРЦА: ${modeData.numRp}`,
-            `ППИ: ${modeData.numPpi}`,
+            `ППИ: ${getPpiDisplay(modeData.numPpi)}`,
             `Длительность: ${modeData.dlit} сек`,
             `Заказчик: ${modeData.zakazchik || 'не указан'}`,
             ``,
@@ -82,7 +88,7 @@ export class TooltipFormatter {
             `ЮСТИРОВКА ОНА`,
             `Номер КА: ${modeData.numKa}`,
             `Номер ПРЦА: ${modeData.numRp}`,
-            `ППИ: ${modeData.numPpi}`,
+            `ППИ: ${getPpiDisplay(modeData.numPpi)}`,
             `Длительность: ${modeData.dlit} сек`,
             `Заказчик: ${modeData.zakazchik || 'не указан'}`,
             ``,
@@ -101,7 +107,7 @@ export class TooltipFormatter {
             `РАСПРЕДЕЛЕНИЕ ОМИ`,
             `Номер КА: ${modeData.numKa}`,
             `Номер ПРЦА: ${modeData.numRp}`,
-            `ППИ: ${modeData.numPpi}`,
+            `ППИ: ${getPpiDisplay(modeData.numPpi)}`,
             `Длительность: ${modeData.dlit} сек`,
             `Заказчик: ${modeData.zakazchik || 'не указан'}`,
             ``,
