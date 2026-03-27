@@ -182,7 +182,7 @@
             return false;
         }
 
-        if (selectedMode === 8 || selectedMode === 1) {
+        if (!isEditMode && (selectedMode === 8 || selectedMode === 1)) {
             if (!localFormData.endTime) {
                 alert('Укажите время окончания диапазона');
                 return false;

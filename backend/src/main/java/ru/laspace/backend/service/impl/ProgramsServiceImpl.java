@@ -19,6 +19,7 @@ import ru.laspace.backend.repository.programs.ProgramsModeMsuRepository;
 import ru.laspace.backend.repository.programs.ProgramsModeOmiRepository;
 import ru.laspace.backend.repository.programs.ProgramsModeOnaRepository;
 import ru.laspace.backend.repository.programs.ProgramsModeRepository;
+import ru.laspace.backend.service.ProgramsOnaService;
 import ru.laspace.backend.service.ProgramsService;
 
 @Service
@@ -32,6 +33,7 @@ public class ProgramsServiceImpl implements ProgramsService {
     private final ProgramsModeMsuRepository programsModeMsuRepository;
     private final ProgramsModeOmiRepository programsModeOmiRepository;
     private final ProgramsModeOnaRepository programsModeOnaRepository;
+    private final ProgramsOnaService programsOnaService;
 
     @Override
     @Transactional
@@ -72,6 +74,7 @@ public class ProgramsServiceImpl implements ProgramsService {
             }
         }
 
+        programsOnaService.saveOnaPrograms(savedMain, request);
         log.info("=== Сохранение ПРЦА завершено ===");
         log.info("Сохранено режимов: {}, Пропущено ТС: {}", savedCount, skippedCount);
     }
