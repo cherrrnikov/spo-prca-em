@@ -2,6 +2,7 @@ import type { createCreators } from '../creators';
 import type { createStores } from '../stores';
 import type { createValidation } from '../validation';
 import { createAnalysisActions } from './analysis';
+import { createCleanup } from './cleanup';
 import { createDataLoaders } from './dataLoaders';
 import { createIntervalHandlers } from './intervalHandlers';
 import { createModeHandlers } from './modeHandlers';
@@ -17,6 +18,7 @@ export function createActions(
     const modeHandlers = createModeHandlers(stores, creators, validation);
     const analysisActions = createAnalysisActions(stores, validation);
     const uiHelpers = createUiHelpers(stores);
+    const cleanup = createCleanup(stores);
 
     return {
         ...dataLoaders,
@@ -24,6 +26,7 @@ export function createActions(
         ...modeHandlers,
         ...analysisActions,
         ...uiHelpers,
+        ...cleanup,
         updateAllConflicts: validation.updateAllConflicts
     };
 }

@@ -15,6 +15,7 @@
     
     let startDate = $state(modalData.startDate || contextDate);
     let endDate = $state(modalData.endDate);
+    const MAX_DAYS = 10;
     
     $effect(() => {
         if (modalData.isOpen) {
@@ -28,8 +29,20 @@
             return false;
         }
         
-        if (new Date(startDate) >= new Date(endDate)) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        if (start >= end) {
             alert('Дата окончания должна быть позже даты начала');
+            return false;
+        }
+        
+        // Рассчитываем разницу в днях
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > MAX_DAYS) {
+            alert(`Анализ можно создать максимум на ${MAX_DAYS} дней. Вы выбрали ${diffDays} дней.`);
             return false;
         }
         
@@ -47,12 +60,12 @@
         <div class="modal-container">
             <div class="modal-header">
                 <h2>Создание анализа</h2>
-                <!-- <button class="close-button" on:click={onClose}>×</button> -->
             </div>
             
             <div class="modal-content">
                 <p class="description">
                     Выберите диапазон дат для создания анализа на основе текущей ПРЦА.
+                    Максимальный период — {MAX_DAYS} дней.
                 </p>
                 
                 <div class="date-range">
@@ -133,25 +146,6 @@
         margin: 0;
         font-size: 1.25rem;
         font-weight: 600;
-    }
-    
-    .close-button {
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        color: white;
-        font-size: 1.5rem;
-        cursor: pointer;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 4px;
-        transition: background 0.2s;
-    }
-    
-    .close-button:hover {
-        background: rgba(255, 255, 255, 0.3);
     }
     
     .modal-content {

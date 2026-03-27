@@ -26,7 +26,8 @@
     isOperatorMode = false,
     updateAllConflicts,
     programsList = [],
-    numKa
+    numKa,
+    onAfterSave
   } = $props<{
     userData: UserResponse | null;
     onOperatorCreate?: () => void;
@@ -42,6 +43,7 @@
     updateAllConflicts?: () => void;
     programsList?: ProgramsListItem[];
     numKa?: number;
+    onAfterSave?: () => void;
   }>();
 
   function handleClickOutside(event: MouseEvent) {
@@ -129,6 +131,10 @@
               }
           }
           
+          console.log("🔧 Вызываем onAfterSave, onAfterSave =", onAfterSave);
+          onAfterSave?.();
+
+
           alert(`✅ Сохранение анализа завершено!\n\n` +
                 `Успешно: ${savedCount}\n` +
                 `Ошибок: ${failedCount}`);
@@ -276,6 +282,9 @@
           console.log("=== РЕЗУЛЬТАТ СОХРАНЕНИЯ ===");
           console.log("Успешно! Ответ сервера:", result);
           
+          console.log("🔧 Вызываем onAfterSave, onAfterSave =", onAfterSave);
+          onAfterSave?.();
+
           alert(`✅ ПРЦА успешно сохранена!\n\n` +
                 `Номер ПРЦА: ${programRequest.mainData.numRp}\n` +
                 `Дата: ${selectedProgramDate}\n` +

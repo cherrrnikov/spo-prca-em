@@ -22,7 +22,8 @@
         onIntervalClick,
         onIntervalDelete,
         selectedIntervalId = null,
-        isEditing = false
+        isEditing = false,
+        isReadOnly = false
     } = $props<{
         intervals: TimeInterval[];
         shadowIntervals?: ShadowInterval[];
@@ -37,6 +38,7 @@
         onIntervalDelete?: (intervalId: string) => void;
         selectedIntervalId?: string | null;
         isEditing: boolean;
+        isReadOnly?: boolean;
     }>();
 
     let containerWidth = $state(0);
@@ -142,6 +144,8 @@
 
     function handleIntervalClick(event: MouseEvent, interval: TimeInterval) {
         event.preventDefault();
+
+        if (isReadOnly) return;
 
         if (interval.isAstrocorrection) {
             return;
@@ -354,7 +358,7 @@
                             value={mode.id}
                             checked={selectedMode === mode.id}
                             on:change={() => selectMode(mode.id)}
-                            disabled={isEditing || isAstroMode}
+                            disabled={isEditing || isAstroMode || isReadOnly}
                         />
                         <span class="mode-text">{mode.label}</span>
                     </label>

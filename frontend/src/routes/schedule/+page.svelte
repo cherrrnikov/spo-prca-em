@@ -77,6 +77,8 @@
         selectProgram,
         exitAnalysisMode,
         deleteProgramFromAnalysis,
+        cleanupAfterSave,
+        isReadOnly,
 
         updateAllConflicts
     } = useScheduleState();
@@ -479,6 +481,7 @@
                     programsList={$programsList}
                     updateAllConflicts={updateAllConflicts} 
                     numKa={$numKa}
+                    onAfterSave={cleanupAfterSave}
                 />
                 <div class="program-date-info">
                     <h2 class="program-date-title">
@@ -510,6 +513,7 @@
                 programsList={$programsList}
                 updateAllConflicts={updateAllConflicts} 
                 numKa={$numKa}
+                onAfterSave={cleanupAfterSave}
             />
         {/if}
     </header>
@@ -529,6 +533,7 @@
             onIntervalDelete={handleIntervalDelete}
             selectedIntervalId={$selectedIntervalId}
             isEditing={$isEditing}
+            isReadOnly={$isReadOnly}
         />
     </div>
 
