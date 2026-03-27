@@ -1,3 +1,4 @@
+import { DEFAULT_NUM_KA } from '$lib/constants/schedule';
 import type {
     CreatedProgramData,
     CreateProgramRequest,
@@ -86,14 +87,19 @@ export class ProgramPreparerService {
         createdPrograms: CreatedProgramData[],
         selectedDate: string,
         selectedTime: string,
-        scheduleStatus: ScheduleStatus
+        scheduleStatus: ScheduleStatus,
+        numKa?: number,
+        numRp?: number
     ): CreateProgramRequest {
-        const numRp = this.generateProgramNumber();
-        const numKa = operatorData.main.n_ka;
+        const finalNumRp = numRp ?? this.generateProgramNumber();
+        let finalNumKa = numKa ?? DEFAULT_NUM_KA;
+        if (!finalNumKa && operatorData?.main?.n_ka) {
+            finalNumKa = operatorData.main.n_ka;
+        }
 
         const mainData = {
-            numRp,
-            numKa,
+            numRp: finalNumRp,
+            numKa: finalNumKa,
             dateOn: `${selectedDate}T${selectedTime}:00`,
             dateOff: `${selectedDate}T23:59:59`,
             typeRp: scheduleStatus === 'main' ? 3 : 5,
@@ -106,7 +112,7 @@ export class ProgramPreparerService {
         createdPrograms.forEach(created => {
             if (created.timeInterval.willBeSaved === true) {
                 // Копируем modeData, но обновляем numRp
-                const modeData = { ...created.modeData, numRp, numKa };
+                const modeData = { ...created.modeData, numRp: finalNumRp, numKa: finalNumKa };
                 modes.push(modeData);
             }
         });

@@ -19,6 +19,7 @@ export interface ProgramsListItem {
     zasvetkaIntervals: ZasvetkaInterval[];
     vkiIntervals: VkiInterval[];
     rotationIntervals: RotationInterval[];
+    numKa: number;
 }
 
 export interface AnalysisModalState {

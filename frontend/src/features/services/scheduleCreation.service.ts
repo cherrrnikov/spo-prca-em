@@ -55,7 +55,9 @@ export class ScheduleCreationService {
         createdPrograms: CreatedProgramData[],
         selectedDate: string,
         selectedTime: string,
-        scheduleStatus: ScheduleStatus
+        scheduleStatus: ScheduleStatus,
+        numKa: number,
+        numRp?: number
     ): CreateProgramRequest {
         return ProgramPreparerService.prepareFullProgramData(
             operatorData,
@@ -63,7 +65,9 @@ export class ScheduleCreationService {
             createdPrograms,
             selectedDate,
             selectedTime,
-            scheduleStatus
+            scheduleStatus,
+            numKa,
+            numRp
         );
     }
 

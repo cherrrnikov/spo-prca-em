@@ -76,3 +76,5 @@ export const ZG_OPTIONS: ZgOption[] = [
     { value: 2, label: 'ЗГ3' },
     { value: 3, label: 'ЗГ4' }
 ];
+
+export const DEFAULT_NUM_KA = 1525;

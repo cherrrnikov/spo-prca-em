@@ -26,7 +26,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
     function getCustomerLabel(code: number): string {
         const customer = CUSTOMER_CODES.find(c => c.value === code);
         return customer?.label.split(' - ')[1] || '';
-    }
+    } 
 
     function createTimeInterval(
         formData: ModeCreationForm, 

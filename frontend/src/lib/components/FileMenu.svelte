@@ -2,9 +2,11 @@
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
   import type { TimeInterval } from '$lib/types';
+  import type { ProgramsListItem } from '$lib/types/analysis';
   import type { UserResponse } from '$lib/types/auth';
   import { mergeMsuIntervals } from '$lib/utils/interval/mergeMsuIntervals';
   import { onMount } from 'svelte';
+  import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
   
   let isOpen = $state(false);
   let isSubMenuOpen = $state(false);
@@ -22,7 +24,9 @@
     onAnalysisClick,
     isAnalysisMode = false,
     isOperatorMode = false,
-    updateAllConflicts
+    updateAllConflicts,
+    programsList = [],
+    numKa
   } = $props<{
     userData: UserResponse | null;
     onOperatorCreate?: () => void;
@@ -36,6 +40,8 @@
     isAnalysisMode?: boolean;
     isOperatorMode?: boolean; 
     updateAllConflicts?: () => void;
+    programsList?: ProgramsListItem[];
+    numKa?: number;
   }>();
 
   function handleClickOutside(event: MouseEvent) {
@@ -76,6 +82,59 @@
 
   async function handleSave() {
       console.log("=== СОХРАНЕНИЕ ПРЦА ===");
+
+        // В режиме анализа сохраняем все ПРЦА из списка
+      if (isAnalysisMode && programsList.length > 0) {
+          console.log(`Режим анализа: сохраняем ${programsList.length} ПРЦА`);
+          
+          let savedCount = 0;
+          let failedCount = 0;
+          
+          for (const program of programsList) {
+            const uniqueNumRp = Math.floor(Date.now() * 1000 + Math.random() * 1000);
+
+              try {
+                  console.log(`\n--- Сохранение ПРЦА для даты ${program.date} ---`);
+                  console.log(`program.numKa для ${program.date}:`, program.numKa);
+                  const mergedCreatedPrograms = mergeMsuIntervals(program.createdPrograms);
+
+                  // Подготавливаем данные для этой ПРЦА
+                  const programRequest = ScheduleCreationService.prepareFullProgramData(
+                      program.operatorData,
+                      program.ppiAssignments,
+                      mergedCreatedPrograms,
+                      program.date,
+                      "00:00",
+                      'main',
+                      program.numKa,
+                      uniqueNumRp
+                  );
+                  
+                  console.log(`Количество режимов для ${program.date}: ${programRequest.modes.length}`);
+                  console.log(`Режимы для ${program.date}:`, programRequest.modes.map(m => ({
+                      kodMode: m.kodMode,
+                      dateOn: m.dateOn,
+                      dateOff: m.dateOff,
+                      dlit: m.dlit
+                  })));
+
+                  // Сохраняем
+                  const result = await ScheduleCreationService.saveProgram(programRequest);
+                  console.log(`✅ ПРЦА для ${program.date} сохранена`);
+                  savedCount++;
+                  
+              } catch (error) {
+                  console.error(`❌ Ошибка сохранения ПРЦА для ${program.date}:`, error);
+                  failedCount++;
+              }
+          }
+          
+          alert(`✅ Сохранение анализа завершено!\n\n` +
+                `Успешно: ${savedCount}\n` +
+                `Ошибок: ${failedCount}`);
+          
+          return;
+      }
       
       // 1. Логируем текущее состояние
       console.log("Intervals (количество):", intervals.length);
@@ -113,7 +172,9 @@
               mergedCreatedPrograms,
               selectedProgramDate,
               "00:00",
-              'main'
+              'main',
+              numKa,
+              undefined
           );
           
           // 3. ЛОГИРУЕМ ВСЕ ДАННЫЕ, КОТОРЫЕ БУДУТ ОТПРАВЛЕНЫ

@@ -128,6 +128,9 @@
 
     function completePpiSelection() {
         if (operatorData && ppiAssignments.length > 0 && onDataProcessed) {
+            if (operatorData.main) {
+                operatorData.main.n_ka = numKa;
+            }
             onDataProcessed(operatorData, ppiAssignments);
         }
         

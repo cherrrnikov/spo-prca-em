@@ -45,8 +45,8 @@ public class ProgramCreateRequest {
     @EqualsAndHashCode
     @ToString
     public static class MainData {
-        private Integer numRp;
-        private Integer numKa;
+        private Long numRp;
+        private Long numKa;
 
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         private LocalDateTime dateOn;
@@ -68,8 +68,8 @@ public class ProgramCreateRequest {
     @EqualsAndHashCode
     @ToString
     public static class ModeData {
-        private Integer numRp;
-        private Integer numKa;
+        private Long numRp;
+        private Long numKa;
 
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         private LocalDateTime dateOn;

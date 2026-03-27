@@ -59,6 +59,9 @@ export function createStores() {
     const activeProgramId = writable<string | null>(null);
     const isAnalysisMode = writable<boolean>(false);
 
+    // Номер КА
+    const numKa = writable<number>(1525);
+
     const activeProgramDate = derived(
         [programsList, activeProgramId],
         ([$programsList, $activeProgramId]) => {
@@ -120,6 +123,9 @@ export function createStores() {
         activeProgramId,
         isAnalysisMode,
         analysisModal,
-        activeProgramDate
+        activeProgramDate,
+
+        // Номер КА
+        numKa
     };
 }

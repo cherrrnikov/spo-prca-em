@@ -1,4 +1,4 @@
-import { WORK_MODES } from '$lib/constants/schedule';
+import { DEFAULT_NUM_KA, WORK_MODES } from '$lib/constants/schedule';
 import type { CreatedProgramData, ProgramModeData, RotationInterval, ShadowInterval, TimeInterval, VkiInterval, ZasvetkaInterval } from '$lib/types';
 import type { ProgramsListItem } from '$lib/types/analysis';
 import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
@@ -35,7 +35,8 @@ export function createAnalysisActions(
         operatorDataLoaded,
         selectedMode,
         editingInterval,
-        selectedIntervalId
+        selectedIntervalId,
+        numKa
     } = stores;
 
     const { syncCurrentProgramWithStore } = validation;
@@ -88,6 +89,7 @@ export function createAnalysisActions(
     function createSourceProgram(): ProgramsListItem {
         const currentOperatorData = get(operatorData);
         const currentBortData = get(bortData);
+        const currentNumKa = get(numKa);
 
         return {
             id: `program_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
@@ -101,7 +103,8 @@ export function createAnalysisActions(
             shadowIntervals: [...get(shadowIntervals)],
             zasvetkaIntervals: [...get(zasvetkaIntervals)],
             vkiIntervals: [...get(vkiIntervals)],
-            rotationIntervals: [...get(rotationIntervals)]
+            rotationIntervals: [...get(rotationIntervals)],
+            numKa: currentNumKa ?? DEFAULT_NUM_KA
         };
     }
 
@@ -175,7 +178,8 @@ export function createAnalysisActions(
             shadowsForDate,
             zasvetkiForDate,
             vkiForDate,
-            rotationsForDate
+            rotationsForDate,
+            sourceProgram.numKa ?? DEFAULT_NUM_KA
         );
     }
 
@@ -641,7 +645,8 @@ export function createAnalysisActions(
         shadows: ShadowInterval[],
         zasvetki: ZasvetkaInterval[],
         vki: VkiInterval[],
-        rotations: RotationInterval[]
+        rotations: RotationInterval[],
+        numKa: number
     ): ProgramsListItem {
         return {
             id: `program_${date.replace(/-/g, '')}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
@@ -655,7 +660,8 @@ export function createAnalysisActions(
             shadowIntervals: shadows,
             zasvetkaIntervals: zasvetki,
             vkiIntervals: vki,
-            rotationIntervals: rotations
+            rotationIntervals: rotations,
+            numKa: numKa
         };
     }
 

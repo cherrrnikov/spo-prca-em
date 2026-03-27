@@ -24,10 +24,10 @@ public class ProgramsMain {
     private Long id;
 
     @Column(name = "num_rp", nullable = false)
-    private Integer numRp; // Начинается с 1 а не с 0
+    private Long numRp; // Начинается с 1 а не с 0
 
     @Column(name = "num_ka", nullable = false)
-    private Integer numKa;
+    private Long numKa;
 
     @Column(name = "date_on")
     private LocalDateTime dateOn;

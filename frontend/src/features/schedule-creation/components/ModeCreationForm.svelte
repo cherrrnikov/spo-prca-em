@@ -95,7 +95,7 @@
         localFormData.ppiNum = interval.ppi || 1;
         localFormData.duration = interval.dlit || 300;
         localFormData.startTime = interval.startTime;
-        localFormData.startTime = interval.endTime;
+        localFormData.endTime = interval.endTime;
         localFormData.customerCode = interval.customerCode || 1;
         
         if (interval.mode === 7) {

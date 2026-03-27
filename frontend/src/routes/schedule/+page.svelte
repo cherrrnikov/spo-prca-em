@@ -55,6 +55,7 @@
         activeProgramDate,
         analysisModal,
         bortData,
+        numKa,
         
         loadUserData,
         handleIntervalClick,
@@ -154,10 +155,17 @@
     ) {
         operatorData.set(newOperatorData);
         ppiAssignments.set(newPpiAssignments);
+
+        if (newOperatorData?.main?.n_ka) {
+            numKa.set(newOperatorData.main.n_ka);
+        }
+
         creationMode.set('operator');
         operatorDataLoaded.set(true);
 
         if (newOperatorData.main?.d_np) {
+
+
             const date = newOperatorData.main.d_np.split('T')[0];
             setContextDate(date); 
             selectedProgramDate.set(date);
@@ -468,7 +476,9 @@
                     ppiAssignments={$ppiAssignments}
                     selectedProgramDate={$selectedProgramDate}
                     createdPrograms={$createdPrograms}
+                    programsList={$programsList}
                     updateAllConflicts={updateAllConflicts} 
+                    numKa={$numKa}
                 />
                 <div class="program-date-info">
                     <h2 class="program-date-title">
@@ -497,7 +507,9 @@
                 ppiAssignments={$ppiAssignments}
                 selectedProgramDate={$selectedProgramDate}
                 createdPrograms={$createdPrograms}
+                programsList={$programsList}
                 updateAllConflicts={updateAllConflicts} 
+                numKa={$numKa}
             />
         {/if}
     </header>

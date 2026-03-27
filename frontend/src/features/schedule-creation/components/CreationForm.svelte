@@ -1,9 +1,10 @@
 <script lang="ts">
-    import type {
-    	MsuGsType,
-    	ScheduleStatus,
-    	ShootingMode
-    } from '../types';
+	import { DEFAULT_NUM_KA } from '$lib/constants/schedule';
+	import type {
+		MsuGsType,
+		ScheduleStatus,
+		ShootingMode
+	} from '../types';
 
     let {
         scheduleStatus = $bindable('main'),
@@ -11,7 +12,7 @@
         selectedTime = $bindable(''),
         shootingMode = $bindable('default'),
         msuGsType = $bindable('msu_gs_1'),
-        numKa = $bindable(1525),
+        numKa = $bindable(DEFAULT_NUM_KA),
         isLoading = false,
         onSubmit,
         onCancel

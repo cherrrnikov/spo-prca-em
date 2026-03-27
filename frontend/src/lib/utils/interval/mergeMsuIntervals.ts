@@ -94,7 +94,19 @@ export function mergeMsuIntervals(createdPrograms: CreatedProgramData[]): Create
     }
     
     console.log(`Результат: было ${msuPrograms.length} интервалов, стало ${mergedMsuPrograms.length} объединенных`);
-    
+    console.log('msuPrograms.length:', msuPrograms.length);
+        msuPrograms.forEach(p => {
+            console.log('Интервал:', {
+                id: p.timeInterval.id,
+                mode: p.modeData.kodMode,
+                start: p.timeInterval.startTime,
+                end: p.timeInterval.endTime,
+                tip: p.modeData.tsData?.tip,
+                prMsu1: p.modeData.tsData?.prMsu1,
+                willBeSaved: p.timeInterval.willBeSaved
+            });
+        });
+
     // 5. Объединяем с остальными программами
     return [...mergedMsuPrograms, ...otherPrograms];
 }
