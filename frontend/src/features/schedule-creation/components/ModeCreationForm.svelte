@@ -61,6 +61,13 @@
         }
     });
 
+    $effect(() => {
+        if (!editingInterval && selectedMode) {
+            // Сброс при создании нового режима
+            resetFormForNewMode(selectedMode);
+        }
+    });
+
     function getInitialFormData(): ModeCreationForm {
         return {
             modeType: null,
