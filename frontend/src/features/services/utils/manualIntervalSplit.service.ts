@@ -12,8 +12,9 @@ export class ManualIntervalSplitService {
         
         // Определяем шаг в зависимости от типа съемки (1=штатная 30мин, 2=учащенная 15мин)
         const stepMinutes = formData.tip === 1 ? 30 : 15;
-        const intervalDuration = formData.duration; // длительность каждого маленького интервала в секундах
-        
+        const intervalDuration = formData.duration * 1000; // длительность каждого маленького интервала в секундах
+        const intervalDurationSec = formData.duration;
+
         const city = CityService.getCityByPpi(formData.ppiNum);
         const color = CityService.getColorByPpi(formData.ppiNum);
         
@@ -43,7 +44,7 @@ export class ManualIntervalSplitService {
                 city,
                 color,
                 ppi: formData.ppiNum,
-                dlit: intervalDuration,
+                dlit: intervalDurationSec,
                 customerCode: formData.customerCode,
                 
                 // Параметры МСУ для съемок
