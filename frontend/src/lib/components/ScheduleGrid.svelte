@@ -23,7 +23,8 @@
         onIntervalDelete,
         selectedIntervalId = null,
         isEditing = false,
-        isReadOnly = false
+        isReadOnly = false,
+        operatorDataLoaded = false
     } = $props<{
         intervals: TimeInterval[];
         shadowIntervals?: ShadowInterval[];
@@ -39,6 +40,7 @@
         selectedIntervalId?: string | null;
         isEditing: boolean;
         isReadOnly?: boolean;
+        operatorDataLoaded?: boolean;
     }>();
 
     let containerWidth = $state(0);
@@ -358,7 +360,7 @@
                             value={mode.id}
                             checked={selectedMode === mode.id}
                             on:change={() => selectMode(mode.id)}
-                            disabled={isEditing || isAstroMode || isReadOnly}
+                            disabled={isEditing || isAstroMode || isReadOnly || !operatorDataLoaded}
                         />
                         <span class="mode-text">{mode.label}</span>
                     </label>

@@ -93,30 +93,31 @@
         console.log("intervals length:", $intervals.length);
     });
 
-    // Создание ПРЦА
     function startOperatorCreation() {
-        // Проверяем, есть ли уже загруженные данные
         if ($operatorDataLoaded && $intervals.length > 0) {
             const confirm = window.confirm(
                 'Текущая ПРЦА не будет сохранена. Продолжить?'
             );
             if (!confirm) return;
-            
-            intervals.set([]);
-            operatorData.set(null);
-            ppiAssignments.set([]);
-            createdPrograms.set([]);
-            shadowIntervals.set([]);
-            zasvetkaIntervals.set([]);
-            vkiIntervals.set([]);
-            rotationIntervals.set([]);
-            
-            operatorDataLoaded.set(false);
-            selectedMode.set(null);
-            editingInterval.set(null);
-            selectedIntervalId.set(null);
-            selectedProgramDate.set(''); 
         }
+        
+        intervals.set([]);
+        operatorData.set(null);
+        ppiAssignments.set([]);
+        createdPrograms.set([]);
+        shadowIntervals.set([]);
+        zasvetkaIntervals.set([]);
+        vkiIntervals.set([]);
+        rotationIntervals.set([]);
+        
+        operatorDataLoaded.set(false);
+        selectedMode.set(null);
+        editingInterval.set(null);
+        selectedIntervalId.set(null);
+        selectedProgramDate.set('');
+        
+        // Сбрасываем read-only режим
+        isReadOnly.set(false);
         
         // Если мы в режиме анализа - выходим из него
         if ($isAnalysisMode) {
@@ -133,6 +134,7 @@
     
     function handleCreationCancel() {
         creationMode.set(null);
+        isReadOnly.set(false);
     }
     
     // Загрузка данных
@@ -483,19 +485,7 @@
                     numKa={$numKa}
                     onAfterSave={cleanupAfterSave}
                 />
-                <div class="program-date-info">
-                    <h2 class="program-date-title">
-                        {#if $isAnalysisMode && $activeProgramId}
-                            ПРЦА действует с 
-                            <strong>{formatDate($activeProgramDate)}</strong> 
-                            по <strong>{formatDate($activeProgramDate)} 23:59:59</strong>
-                        {:else}
-                            ПРЦА действует с 
-                            <strong>{formatDate($selectedProgramDate)}</strong> 
-                            по <strong>{formatDate($selectedProgramDate)} 23:59:59</strong>
-                        {/if}
-                    </h2>
-                </div>
+                 
             </div>
         {:else}
             <FileMenu 
@@ -534,6 +524,7 @@
             selectedIntervalId={$selectedIntervalId}
             isEditing={$isEditing}
             isReadOnly={$isReadOnly}
+            operatorDataLoaded={$operatorDataLoaded}
         />
     </div>
 
