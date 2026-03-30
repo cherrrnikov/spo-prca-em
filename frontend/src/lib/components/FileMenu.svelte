@@ -98,7 +98,19 @@
               try {
                   console.log(`\n--- Сохранение ПРЦА для даты ${program.date} ---`);
                   console.log(`program.numKa для ${program.date}:`, program.numKa);
-                  const mergedCreatedPrograms = mergeMsuIntervals(program.createdPrograms);
+                  
+                  const redIntervals = createdPrograms.filter(p => p.timeInterval.hasConflict === true);
+
+                  if (redIntervals.length > 0) {
+                      alert(`❌ Невозможно сохранить ПРЦА!\n\n` +
+                            `Обнаружены конфликтующие интервалы (красные)\n` +
+                            `Пожалуйста, устраните конфликты вручную (удалите или переместите интервалы) и попробуйте снова.`);
+                      return;
+                  }
+
+                  const mergedCreatedPrograms = mergeMsuIntervals(createdPrograms);
+                  console.log(`После объединения: ${mergedCreatedPrograms.length} интервалов (было ${createdPrograms.length})`);
+
 
                   // Подготавливаем данные для этой ПРЦА
                   const programRequest = ScheduleCreationService.prepareFullProgramData(
@@ -167,6 +179,16 @@
           
           console.log("=== ПОДГОТОВКА ДАННЫХ ДЛЯ СОХРАНЕНИЯ ===");
           await updateAllConflicts();
+
+
+          const redIntervals = createdPrograms.filter(p => p.timeInterval.hasConflict === true);
+
+          if (redIntervals.length > 0) {
+              alert(`❌ Невозможно сохранить ПРЦА!\n\n` +
+                    `Обнаружены конфликтующие интервалы (красные)\n` +
+                    `Пожалуйста, устраните конфликты вручную (удалите или переместите интервалы) и попробуйте снова.`);
+              return;
+          }
 
           const mergedCreatedPrograms = mergeMsuIntervals(createdPrograms);
           console.log(`После объединения: ${mergedCreatedPrograms.length} интервалов (было ${createdPrograms.length})`);
