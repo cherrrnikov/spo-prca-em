@@ -91,14 +91,13 @@ export class ProgramPreparerService {
         numKa?: number,
         numRp?: number
     ): CreateProgramRequest {
-        const finalNumRp = numRp ?? this.generateProgramNumber();
         let finalNumKa = numKa ?? DEFAULT_NUM_KA;
         if (!finalNumKa && operatorData?.main?.n_ka) {
             finalNumKa = operatorData.main.n_ka;
         }
 
         const mainData = {
-            numRp: finalNumRp,
+            numRp: 0,
             numKa: finalNumKa,
             dateOn: `${selectedDate}T${selectedTime}:00`,
             dateOff: `${selectedDate}T23:59:59`,
@@ -112,7 +111,7 @@ export class ProgramPreparerService {
         createdPrograms.forEach(created => {
             if (created.timeInterval.willBeSaved === true) {
                 // Копируем modeData, но обновляем numRp
-                const modeData = { ...created.modeData, numRp: finalNumRp, numKa: finalNumKa };
+                const modeData = { ...created.modeData, numRp: 0, numKa: finalNumKa };
                 modes.push(modeData);
             }
         });
