@@ -20,6 +20,7 @@ export interface ProgramsListItem {
     vkiIntervals: VkiInterval[];
     rotationIntervals: RotationInterval[];
     numKa: number;
+    numRp?: number;
 }
 
 export interface AnalysisModalState {

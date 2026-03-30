@@ -104,7 +104,8 @@ export function createAnalysisActions(
             zasvetkaIntervals: [...get(zasvetkaIntervals)],
             vkiIntervals: [...get(vkiIntervals)],
             rotationIntervals: [...get(rotationIntervals)],
-            numKa: currentNumKa ?? DEFAULT_NUM_KA
+            numKa: currentNumKa ?? DEFAULT_NUM_KA,
+            numRp: undefined
         };
     }
 
@@ -179,7 +180,8 @@ export function createAnalysisActions(
             zasvetkiForDate,
             vkiForDate,
             rotationsForDate,
-            sourceProgram.numKa ?? DEFAULT_NUM_KA
+            sourceProgram.numKa ?? DEFAULT_NUM_KA,
+            sourceProgram.numRp
         );
     }
 
@@ -646,7 +648,8 @@ export function createAnalysisActions(
         zasvetki: ZasvetkaInterval[],
         vki: VkiInterval[],
         rotations: RotationInterval[],
-        numKa: number
+        numKa: number,
+        numRp?: number
     ): ProgramsListItem {
         return {
             id: `program_${date.replace(/-/g, '')}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
@@ -661,7 +664,8 @@ export function createAnalysisActions(
             zasvetkaIntervals: zasvetki,
             vkiIntervals: vki,
             rotationIntervals: rotations,
-            numKa: numKa
+            numKa: numKa,
+            numRp: numRp
         };
     }
 

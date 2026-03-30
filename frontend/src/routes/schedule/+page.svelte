@@ -56,6 +56,7 @@
         analysisModal,
         bortData,
         numKa,
+        currentNumRp,
         
         loadUserData,
         handleIntervalClick,
@@ -484,28 +485,67 @@
                     updateAllConflicts={updateAllConflicts} 
                     numKa={$numKa}
                     onAfterSave={cleanupAfterSave}
+                    onNumRpSaved={(numRp) => {
+                        currentNumRp.set(numRp);
+                    }}
                 />
-                 
+                <div class="program-date-info">
+                    <h2 class="program-date-title">
+                        {#if $isReadOnly}
+                            ПРЦА действует с 
+                            <strong>{formatDate($selectedProgramDate)} 00:00:00</strong> 
+                            по <strong>{formatDate($selectedProgramDate)} 23:59:59</strong>
+                            {#if $operatorData?.main?.n_ka}
+                                <span class="program-details">(КА {$operatorData.main.n_ka}, РП {$currentNumRp})</span>
+                            {/if}
+                        {:else}
+                            ПРЦА действует с 
+                            <strong>{formatDate($selectedProgramDate)} 00:00:00</strong> 
+                            по <strong>{formatDate($selectedProgramDate)} 23:59:59</strong>
+                        {/if}
+                    </h2>
+                </div>
             </div>
         {:else}
-            <FileMenu 
-                userData={$userData}
-                onOperatorCreate={startOperatorCreation}
-                onReferenceCreate={startReferenceCreation}
-                onAnalysisClick={openAnalysisModal}
-                isAnalysisMode={$isAnalysisMode}
-                isOperatorMode={$creationMode === 'operator'}
-                intervals={$intervals}
-                operatorData={$operatorData}
-                ppiAssignments={$ppiAssignments}
-                selectedProgramDate={$selectedProgramDate}
-                createdPrograms={$createdPrograms}
-                programsList={$programsList}
-                updateAllConflicts={updateAllConflicts} 
-                numKa={$numKa}
-                onAfterSave={cleanupAfterSave}
-            />
+        <FileMenu 
+            userData={$userData}
+            onOperatorCreate={startOperatorCreation}
+            onReferenceCreate={startReferenceCreation}
+            onAnalysisClick={openAnalysisModal}
+            isAnalysisMode={$isAnalysisMode}
+            isOperatorMode={$creationMode === 'operator'}
+            intervals={$intervals}
+            operatorData={$operatorData}
+            ppiAssignments={$ppiAssignments}
+            selectedProgramDate={$selectedProgramDate}
+            createdPrograms={$createdPrograms}
+            programsList={$programsList}
+            updateAllConflicts={updateAllConflicts} 
+            numKa={$numKa}
+            onAfterSave={cleanupAfterSave}
+            onNumRpSaved={(numRp) => {
+                currentNumRp.set(numRp);
+            }}
+        />
+        {#if $selectedProgramDate}
+            <div class="program-date-info">
+                <h2 class="program-date-title">
+                    {#if $isReadOnly}
+                        ПРЦА действует с 
+                        <strong>{formatDate($selectedProgramDate)} 00:00:00</strong> 
+                        по <strong>{formatDate($selectedProgramDate)} 23:59:59</strong>
+                        {#if $operatorData?.main?.n_ka}
+                            <span class="program-details">(Номер КА: {$operatorData.main.n_ka}, Номер РП: {$currentNumRp})</span>
+                        {/if}
+                    {:else}
+                        ПРЦА действует с 
+                        <strong>{formatDate($selectedProgramDate)} 00:00:00</strong> 
+                        по <strong>{formatDate($selectedProgramDate)} 23:59:59</strong>
+                    {/if}
+                </h2>
+            </div>
         {/if}
+    {/if}
     </header>
     
     <div class="grid-container">
@@ -645,4 +685,5 @@
         font-weight: bold;
         color: #2c5282;
     }
+
 </style>

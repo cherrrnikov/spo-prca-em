@@ -1,5 +1,8 @@
 package ru.laspace.backend.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -34,7 +37,7 @@ public class ProgramsController {
             @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера", content = @Content)
     })
     @PostMapping("/create")
-    public ResponseEntity<Void> createProgram(@RequestBody ProgramCreateRequest request) {
+    public ResponseEntity<Map<String, Long>> createProgram(@RequestBody ProgramCreateRequest request) {
         log.info("=== Получен запрос на создание ПРЦА ===");
 
         if (request == null) {
@@ -53,9 +56,13 @@ public class ProgramsController {
         log.info("Количество режимов в запросе: {}", request.getModes() != null ? request.getModes().size() : 0);
 
         try {
-            programsService.saveProgram(request);
-            log.info("ПРЦА успешно сохранена");
-            return ResponseEntity.status(HttpStatus.CREATED).build();
+            Long generatedNumRp = programsService.saveProgram(request);
+            log.info("ПРЦА успешно сохранена, присвоен номер: {}", generatedNumRp);
+
+            Map<String, Long> response = new HashMap<>();
+            response.put("numRp", generatedNumRp);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             log.error("Ошибка при сохранении ПРЦА: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();

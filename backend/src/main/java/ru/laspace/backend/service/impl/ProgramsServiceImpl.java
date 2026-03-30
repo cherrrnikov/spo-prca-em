@@ -39,7 +39,7 @@ public class ProgramsServiceImpl implements ProgramsService {
 
     @Override
     @Transactional
-    public void saveProgram(ProgramCreateRequest request) {
+    public Long saveProgram(ProgramCreateRequest request) {
         log.info("=== Начало сохранения ПРЦА ===");
         Long numKa = request.getMainData().getNumKa();
         Long newNumRp = programNumberService.generateNextProgramNumber(numKa);
@@ -71,6 +71,8 @@ public class ProgramsServiceImpl implements ProgramsService {
         programsOnaService.saveOnaPrograms(savedMain, request);
         log.info("=== Сохранение ПРЦА завершено ===");
         log.info("Сохранено режимов: {}", savedCount);
+
+        return newNumRp;
     }
 
     private ProgramsMain createProgramsMain(ProgramCreateRequest.MainData mainData, Long newNumRp) {

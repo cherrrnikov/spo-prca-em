@@ -62,6 +62,9 @@ export function createStores() {
     // Номер КА
     const numKa = writable<number>(1525);
 
+    // Номер РП
+    const currentNumRp = writable<number | null>(null);
+
     const isReadOnly = writable(false);
 
     const activeProgramDate = derived(
@@ -129,6 +132,9 @@ export function createStores() {
 
         // Номер КА
         numKa,
+
+        // Номер РП
+        currentNumRp,
 
         isReadOnly
     };

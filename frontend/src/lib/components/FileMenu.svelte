@@ -27,7 +27,8 @@
     updateAllConflicts,
     programsList = [],
     numKa,
-    onAfterSave
+    onAfterSave,
+    onNumRpSaved
   } = $props<{
     userData: UserResponse | null;
     onOperatorCreate?: () => void;
@@ -44,6 +45,7 @@
     programsList?: ProgramsListItem[];
     numKa?: number;
     onAfterSave?: () => void;
+    onNumRpSaved?: (numRp: number) => void;
   }>();
 
   function handleClickOutside(event: MouseEvent) {
@@ -93,8 +95,6 @@
           let failedCount = 0;
           
           for (const program of programsList) {
-            const uniqueNumRp = Math.floor(Date.now() * 1000 + Math.random() * 1000);
-
               try {
                   console.log(`\n--- Сохранение ПРЦА для даты ${program.date} ---`);
                   console.log(`program.numKa для ${program.date}:`, program.numKa);
@@ -121,7 +121,7 @@
                       "00:00",
                       'main',
                       program.numKa,
-                      uniqueNumRp
+                      undefined
                   );
                   
                   console.log(`Количество режимов для ${program.date}: ${programRequest.modes.length}`);
@@ -135,6 +135,14 @@
                   // Сохраняем
                   const result = await ScheduleCreationService.saveProgram(programRequest);
                   console.log(`✅ ПРЦА для ${program.date} сохранена`);
+
+                  if (result?.numRp) {
+                      program.numRp = result.numRp;
+                      const index = programsList.findIndex(p => p.id === program.id);
+                      if (index !== -1) {
+                          programsList[index] = { ...program, numRp: result.numRp };
+                      }
+                  }
                   savedCount++;
                   
               } catch (error) {
@@ -304,6 +312,12 @@
           console.log("=== РЕЗУЛЬТАТ СОХРАНЕНИЯ ===");
           console.log("Успешно! Ответ сервера:", result);
           
+          if (result?.numRp) {
+              if (onNumRpSaved) {
+                  onNumRpSaved(result.numRp);
+              }
+          }
+
           console.log("🔧 Вызываем onAfterSave, onAfterSave =", onAfterSave);
           onAfterSave?.();
 
