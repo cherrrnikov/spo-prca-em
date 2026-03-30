@@ -2,7 +2,7 @@
 	import type { OperatorData, Ppi, PpiAssignment, PpiSelectionModal as PpiSelectionModalType } from "$lib/types";
 	import { onMount } from "svelte";
 	import { ScheduleCreationService } from "../../services/scheduleCreation.service";
-	import type { MsuGsType, ScheduleStatus, ShootingMode } from "../types";
+	import type { ScheduleStatus } from "../types";
 	import CreationForm from "./CreationForm.svelte";
 	import PpiSelectionModal from "./PpiSelectionModal.svelte";
 
@@ -30,8 +30,6 @@
     let scheduleStatus = $state<ScheduleStatus>('main');
     let selectedDate = $state('');
     let selectedTime = $state('');
-    let shootingMode = $state<ShootingMode>('default');
-    let msuGsType = $state<MsuGsType>('msu_gs_1');
 
     let operatorData = $state<OperatorData | null>(null);
     let ppiAssignments = $state<PpiAssignment[]>([]);
@@ -241,8 +239,6 @@
     
     function handleCancelCreation() {
         scheduleStatus = 'main';
-        shootingMode = 'default';
-        msuGsType = 'msu_gs_1';
         operatorData = null;
         ppiAssignments = [];
         ppiModal.isOpen = false;
@@ -253,8 +249,6 @@
 
     function resetFormState() {
         scheduleStatus = 'main';
-        shootingMode = 'default';
-        msuGsType = 'msu_gs_1';
         ppiModal.isOpen = false;
         isLoading = false;
     }
@@ -265,8 +259,6 @@
         bind:scheduleStatus
         bind:selectedDate
         bind:selectedTime
-        bind:shootingMode
-        bind:msuGsType
         bind:numKa
         {isLoading}
         onSubmit={handleFormSubmit}

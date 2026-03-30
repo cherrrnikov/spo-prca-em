@@ -1,17 +1,13 @@
 <script lang="ts">
 	import { DEFAULT_NUM_KA } from '$lib/constants/schedule';
 	import type {
-		MsuGsType,
 		ScheduleStatus,
-		ShootingMode
 	} from '../types';
 
     let {
         scheduleStatus = $bindable('main'),
         selectedDate = $bindable(''),
         selectedTime = $bindable(''),
-        shootingMode = $bindable('default'),
-        msuGsType = $bindable('msu_gs_1'),
         numKa = $bindable(DEFAULT_NUM_KA),
         isLoading = false,
         onSubmit,
@@ -20,8 +16,6 @@
         scheduleStatus?: ScheduleStatus;
         selectedDate?: string;
         selectedTime?: string;
-        shootingMode?: ShootingMode;
-        msuGsType?: MsuGsType;
         numKa?: number;
         isLoading?: boolean;
         onSubmit: () => Promise<void>;
@@ -106,58 +100,6 @@
                     on:input={(e) => selectedTime = e.target.value}
                     class="time-input"
                 />
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label">Штатные съемки:</label>
-            <div class="radio-group">
-                <label class="radio-label">
-                    <input 
-                        type="radio" 
-                        name="shootingMode"
-                        value="default"
-                        checked={shootingMode === 'default'}
-                        on:change={(e) => shootingMode = e.target.value as ShootingMode}
-                    />
-                    <span>По умолчанию</span>
-                </label>
-                <label class="radio-label">
-                    <input 
-                        type="radio" 
-                        name="shootingMode"
-                        value="no_shooting"
-                        checked={shootingMode === 'no_shooting'}
-                        on:change={(e) => shootingMode = e.target.value as ShootingMode}
-                    />
-                    <span>Без съемки</span>
-                </label>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label">Признак МСУ ГС:</label>
-            <div class="radio-group">
-                <label class="radio-label">
-                    <input 
-                        type="radio" 
-                        name="msuGsType"
-                        value="msu_gs_1"
-                        checked={msuGsType === 'msu_gs_1'}
-                        on:change={(e) => msuGsType = e.target.value as MsuGsType}
-                    />
-                    <span>Комплект МСУ ГС 1</span>
-                </label>
-                <label class="radio-label">
-                    <input 
-                        type="radio" 
-                        name="msuGsType"
-                        value="msu_gs_2"
-                        checked={msuGsType === 'msu_gs_2'}
-                        on:change={(e) => msuGsType = e.target.value as MsuGsType}
-                    />
-                    <span>Комплект МСУ ГС 2</span>
-                </label>
             </div>
         </div>
 
