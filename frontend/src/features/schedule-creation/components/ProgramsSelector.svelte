@@ -39,13 +39,6 @@
             >
                 ✕
             </button>
-            <!-- <button 
-                class="toggle-button"
-                on:click={() => isOpen = !isOpen}
-                aria-label={isOpen ? 'Свернуть' : 'Развернуть'}
-            >
-                {isOpen ? '▼' : '▶'}
-            </button> -->
         </div>
     </div>
     

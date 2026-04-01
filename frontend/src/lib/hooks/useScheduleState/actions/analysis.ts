@@ -1,4 +1,5 @@
 import { DEFAULT_NUM_KA, WORK_MODES } from '$lib/constants/schedule';
+import { modal } from '$lib/services/modal.service';
 import type { CreatedProgramData, ProgramModeData, RotationInterval, ShadowInterval, TimeInterval, VkiInterval, ZasvetkaInterval } from '$lib/types';
 import type { ProgramsListItem } from '$lib/types/analysis';
 import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
@@ -75,7 +76,7 @@ export function createAnalysisActions(
             // 4. Добавляем все созданные ПРЦА в список
             programsList.update(list => [...list, ...newPrograms]);
             
-            alert(`Создано ${newPrograms.length} ПРЦА для анализа`);
+            modal.alert("Успех", `Создано ${newPrograms.length} ПРЦА для анализа`, 'success');
             
         } catch (error) {
             console.error("Ошибка при создании анализа:", error);
@@ -208,6 +209,7 @@ export function createAnalysisActions(
         vkiIntervals.set(program.vkiIntervals);
         rotationIntervals.set(program.rotationIntervals);
         contextDate.set(program.date);
+        selectedProgramDate.set(program.date);
         activeProgramId.set(programId);
     }
 

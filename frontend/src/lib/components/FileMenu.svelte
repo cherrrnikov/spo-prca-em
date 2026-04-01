@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
+  import { modal } from '$lib/services/modal.service';
   import type { TimeInterval } from '$lib/types';
   import type { ProgramsListItem } from '$lib/types/analysis';
   import type { UserResponse } from '$lib/types/auth';
@@ -11,6 +11,8 @@
   let isOpen = $state(false);
   let isSubMenuOpen = $state(false);
   let menuRef = $state<HTMLDivElement | null>(null);
+  let logoutForm: HTMLFormElement;
+  let pendingLogout = false;
 
   let {
     userData,
@@ -102,9 +104,7 @@
                   const redIntervals = createdPrograms.filter(p => p.timeInterval.hasConflict === true);
 
                   if (redIntervals.length > 0) {
-                      alert(`❌ Невозможно сохранить ПРЦА!\n\n` +
-                            `Обнаружены конфликтующие интервалы (красные)\n` +
-                            `Пожалуйста, устраните конфликты вручную (удалите или переместите интервалы) и попробуйте снова.`);
+                      modal.alert('Ошибка', 'Невозможно сохранить ПРЦА!\n\nОбнаружены конфликтующие интервалы (красные)\n\nПожалуйста, устраните конфликты вручную (удалите или переместите интервалы) и попробуйте снова.', 'error');
                       return;
                   }
 
@@ -155,9 +155,7 @@
           onAfterSave?.();
 
 
-          alert(`✅ Сохранение анализа завершено!\n\n` +
-                `Успешно: ${savedCount}\n` +
-                `Ошибок: ${failedCount}`);
+          modal.alert('Успех', `Сохранение анализа завершено!\n\nУспешно: ${savedCount}\nОшибок: ${failedCount}`, 'success');
           
           return;
       }
@@ -172,13 +170,13 @@
       // 2. Проверяем данные
       if (!operatorData || !selectedProgramDate) {
           console.error("Недостаточно данных для сохранения!");
-          alert('Ошибка: Нет данных оператора или дата не выбрана');
+          modal.alert('Ошибка', 'Нет данных оператора или дата не выбрана', 'error');
           return;
       }
       
       if (intervals.length === 0 && (!operatorData.kvd_list?.length && !operatorData.tnp_list?.length && !operatorData.ts_list?.length)) {
           console.error("Нет интервалов для сохранения!");
-          alert('Ошибка: Нет интервалов для сохранения');
+          modal.alert('Ошибка', 'Нет интервалов для сохранения', 'error');
           return;
       }
       
@@ -192,9 +190,7 @@
           const redIntervals = createdPrograms.filter(p => p.timeInterval.hasConflict === true);
 
           if (redIntervals.length > 0) {
-              alert(`❌ Невозможно сохранить ПРЦА!\n\n` +
-                    `Обнаружены конфликтующие интервалы (красные)\n` +
-                    `Пожалуйста, устраните конфликты вручную (удалите или переместите интервалы) и попробуйте снова.`);
+              modal.alert('Ошибка', 'Невозможно сохранить ПРЦА!\n\nОбнаружены конфликтующие интервалы (красные)\n\nПожалуйста, устраните конфликты вручную (удалите или переместите интервалы) и попробуйте снова.', 'error');
               return;
           }
 
@@ -219,7 +215,7 @@
           
           console.log("\n=== ДЕТАЛЬНЫЙ АНАЛИЗ ===");
           console.log("Основные данные программы:");
-          console.log("- Номер ПРЦА:", programRequest.mainData.numRp);
+          console.log("- Номер РП:", programRequest.mainData.numRp);
           console.log("- Номер КА:", programRequest.mainData.numKa);
           console.log("- Дата начала:", programRequest.mainData.dateOn);
           console.log("- Дата окончания:", programRequest.mainData.dateOff);
@@ -321,21 +317,17 @@
           console.log("🔧 Вызываем onAfterSave, onAfterSave =", onAfterSave);
           onAfterSave?.();
 
-          alert(`✅ ПРЦА успешно сохранена!\n\n` +
-                `Номер ПРЦА: ${programRequest.mainData.numRp}\n` +
-                `Дата: ${selectedProgramDate}\n` +
-                `Сохранено режимов: ${programRequest.modes.length}\n` +
-                `(КВД: ${kvdCount}, ТНП: ${tnpCount}, ТС: ${tsCount} - временно пропускаются, ОМИ: ${omiCount}, ОНА: ${onaCount})`);
-          
+          modal.alert('Успех', `ПРЦА успешно сохранена!\n\nНомер РП: ${result?.numRp || programRequest.mainData.numRp}\nДата: ${selectedProgramDate}\nСохранено режимов: ${programRequest.modes.length}\n(КВД: ${kvdCount}, ТНП: ${tnpCount}, ТС: ${tsCount}, ОМИ: ${omiCount}, ОНА: ${onaCount}, Съемки: ${shootingCount})`, 'success');
+          console.log('modal.alert вызван');
 
       } catch (error) {
           console.error("❌ ОШИБКА ПРИ СОХРАНЕНИИ:", error);
-          alert(`❌ Ошибка сохранения ПРЦА:\n${error.message}\n\nПодробности в консоли (F12)`);
+          modal.alert('Ошибка', `Ошибка сохранения ПРЦА:\n${error.message}`, 'error');
       }
   }
 
   function handleExport() {
-    alert('Генерация отчета');
+    modal.alert('Информация', 'Генерация отчета (в разработке)', 'info');
   }
 
   function handleAnalysis() {
@@ -350,9 +342,28 @@
   }
 
   function handleLogout() {
-    if (confirm('Вы уверены, что хотите выйти?')) {
-      goto('/');
-    }
+    modal.confirm(
+      'Подтверждение',
+      'Вы уверены, что хотите выйти?',
+      async () => {
+        // Отправляем запрос на выход
+        const response = await fetch('/?/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        });
+        
+        if (response.ok) {
+          // После успешного выхода — редирект на главную
+          goto('/');
+        } else {
+          modal.alert('Ошибка', 'Не удалось выйти из системы', 'error');
+        }
+      },
+      undefined,
+      'warning'
+    );
   }
 
   function handleAdmin() {
@@ -430,15 +441,14 @@
         {#if userData?.roles?.includes('ADMIN')}
             <button onclick={handleAdmin} type="submit" class="menu-item">Панель админа</button>
         {/if}
-        <form method="POST" action="/?/logout" use:enhance>
-            <button onclick={handleLogout} type="submit" class="menu-item logout">
-            Выход
-            </button>
-        </form>
+        <button onclick={handleLogout} class="menu-item logout">
+          Выход
+        </button>
       </div>
     </div>
   {/if}
 </div>
+
 
 <style>
   .file-menu {

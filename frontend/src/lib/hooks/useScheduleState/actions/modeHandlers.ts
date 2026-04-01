@@ -1,4 +1,5 @@
 import { CUSTOMER_CODES } from '$lib/constants/schedule';
+import { modal } from '$lib/services/modal.service';
 import type { CreatedProgramData, ModeCreationForm, ProgramModeData, TimeInterval } from '$lib/types';
 import { checkIntervalOverlap } from '$lib/utils/interval/conflicts';
 import { IntervalValidationService } from '$lib/utils/intervalValidation';
@@ -65,7 +66,7 @@ export function createModeHandlers(
                 );
                 
                 if (sameModeOverlap.overlaps) {
-                    alert(`Ошибка: интервал ${interval.startTime}-${interval.endTime} пересекается с существующим интервалом`);
+                    modal.alert("Ошибка", `Интервал ${interval.startTime}-${interval.endTime} пересекается с существующим интервалом`, 'error')
                     return;
                 }
                 intervalsToAdd.push(interval);
@@ -102,7 +103,7 @@ export function createModeHandlers(
             );
             
             if (!validation.isValid) {
-                alert(validation.message);
+                modal.alert("Ошибка", `${validation.message}`, 'error')
                 return;
             }
 
@@ -115,8 +116,8 @@ export function createModeHandlers(
             );
             
             if (sameModeOverlap.overlaps) {
-                alert(`Ошибка: интервал пересекается с существующим интервалом\n` +
-                    `Время конфликта: ${sameModeOverlap.conflictingInterval?.startTime} - ${sameModeOverlap.conflictingInterval?.endTime}`);
+                modal.alert("Ошибка", `Интервал пересекается с существующим интервалом\n` +
+                    `Время конфликта: ${sameModeOverlap.conflictingInterval?.startTime} - ${sameModeOverlap.conflictingInterval?.endTime}`, 'error')
                 return;
             }
             

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { modal } from "$lib/services/modal.service";
 	import type { OperatorData, Ppi, PpiAssignment, PpiSelectionModal as PpiSelectionModalType } from "$lib/types";
 	import { onMount } from "svelte";
 	import { ScheduleCreationService } from "../../services/scheduleCreation.service";
@@ -52,7 +53,7 @@
 
     async function handleFormSubmit() {
         if (!selectedDate) {
-            alert('Выберите дату');
+            modal.alert('Ошибка', 'Выберите дату', 'error');
             return;
         }
 
@@ -96,7 +97,7 @@
             }
         } catch (error) {
             console.error('Ошибка при загрузке данных:', error);
-            alert('Ошибка при загрузке данных: ' + (error as Error).message);
+            modal.alert('Ошибка', 'Ошибка при загрузке данных: ' + (error as Error).message, 'error');
         } finally {
             isLoading = false;
         }

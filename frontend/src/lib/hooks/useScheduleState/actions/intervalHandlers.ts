@@ -1,3 +1,4 @@
+import { modal } from '$lib/services/modal.service';
 import type { ModeCreationForm, TimeInterval } from '$lib/types';
 import { checkIntervalOverlap } from '$lib/utils/interval/conflicts';
 import { IntervalValidationService } from '$lib/utils/intervalValidation';
@@ -33,11 +34,6 @@ export function createIntervalHandlers(
     } = validation;
 
     function handleIntervalClick(interval: TimeInterval) {
-        if (interval.isAstrocorrection) {
-            alert('Попытка редактировать астрокоррекцию - операция запрещена');
-            return;
-        }
-
         isEditing.set(true);
 
         const intervalWithDefaults = {
@@ -60,11 +56,6 @@ export function createIntervalHandlers(
         const intervalToDelete = currentIntervals.find(i => i.id === intervalId);
 
         console.log('Удаляемый интервал:', intervalToDelete);
-
-        if (intervalToDelete?.isAstrocorrection) {
-            alert("Попытка удалить астрокоррекцию - операция запрещена");
-            return;
-        }
 
         intervals.set(currentIntervals.filter(interval => interval.id !== intervalId));
 
@@ -99,7 +90,7 @@ export function createIntervalHandlers(
         );
         
         if (!validation.isValid) {
-            alert(validation.message);
+            modal.alert("Ошибка", `${validation.message}`, 'error')
             return;
         }
 
@@ -113,8 +104,8 @@ export function createIntervalHandlers(
         );
         
         if (sameModeOverlap.overlaps) {
-            alert(`Ошибка: интервал пересекается с существующим интервалом\n` +
-                `Время конфликта: ${sameModeOverlap.conflictingInterval?.startTime} - ${sameModeOverlap.conflictingInterval?.endTime}`);
+            modal.alert("Ошибка", `Ошибка: интервал пересекается с существующим интервалом\n` +
+                `Время конфликта: ${sameModeOverlap.conflictingInterval?.startTime} - ${sameModeOverlap.conflictingInterval?.endTime}`, 'error');
             return;
         }
         

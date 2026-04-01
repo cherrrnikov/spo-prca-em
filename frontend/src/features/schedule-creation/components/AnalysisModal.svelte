@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { AnalysisModalState } from '$lib/types/analysis';
+	import { modal } from '$lib/services/modal.service';
+	import type { AnalysisModalState } from '$lib/types/analysis';
     
     let {
         modalData,
@@ -25,7 +26,7 @@
 
     function validateDates(): boolean {
         if (!startDate || !endDate) {
-            alert('Выберите начальную и конечную даты');
+            modal.alert('Ошибка', 'Выберите начальную и конечную даты', 'error');
             return false;
         }
         
@@ -33,7 +34,7 @@
         const end = new Date(endDate);
         
         if (start >= end) {
-            alert('Дата окончания должна быть позже даты начала');
+            modal.alert('Ошибка', 'Дата окончания должна быть позже даты начала', 'error');
             return false;
         }
         
@@ -42,7 +43,7 @@
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
         if (diffDays > MAX_DAYS) {
-            alert(`Анализ можно создать максимум на ${MAX_DAYS} дней. Вы выбрали ${diffDays} дней.`);
+            modal.alert('Ошибка', `Анализ можно создать максимум на ${MAX_DAYS} дней. Вы выбрали ${diffDays} дней.`, 'error');
             return false;
         }
         

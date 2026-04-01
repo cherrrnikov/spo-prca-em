@@ -21,6 +21,7 @@
     import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
     import { TimeUtils } from '$lib/utils/time';
     
+    import { modal } from '$lib/services/modal.service';
     import type { CreatedProgramData, OperatorData, PpiAssignment, ProgramModeData, TimeInterval } from '$lib/types';
     import { checkAllConflicts } from '$lib/utils/interval/index';
     import { ModeUtils } from '$lib/utils/mode';
@@ -94,14 +95,7 @@
         console.log("intervals length:", $intervals.length);
     });
 
-    function startOperatorCreation() {
-        if ($operatorDataLoaded && $intervals.length > 0) {
-            const confirm = window.confirm(
-                'Текущая ПРЦА не будет сохранена. Продолжить?'
-            );
-            if (!confirm) return;
-        }
-        
+    function resetAndStartOperatorCreation() {
         intervals.set([]);
         operatorData.set(null);
         ppiAssignments.set([]);
@@ -127,10 +121,24 @@
         
         creationMode.set('operator');
     }
+
+    function startOperatorCreation() {
+        if ($operatorDataLoaded && $intervals.length > 0) {
+            modal.confirm(
+                'Подтверждение',
+                'Текущая ПРЦА не будет сохранена. Продолжить?',
+                resetAndStartOperatorCreation,
+                undefined,
+                'warning'
+            );
+        } else {
+            resetAndStartOperatorCreation();
+        }
+    }
     
     function startReferenceCreation() {
         creationMode.set('reference');
-        alert('Создание по опорной ПРЦА (в разработке)');
+        modal.alert('Информация', 'Создание по опорной ПРЦА (в разработке)', 'info');
     }
     
     function handleCreationCancel() {

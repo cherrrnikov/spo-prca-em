@@ -5,6 +5,7 @@
     	PPI_LIST,
     	ZG_OPTIONS
     } from "$lib/constants/schedule";
+    import { modal } from "$lib/services/modal.service";
     import type { ModeCreationForm, TimeInterval, TsMsuConfig } from "$lib/types";
     import { IntervalValidationService } from "$lib/utils/intervalValidation";
     import { TimeUtils } from "$lib/utils/time";
@@ -158,7 +159,7 @@
                 const currentDate = contextDate; // или получить из пропса
                 
                 if (!currentDate) {
-                    alert('Не выбрана дата');
+                    modal.alert('Ошибка', 'Не выбрана дата', 'error');
                     return;
                 }
                 
@@ -169,7 +170,7 @@
                 );
                 
                 if (subIntervals.length === 0) {
-                    alert('В указанном диапазоне не помещается ни один интервал с заданной длительностью');
+                    modal.alert('Ошибка', 'В указанном диапазоне не помещается ни один интервал с заданной длительностью', 'error');
                     return;
                 }
                 
@@ -185,13 +186,13 @@
 
     function validateForm(): boolean {
         if (!localFormData.startTime || localFormData.duration <= 0) {
-            alert('Укажите время начала и длительность');
+            modal.alert('Ошибка', 'Укажите время начала и длительность', 'error');
             return false;
         }
 
         if (!isEditMode && (selectedMode === 8 || selectedMode === 1)) {
             if (!localFormData.endTime) {
-                alert('Укажите время окончания диапазона');
+                modal.alert('Ошибка', 'Укажите время начала диапазона', 'error');
                 return false;
             }
             
@@ -199,12 +200,12 @@
             const endSeconds = TimeUtils.timeToSeconds(localFormData.endTime);
             
             if (endSeconds <= startSeconds) {
-                alert('Время окончания диапазона должно быть позже времени начала');
+                modal.alert('Ошибка', 'Время окончания диапазона должно быть позже времени начала', 'error');
                 return false;
             }
             
             if (localFormData.duration > (endSeconds - startSeconds)) {
-                alert('Длительность интервала больше, чем весь диапазон');
+                modal.alert('Ошибка', 'Длительность интервала больше, чем весь диапазон', 'error');
                 return false;
             }
         }
@@ -215,7 +216,7 @@
         );
         
         if (!validation.isValid) {
-            alert(validation.message);
+            modal.alert('Ошибка', `${validation.message}`, 'error');
             return false;
         }
         
