@@ -1,5 +1,5 @@
 import type { JwtResponse } from '$lib/types/auth';
-import { isTokenExpiringSoon } from '$lib/utils/jwt';
+import { decodeJWT, isTokenExpiringSoon } from '$lib/utils/jwt';
 import type { Handle } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 
@@ -15,11 +15,49 @@ export const handle: Handle = async ({ event, resolve }) => {
   const accessToken = event.cookies.get('access_token');
   const refreshToken = event.cookies.get('refresh_token');
 
+  // Если нет refresh_token, отправляем на логин
   if (!refreshToken && event.url.pathname.startsWith('/schedule')) {
     await cleanupCookies(event.cookies);
     throw redirect(303, '/');
   }
 
+  // Восстанавливаем user_data, если она пропала, но токен валидный
+  if (accessToken && !event.cookies.get('user_data')) {
+    try {
+      const payload = decodeJWT(accessToken);
+      if (payload && payload.exp * 1000 > Date.now()) {
+        let roles: string[] = [];
+        if (payload.roles) {
+          if (typeof payload.roles === 'string') {
+            roles = payload.roles.split(',').map(r => r.trim());
+          } else if (Array.isArray(payload.roles)) {
+            roles = payload.roles;
+          }
+        }
+        
+        const userData = {
+          username: payload.sub,
+          firstName: '',
+          lastName: '',
+          roles: roles
+        };
+        
+        event.cookies.set('user_data', JSON.stringify(userData), {
+          path: '/',
+          httpOnly: false,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 900
+        });
+        
+        console.log('🔄 Восстановлена user_data из токена');
+      }
+    } catch (e) {
+      console.log('Ошибка восстановления user_data:', e);
+    }
+  }
+
+  // Проверяем, нужно ли обновлять access_token
   if (accessToken && refreshToken && isTokenExpiringSoon(accessToken, 2)) {
     console.log(`🔄 Хук: токен истекает для ${event.url.pathname}, пробую обновить...`);
     
@@ -44,7 +82,6 @@ export const handle: Handle = async ({ event, resolve }) => {
           }
         }
       } finally {
-        // Очищаем промис после завершения
         refreshPromise = null;
       }
     }
@@ -84,11 +121,32 @@ async function refreshAccessToken(cookies: any, refreshToken: string): Promise<b
           maxAge: 900
         });
 
+        if (newTokens.refreshToken) {
+          cookies.set('refresh_token', newTokens.refreshToken, {
+            path: '/',
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 604800
+          });
+        }
+
+        const payload = decodeJWT(newTokens.accessToken);
+        
+        let roles: string[] = [];
+        if (payload?.roles) {
+          if (typeof payload.roles === 'string') {
+            roles = payload.roles.split(',').map(r => r.trim());
+          } else if (Array.isArray(payload.roles)) {
+            roles = payload.roles;
+          }
+        }
+        
         const userData = {
-          username: newTokens.username,
-          firstName: newTokens.firstName,
-          lastName: newTokens.lastName,
-          roles: newTokens.roles || []
+          username: newTokens.username || payload?.sub || '',
+          firstName: newTokens.firstName || '',
+          lastName: newTokens.lastName || '',
+          roles: roles
         };
 
         cookies.set('user_data', JSON.stringify(userData), {
@@ -99,7 +157,7 @@ async function refreshAccessToken(cookies: any, refreshToken: string): Promise<b
           maxAge: 900
         });
 
-        console.log('✅ Хук: токен успешно обновлен');
+        console.log('✅ Хук: токен и user_data успешно обновлены');
         return true;
       }
 
@@ -122,7 +180,6 @@ async function refreshAccessToken(cookies: any, refreshToken: string): Promise<b
       }
       
       if (attempt < MAX_RETRIES) {
-        console.log(`⏳ Жду ${RETRY_DELAY * attempt}ms перед следующей попыткой...`);
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
       }
     }

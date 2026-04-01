@@ -63,7 +63,7 @@
     });
 
     $effect(() => {
-        if (!editingInterval && selectedMode) {
+        if (!editingInterval && selectedMode) { 
             // Сброс при создании нового режима
             resetFormForNewMode(selectedMode);
         }
@@ -77,8 +77,10 @@
                 localFormData.prBssd = bortData.pr_bssd ?? 0;
                 localFormData.prZg = bortData.pr_zg ?? 0;
                 localFormData.prOtklZg = bortData.pr_otkl_zg ?? 0;
+            } else if (selectedMode === 8) {
+                localFormData.prBssd = bortData.pr_bssd ?? 0;
+                localFormData.prZg = bortData.pr_zg ?? 0;
             }
-            // Для ТС (mode 8) - не подставляем, остаются 0
         }
     });
 

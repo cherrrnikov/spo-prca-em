@@ -4,29 +4,25 @@
   import { onDestroy, onMount } from 'svelte';
   import '../app.css';
   
-  let keepaliveInterval: NodeJS.Timeout;
-
   let { children } = $props();
+  let keepaliveInterval: ReturnType<typeof setInterval>;
   
   onMount(() => {
+    // Keepalive каждые 13 минут (токен живет 15 минут)
     keepaliveInterval = setInterval(async () => {
       try {
-        await fetch('/api/auth/keepalive', {
-          method: 'GET',
-          credentials: 'same-origin' 
-        });
-      } catch (error) {
-      }
-    }, 60000);
-    
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        fetch('/api/auth/keepalive', {
+        const response = await fetch('/api/auth/validate', {
           method: 'GET',
           credentials: 'same-origin'
-        }).catch(() => {});
+        });
+        
+        if (response.ok) {
+          console.log('🔄 Keepalive: сессия продлена');
+        }
+      } catch (e) {
+        // тихо падаем
       }
-    });
+    }, 780000); // 13 минут
   });
   
   onDestroy(() => {
@@ -58,4 +54,3 @@
 />
 
 {@render children()}
-

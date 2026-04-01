@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
     const userDataStr = cookies.get('user_data');
     
     if (userDataStr) {
-      const userData = JSON.parse(userDataStr);
+      const userData = JSON.parse(decodeURIComponent(userDataStr));
       return { user: userData };
     }
     
