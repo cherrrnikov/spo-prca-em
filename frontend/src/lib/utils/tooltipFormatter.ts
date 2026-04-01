@@ -13,7 +13,6 @@ export class TooltipFormatter {
         const lines = [
             `КАЛИБРОВКА ВД`,
             `Номер КА: ${modeData.numKa}`,
-            `Номер ПРЦА: ${modeData.numRp}`,
             `ППИ: ${getPpiDisplay(modeData.numPpi)}`,
             `Длительность: ${modeData.dlit} сек`,
             `Заказчик: ${modeData.zakazchik || 'не указан'}`,
@@ -34,7 +33,6 @@ export class TooltipFormatter {
         const lines = [
             `РЕЖИМ ТНП`,
             `Номер КА: ${modeData.numKa}`,
-            `Номер ПРЦА: ${modeData.numRp}`,
             `ППИ: ${getPpiDisplay(modeData.numPpi)}`,
             `Длительность: ${modeData.dlit} сек`,
             `Заказчик: ${modeData.zakazchik || 'не указан'}`,
@@ -57,7 +55,6 @@ export class TooltipFormatter {
         const lines = [
             title,
             `Номер КА: ${modeData.numKa}`,
-            `Номер ПРЦА: ${modeData.numRp}`,
             `ППИ: ${getPpiDisplay(modeData.numPpi)}`,
             `Длительность: ${modeData.dlit} сек`,
             `Заказчик: ${modeData.zakazchik || 'не указан'}`,
@@ -87,7 +84,6 @@ export class TooltipFormatter {
         const lines = [
             `ЮСТИРОВКА ОНА`,
             `Номер КА: ${modeData.numKa}`,
-            `Номер ПРЦА: ${modeData.numRp}`,
             `ППИ: ${getPpiDisplay(modeData.numPpi)}`,
             `Длительность: ${modeData.dlit} сек`,
             `Заказчик: ${modeData.zakazchik || 'не указан'}`,
@@ -106,7 +102,6 @@ export class TooltipFormatter {
         const lines = [
             `РАСПРЕДЕЛЕНИЕ ОМИ`,
             `Номер КА: ${modeData.numKa}`,
-            `Номер ПРЦА: ${modeData.numRp}`,
             `ППИ: ${getPpiDisplay(modeData.numPpi)}`,
             `Длительность: ${modeData.dlit} сек`,
             `Заказчик: ${modeData.zakazchik || 'не указан'}`,
