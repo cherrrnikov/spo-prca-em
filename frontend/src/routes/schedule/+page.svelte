@@ -25,7 +25,6 @@
     import type { CreatedProgramData, OperatorData, PpiAssignment, ProgramModeData, TimeInterval } from '$lib/types';
     import { checkAllConflicts } from '$lib/utils/interval/index';
     import { ModeUtils } from '$lib/utils/mode';
-    import { get } from 'svelte/store';
     import AnalysisModal from '../../features/schedule-creation/components/AnalysisModal.svelte';
     import ProgramsSelector from '../../features/schedule-creation/components/ProgramsSelector.svelte';
 
@@ -181,6 +180,10 @@
 
             const date = newOperatorData.main.d_np.split('T')[0];
             setContextDate(date); 
+
+            const bortDataForDate = await ScheduleApiService.loadBortData(date);
+            bortData.set(bortDataForDate);
+
             selectedProgramDate.set(date);
 
             await Promise.all([
@@ -194,7 +197,9 @@
             const newIntervals = ScheduleCreationService.convertToTimeIntervals(
                 newOperatorData,
                 newPpiAssignments,
-                workModes
+                workModes,
+                undefined,
+                bortDataForDate
             );
             
             // СОЗДАЁМ createdPrograms ДЛЯ ВСЕХ ИНТЕРВАЛОВ ИЗ ИД06
@@ -341,8 +346,8 @@
                         i.id.startsWith(`ts_${ts.id}`)
                     );
 
-                    const currentBortData = get(bortData);
-                    
+                    const currentBortData = $bortData;
+
                     tsSubIntervals.forEach((subInterval, idx) => {
                         subInterval.customerCode = 1;
 
@@ -374,10 +379,8 @@
                             ik8Msu2: ts.pr_ik8_2,
                             ik9Msu2: ts.pr_ik9_2,
                             ik10Msu2: ts.pr_ik10_2,
-                            // ИД02
                             prBssd: currentBortData?.pr_bssd ?? 0,
                             prZg: currentBortData?.pr_zg ?? 0,
-                            // ИД06
                             prOtklZgBssd: ts.pr_otkl_zg
                         };
 
@@ -396,10 +399,6 @@
                         };
 
                         console.log('tsData:', modeData.tsData);
-                        console.log('ИД02 данные:', {
-                            prBssd: currentBortData?.pr_bssd,
-                            prZg: currentBortData?.pr_zg
-                        });
                         
                         programs.push({
                             tempId: `ts_${ts.id}_${idx}`,
@@ -585,6 +584,7 @@
                 onCancel={handleModeFormCancel}
                 onUpdate={handleIntervalUpdate}
                 contextDate={$contextDate}
+                bortData={$bortData}
             />
         {/if}
 

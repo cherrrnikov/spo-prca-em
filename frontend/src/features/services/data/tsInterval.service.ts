@@ -1,10 +1,11 @@
-import type { Id06TsDto, TimeInterval, TsMsuConfig } from '$lib/types';
+import type { Id02Dto, Id06TsDto, TimeInterval, TsMsuConfig } from '$lib/types';
 import { CityService } from '../utils/cities.service';
 
 export class TsIntervalService {
     static convertTsToSubIntervals(
         tsRecord: Id06TsDto,
-        ppiNum: number 
+        ppiNum: number,
+        bortData?: Id02Dto | null  // ← добавить параметр
     ): TimeInterval[] {
         const subIntervals: TimeInterval[] = [];
         
@@ -46,6 +47,40 @@ export class TsIntervalService {
                 
                 msu1Config: this.getMsuConfigFromTsRecord(tsRecord, 1),
                 msu2Config: this.getMsuConfigFromTsRecord(tsRecord, 2),
+                
+                tsData: {
+                    id: tsRecord.id,
+                    idMain: tsRecord.id_main,
+                    tip: tsRecord.tip,
+                    reg: tsRecord.reg,
+                    dlit: subIntervalDuration * 60,
+                    prMsu1: tsRecord.pr_msu1,
+                    vd1Msu1: tsRecord.pr_vd1_1,
+                    vd2Msu1: tsRecord.pr_vd2_1,
+                    vd3Msu1: tsRecord.pr_vd3_1,
+                    ik4Msu1: tsRecord.pr_ik4_1,
+                    ik5Msu1: tsRecord.pr_ik5_1,
+                    ik6Msu1: tsRecord.pr_ik6_1,
+                    ik7Msu1: tsRecord.pr_ik7_1,
+                    ik8Msu1: tsRecord.pr_ik8_1,
+                    ik9Msu1: tsRecord.pr_ik9_1,
+                    ik10Msu1: tsRecord.pr_ik10_1,
+                    prMsu2: tsRecord.pr_msu2,
+                    vd1Msu2: tsRecord.pr_vd1_2,
+                    vd2Msu2: tsRecord.pr_vd2_2,
+                    vd3Msu2: tsRecord.pr_vd3_2,
+                    ik4Msu2: tsRecord.pr_ik4_2,
+                    ik5Msu2: tsRecord.pr_ik5_2,
+                    ik6Msu2: tsRecord.pr_ik6_2,
+                    ik7Msu2: tsRecord.pr_ik7_2,
+                    ik8Msu2: tsRecord.pr_ik8_2,
+                    ik9Msu2: tsRecord.pr_ik9_2,
+                    ik10Msu2: tsRecord.pr_ik10_2,
+                    // Для ТС - prBssd и prZg из ИД02, prOtklZg из ИД06
+                    prBssd: bortData?.pr_bssd ?? 0,
+                    prZg: bortData?.pr_zg ?? 0,
+                    prOtklZgBssd: tsRecord.pr_otkl_zg
+                },
                 
                 hasConflict: false,
                 conflictWith: [],

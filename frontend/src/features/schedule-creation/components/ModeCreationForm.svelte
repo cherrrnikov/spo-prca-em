@@ -69,6 +69,19 @@
         }
     });
 
+    $effect(() => {
+        // При создании нового интервала (не редактирование)
+        if (!isEditMode && bortData) {
+            if (selectedMode === 1) {
+                // Для обычных съемок - берем из ИД02
+                localFormData.prBssd = bortData.pr_bssd ?? 0;
+                localFormData.prZg = bortData.pr_zg ?? 0;
+                localFormData.prOtklZg = bortData.pr_otkl_zg ?? 0;
+            }
+            // Для ТС (mode 8) - не подставляем, остаются 0
+        }
+    });
+
     function getInitialFormData(): ModeCreationForm {
         return {
             modeType: null,

@@ -12,7 +12,8 @@ import { ScheduleCreationService } from '../../../features/services/scheduleCrea
 export function createCreators(stores: ReturnType<typeof import('./stores').createStores>) {
     const {
         contextDate,
-        operatorData
+        operatorData,
+        bortData
     } = stores;
 
     function generateTempId(): string {
@@ -34,6 +35,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
         endTime: string
     ): TimeInterval {
         const currentContextDate = get(contextDate);
+        const currentBortData = get(bortData);
 
         const interval: TimeInterval = {
             id: tempId,
@@ -62,6 +64,78 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
         if (formData.modeType === 8 || formData.modeType === 1) {
             interval.msu1Config = { ...formData.msu1Config };
             interval.msu2Config = { ...formData.msu2Config };
+
+            if (formData.modeType === 8) {
+                // ТС - берем ВСЕ из формы (данные из ИД06)
+                interval.tsData = {
+                    id: 0,
+                    idMain: 0,
+                    tip: formData.tip ?? 1,
+                    reg: formData.reg ?? 0,
+                    dlit: formData.duration,
+                    prMsu1: formData.msu1Config.prMsu || 0,
+                    vd1Msu1: formData.msu1Config.vd1 || 0,
+                    vd2Msu1: formData.msu1Config.vd2 || 0,
+                    vd3Msu1: formData.msu1Config.vd3 || 0,
+                    ik4Msu1: formData.msu1Config.ik4 || 0,
+                    ik5Msu1: formData.msu1Config.ik5 || 0,
+                    ik6Msu1: formData.msu1Config.ik6 || 0,
+                    ik7Msu1: formData.msu1Config.ik7 || 0,
+                    ik8Msu1: formData.msu1Config.ik8 || 0,
+                    ik9Msu1: formData.msu1Config.ik9 || 0,
+                    ik10Msu1: formData.msu1Config.ik10 || 0,
+                    prMsu2: formData.msu2Config.prMsu || 0,
+                    vd1Msu2: formData.msu2Config.vd1 || 0,
+                    vd2Msu2: formData.msu2Config.vd2 || 0,
+                    vd3Msu2: formData.msu2Config.vd3 || 0,
+                    ik4Msu2: formData.msu2Config.ik4 || 0,
+                    ik5Msu2: formData.msu2Config.ik5 || 0,
+                    ik6Msu2: formData.msu2Config.ik6 || 0,
+                    ik7Msu2: formData.msu2Config.ik7 || 0,
+                    ik8Msu2: formData.msu2Config.ik8 || 0,
+                    ik9Msu2: formData.msu2Config.ik9 || 0,
+                    ik10Msu2: formData.msu2Config.ik10 || 0,
+                    // Для ТС - берем из формы (это данные из ИД06)
+                    prBssd: currentBortData?.pr_bssd ?? 0,
+                    prZg: currentBortData?.pr_zg ?? 0,
+                    prOtklZgBssd: formData.prOtklZg ?? 0
+                };
+            } else {
+                // Обычная съемка (mode 1) - берем prBssd и prZg из ИД02
+                interval.tsData = {
+                    id: 0,
+                    idMain: 0,
+                    tip: formData.tip ?? 1,
+                    reg: formData.reg ?? 0,
+                    dlit: formData.duration,
+                    prMsu1: formData.msu1Config.prMsu || 0,
+                    vd1Msu1: formData.msu1Config.vd1 || 0,
+                    vd2Msu1: formData.msu1Config.vd2 || 0,
+                    vd3Msu1: formData.msu1Config.vd3 || 0,
+                    ik4Msu1: formData.msu1Config.ik4 || 0,
+                    ik5Msu1: formData.msu1Config.ik5 || 0,
+                    ik6Msu1: formData.msu1Config.ik6 || 0,
+                    ik7Msu1: formData.msu1Config.ik7 || 0,
+                    ik8Msu1: formData.msu1Config.ik8 || 0,
+                    ik9Msu1: formData.msu1Config.ik9 || 0,
+                    ik10Msu1: formData.msu1Config.ik10 || 0,
+                    prMsu2: formData.msu2Config.prMsu || 0,
+                    vd1Msu2: formData.msu2Config.vd1 || 0,
+                    vd2Msu2: formData.msu2Config.vd2 || 0,
+                    vd3Msu2: formData.msu2Config.vd3 || 0,
+                    ik4Msu2: formData.msu2Config.ik4 || 0,
+                    ik5Msu2: formData.msu2Config.ik5 || 0,
+                    ik6Msu2: formData.msu2Config.ik6 || 0,
+                    ik7Msu2: formData.msu2Config.ik7 || 0,
+                    ik8Msu2: formData.msu2Config.ik8 || 0,
+                    ik9Msu2: formData.msu2Config.ik9 || 0,
+                    ik10Msu2: formData.msu2Config.ik10 || 0,
+                    // Для съемки - берем из ИД02
+                    prBssd: currentBortData?.pr_bssd ?? 0,
+                    prZg: currentBortData?.pr_zg ?? 0,
+                    prOtklZgBssd: currentBortData?.pr_otkl_zg ?? 0
+                };
+            }
         }
 
         if (formData.modeType === 6) {
@@ -171,6 +245,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
 
     function createProgramModeData(formData: ModeCreationForm, tempId: string): ProgramModeData {
         const currentOperatorData = get(operatorData);
+        const currentBortData = get(bortData)
         const currentContextDate = get(contextDate);
         const mainId = currentOperatorData?.main.id || 0;
         const endDisplayTime = TimeUtils.calculateEndTimeSeconds(formData.startTime, formData.duration);
@@ -211,41 +286,59 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             const tip = (formData as any).tip || 1;  
             const reg = (formData as any).reg || 1;
 
-            return {
-                ...baseData,
-                tsData: {
-                    id: 0,
-                    idMain: mainId,
-                    tip: tip,
-                    reg: reg,
-                    dlit: baseData.dlit,
-                    prMsu1: msu1Config.prMsu || 0,
-                    vd1Msu1: msu1Config.vd1 || 0,
-                    vd2Msu1: msu1Config.vd2 || 0,
-                    vd3Msu1: msu1Config.vd3 || 0,
-                    ik4Msu1: msu1Config.ik4 || 0,
-                    ik5Msu1: msu1Config.ik5 || 0,
-                    ik6Msu1: msu1Config.ik6 || 0,
-                    ik7Msu1: msu1Config.ik7 || 0,
-                    ik8Msu1: msu1Config.ik8 || 0,
-                    ik9Msu1: msu1Config.ik9 || 0,
-                    ik10Msu1: msu1Config.ik10 || 0,
-                    prMsu2: msu2Config.prMsu || 0,
-                    vd1Msu2: msu2Config.vd1 || 0,
-                    vd2Msu2: msu2Config.vd2 || 0,
-                    vd3Msu2: msu2Config.vd3 || 0,
-                    ik4Msu2: msu2Config.ik4 || 0,
-                    ik5Msu2: msu2Config.ik5 || 0,
-                    ik6Msu2: msu2Config.ik6 || 0,
-                    ik7Msu2: msu2Config.ik7 || 0,
-                    ik8Msu2: msu2Config.ik8 || 0,
-                    ik9Msu2: msu2Config.ik9 || 0,
-                    ik10Msu2: msu2Config.ik10 || 0,
-                    prBssd: formData.prBssd ?? 0,
-                    prZg: formData.prZg ?? 0,
-                    prOtklZgBssd: formData.prOtklZg ?? 0
-                }
+            const baseTsData = {
+                id: 0,
+                idMain: mainId,
+                tip: tip,
+                reg: reg,
+                dlit: baseData.dlit,
+                prMsu1: msu1Config.prMsu || 0,
+                vd1Msu1: msu1Config.vd1 || 0,
+                vd2Msu1: msu1Config.vd2 || 0,
+                vd3Msu1: msu1Config.vd3 || 0,
+                ik4Msu1: msu1Config.ik4 || 0,
+                ik5Msu1: msu1Config.ik5 || 0,
+                ik6Msu1: msu1Config.ik6 || 0,
+                ik7Msu1: msu1Config.ik7 || 0,
+                ik8Msu1: msu1Config.ik8 || 0,
+                ik9Msu1: msu1Config.ik9 || 0,
+                ik10Msu1: msu1Config.ik10 || 0,
+                prMsu2: msu2Config.prMsu || 0,
+                vd1Msu2: msu2Config.vd1 || 0,
+                vd2Msu2: msu2Config.vd2 || 0,
+                vd3Msu2: msu2Config.vd3 || 0,
+                ik4Msu2: msu2Config.ik4 || 0,
+                ik5Msu2: msu2Config.ik5 || 0,
+                ik6Msu2: msu2Config.ik6 || 0,
+                ik7Msu2: msu2Config.ik7 || 0,
+                ik8Msu2: msu2Config.ik8 || 0,
+                ik9Msu2: msu2Config.ik9 || 0,
+                ik10Msu2: msu2Config.ik10 || 0,
             };
+
+            if (formData.modeType === 8) {
+                // ТС - берем из формы (данные из ИД06)
+                return {
+                    ...baseData,
+                    tsData: {
+                        ...baseTsData,
+                        prBssd: currentBortData?.pr_bssd ?? 0,
+                        prZg: currentBortData?.pr_zg ?? 0,
+                        prOtklZgBssd: formData.prOtklZg ?? 0
+                    }
+                };
+            } else {
+                // Обычная съемка - берем из ИД02
+                return {
+                    ...baseData,
+                    tsData: {
+                        ...baseTsData,
+                        prBssd: currentBortData?.pr_bssd ?? 0,
+                        prZg: currentBortData?.pr_zg ?? 0,
+                        prOtklZgBssd: currentBortData?.pr_otkl_zg ?? 0
+                    }
+                };
+            }
         } else if (formData.modeType === 4) {
             return {
                 ...baseData,

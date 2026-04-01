@@ -345,7 +345,8 @@ export function createAnalysisActions(
     ): Promise<{ intervalsForDate: TimeInterval[], createdProgramsForDate: CreatedProgramData[] }> {
         let intervalsForDate: TimeInterval[] = [];
         let createdProgramsForDate: CreatedProgramData[] = [];
-        
+        const currentBortData = get(bortData);
+
         if (operatorDataForDate) {
             console.log(`Есть данные ИД06 для ${date}, создаём интервалы из них`);
             
@@ -360,7 +361,8 @@ export function createAnalysisActions(
                 operatorDataForDate,
                 currentProgram.ppiAssignments,
                 WORK_MODES,
-                1
+                1,
+                currentBortData
             );
             intervalsForDate = [...intervalsFromId06];
             const existingIds = new Set(intervalsFromId06.map(i => i.id));
@@ -563,8 +565,8 @@ export function createAnalysisActions(
                                 ik8Msu2: ts.pr_ik8_2,
                                 ik9Msu2: ts.pr_ik9_2,
                                 ik10Msu2: ts.pr_ik10_2,
-                                prBssd: 0,
-                                prZg: 0,
+                                prBssd: currentBortData?.pr_bssd ?? 0,
+                                prZg: currentBortData?.pr_zg ?? 0,
                                 prOtklZgBssd: ts.pr_otkl_zg
                             }
                         };

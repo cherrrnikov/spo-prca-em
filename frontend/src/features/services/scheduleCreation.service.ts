@@ -2,6 +2,7 @@ import type {
     CreatedProgramData,
     CreateProgramRequest,
     ForecastData,
+    Id02Dto,
     Id06OnaDto,
     Kr01DataResponse,
     OperatorData,
@@ -95,7 +96,8 @@ export class ScheduleCreationService {
         operatorData: OperatorData,
         ppiAssignments: PpiAssignment[],
         workModes: WorkMode[],
-        defaultPpi?: number 
+        defaultPpi?: number,
+        bortData?: Id02Dto | null
     ): TimeInterval[] {
         const intervals: TimeInterval[] = [];
         
@@ -116,7 +118,7 @@ export class ScheduleCreationService {
         if (operatorData.ts_list?.length) {
             operatorData.ts_list.forEach(ts => {
                 const ppiNum = this.getPpiNumber(ts.id, 'ts', ppiAssignments, defaultPpi);
-                const tsSubIntervals = TsIntervalService.convertTsToSubIntervals(ts, ppiNum);
+                const tsSubIntervals = TsIntervalService.convertTsToSubIntervals(ts, ppiNum, bortData);
                 intervals.push(...tsSubIntervals);
             });
         }
@@ -211,7 +213,12 @@ export class ScheduleCreationService {
             nearZasvetka: false,
             zasvetkaConflict: false,
             zasvetkaDistance: 0,
-            willBeSaved: true
+            willBeSaved: true,
+            kvdConfig: {
+                prMsu: kvd.pr_msu,
+                prBssd: kvd.pr_bssd,
+                prZg: kvd.pr_zg
+            }
         };
     }
 
