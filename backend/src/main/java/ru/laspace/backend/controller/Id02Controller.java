@@ -4,7 +4,6 @@ import java.time.LocalDate;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +25,6 @@ import ru.laspace.backend.service.Id02Service;
 @RestController
 @RequestMapping("/api/bort")
 @RequiredArgsConstructor
-@CrossOrigin
 @Tag(name = "Состояние бортовых систем", description = "API для получения данных о состоянии бортовых систем КА")
 public class Id02Controller {
 

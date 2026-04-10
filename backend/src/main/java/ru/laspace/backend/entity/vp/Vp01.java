@@ -35,8 +35,8 @@ public class Vp01 {
     @Column(name = "data_zap")
     private LocalDateTime dataZap;
 
-    @Column(name = "form_id") // будет еще одна таблица
-    private Integer formId; // пока просто int
+    // @Column(name = "form_id") // будет еще одна таблица
+    // private Integer formId; // пока просто int
 
     @Column(name = "k")
     private Integer k = 0; // кол-во записей в табл vp01_msu, относящихся к данной ВПРЦА

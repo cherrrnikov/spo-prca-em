@@ -4,7 +4,6 @@ import java.time.LocalDate;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +25,6 @@ import ru.laspace.backend.service.Kr01Service;
 @RestController
 @RequestMapping("/api/vki")
 @RequiredArgsConstructor
-@CrossOrigin
 @Tag(name = "Коррекция орбиты (ВКИ)", description = "API для работы с данными коррекции орбиты космических аппаратов")
 public class Kr01Controller {
 

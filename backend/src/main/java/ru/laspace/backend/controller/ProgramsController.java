@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,7 +24,6 @@ import ru.laspace.backend.service.ProgramsService;
 @RestController
 @RequestMapping("/api/programs")
 @RequiredArgsConstructor
-@CrossOrigin
 @Tag(name = "Программа работы целевой аппаратуры", description = "API для сохранения ПРЦА")
 public class ProgramsController {
     private final ProgramsService programsService;

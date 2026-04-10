@@ -4,7 +4,6 @@ import java.time.LocalDate;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +25,6 @@ import ru.laspace.backend.service.Ro02Service;
 @RestController
 @RequestMapping("/api/rotation")
 @RequiredArgsConstructor
-@CrossOrigin
 @Tag(name = "Сезонные развороты", description = "API для работы с данными сезонных разворотов космических аппаратов")
 public class Ro02Controller {
 
