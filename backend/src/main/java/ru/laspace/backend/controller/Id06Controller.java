@@ -48,21 +48,15 @@ public class Id06Controller {
 
         log.info("Запрос данных оператора для даты: {}", date);
 
-        try {
-            Id06DataResponse data = (Id06DataResponse) id06Service.getOperatorData(date);
+        Id06DataResponse data = (Id06DataResponse) id06Service.getOperatorData(date);
 
-            if (data == null) {
-                log.info("Данные не найдены для даты: {}", date);
-                return ResponseEntity.notFound().build();
-            }
-
-            log.info("Найдено {} интервалов для даты {}", data.getTotalIntervals(), date);
-            return ResponseEntity.ok(data);
-
-        } catch (Exception e) {
-            log.error("Ошибка при получении данных для даты {}: {}", date, e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+        if (data == null) {
+            log.info("Данные не найдены для даты: {}", date);
+            return ResponseEntity.notFound().build();
         }
+
+        log.info("Найдено {} интервалов для даты {}", data.getTotalIntervals(), date);
+        return ResponseEntity.ok(data);
     }
 
     @Operation(summary = "Получить стандартные длительности режимов", description = "Возвращает стандартные длительности в секундах для всех типов режимов из таблицы констант")
@@ -84,15 +78,9 @@ public class Id06Controller {
     public ResponseEntity<Map<String, Integer>> getModeDurations() {
         log.info("Запрос стандартных длительностей режимов");
 
-        try {
-            Map<String, Integer> durations = constantsService.getModeDurations();
-            log.info("Возвращаем {} длительностей режимов", durations.size());
-            return ResponseEntity.ok(durations);
-
-        } catch (Exception e) {
-            log.error("Ошибка при получении длительностей режимов: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
-        }
+        Map<String, Integer> durations = constantsService.getModeDurations();
+        log.info("Возвращаем {} длительностей режимов", durations.size());
+        return ResponseEntity.ok(durations);
     }
 
     @Operation(summary = "Проверка работоспособности API", description = "Проверяет, что сервис планирования работает")

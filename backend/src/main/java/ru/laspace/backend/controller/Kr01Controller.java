@@ -45,23 +45,16 @@ public class Kr01Controller {
 
         log.info("Запрос данных коррекции орбиты (ВКИ) на дату: {}", date);
 
-        try {
-            Kr01DataResponse data = kr01Service.getKr01Data(date);
+        Kr01DataResponse data = kr01Service.getKr01Data(date);
 
-            if (data == null) {
-                log.info("Данные коррекции орбиты не найдены на дату: {}", date);
-                return ResponseEntity.notFound().build();
-            }
-
-            log.info("Найдено {} импульсов коррекции для даты {}",
-                    data.getTotalImpulses(), date);
-            return ResponseEntity.ok(data);
-
-        } catch (Exception e) {
-            log.error("Ошибка при получении данных коррекции орбиты на дату {}: {}",
-                    date, e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+        if (data == null) {
+            log.info("Данные коррекции орбиты не найдены на дату: {}", date);
+            return ResponseEntity.notFound().build();
         }
+
+        log.info("Найдено {} импульсов коррекции для даты {}",
+                data.getTotalImpulses(), date);
+        return ResponseEntity.ok(data);
     }
 
     @Operation(summary = "Проверка работоспособности API ВКИ", description = "Проверяет, что сервис коррекции орбиты работает")

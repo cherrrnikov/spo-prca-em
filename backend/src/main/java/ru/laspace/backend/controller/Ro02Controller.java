@@ -45,23 +45,16 @@ public class Ro02Controller {
 
         log.info("Запрос данных сезонных разворотов на дату: {}", date);
 
-        try {
-            Ro02DataResponse data = ro02Service.getRo02Data(date);
+        Ro02DataResponse data = ro02Service.getRo02Data(date);
 
-            if (data == null) {
-                log.info("Данные сезонных разворотов не найдены на дату: {}", date);
-                return ResponseEntity.notFound().build();
-            }
-
-            log.info("Найдено {} записей сезонных разворотов для даты {}",
-                    data.getTotalRotations(), date);
-            return ResponseEntity.ok(data);
-
-        } catch (Exception e) {
-            log.error("Ошибка при получении данных сезонных разворотов на дату {}: {}",
-                    date, e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+        if (data == null) {
+            log.info("Данные сезонных разворотов не найдены на дату: {}", date);
+            return ResponseEntity.notFound().build();
         }
+
+        log.info("Найдено {} записей сезонных разворотов для даты {}",
+                data.getTotalRotations(), date);
+        return ResponseEntity.ok(data);
     }
 
     @Operation(summary = "Проверка работоспособности API разворотов", description = "Проверяет, что сервис сезонных разворотов работает")

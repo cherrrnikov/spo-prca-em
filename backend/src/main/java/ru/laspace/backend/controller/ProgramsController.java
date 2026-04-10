@@ -53,17 +53,12 @@ public class ProgramsController {
                 request.getMainData().getNumKa());
         log.info("Количество режимов в запросе: {}", request.getModes() != null ? request.getModes().size() : 0);
 
-        try {
-            Long generatedNumRp = programsService.saveProgram(request);
-            log.info("ПРЦА успешно сохранена, присвоен номер: {}", generatedNumRp);
+        Long generatedNumRp = programsService.saveProgram(request);
+        log.info("ПРЦА успешно сохранена, присвоен номер: {}", generatedNumRp);
 
-            Map<String, Long> response = new HashMap<>();
-            response.put("numRp", generatedNumRp);
+        Map<String, Long> response = new HashMap<>();
+        response.put("numRp", generatedNumRp);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (Exception e) {
-            log.error("Ошибка при сохранении ПРЦА: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
-        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

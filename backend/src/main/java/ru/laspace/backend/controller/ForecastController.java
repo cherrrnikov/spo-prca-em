@@ -43,22 +43,15 @@ public class ForecastController {
 
         log.info("Запрос прогнозных данных на дату: {}", date);
 
-        try {
-            ForecastDataResponse data = forecastService.getOperatorData(date);
+        ForecastDataResponse data = forecastService.getOperatorData(date);
 
-            if (data == null) {
-                log.info("Прогнозные данные не найдены на дату: {}", date);
-                return ResponseEntity.notFound().build();
-            }
-
-            log.info("Найдено теней: {}, засветок: {}",
-                    data.getShadows().size(), data.getZasvetki().size());
-            return ResponseEntity.ok(data);
-
-        } catch (Exception e) {
-            log.error("Ошибка при получении прогнозных данных на дату {}: {}",
-                    date, e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+        if (data == null) {
+            log.info("Прогнозные данные не найдены на дату: {}", date);
+            return ResponseEntity.notFound().build();
         }
+
+        log.info("Найдено теней: {}, засветок: {}",
+                data.getShadows().size(), data.getZasvetki().size());
+        return ResponseEntity.ok(data);
     }
 }

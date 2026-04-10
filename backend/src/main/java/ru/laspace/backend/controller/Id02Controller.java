@@ -46,24 +46,18 @@ public class Id02Controller {
 
         log.info("Запрос состояния бортовых систем для даты: {}", date);
 
-        try {
-            Id02Dto data = id02Service.getBortData(date);
+        Id02Dto data = id02Service.getBortData(date);
 
-            if (data == null) {
-                log.info("Данные о состоянии бортовых систем не найдены для даты: {}", date);
-                return ResponseEntity.notFound().build();
-            }
-
-            log.info("Найдена запись ИД02 ID={}, КА={}, RNF={} для даты {}",
-                    data.getId(), data.getNKa(), data.getRnf(), date);
-
-            return ResponseEntity.ok(data);
-
-        } catch (Exception e) {
-            log.error("Ошибка при получении данных ИД02 для даты {}: {}",
-                    date, e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+        if (data == null) {
+            log.info("Данные о состоянии бортовых систем не найдены для даты: {}", date);
+            return ResponseEntity.notFound().build();
         }
+
+        log.info("Найдена запись ИД02 ID={}, КА={}, RNF={} для даты {}",
+                data.getId(), data.getNKa(), data.getRnf(), date);
+
+        return ResponseEntity.ok(data);
+
     }
 
     @Operation(summary = "Проверка работоспособности API ИД02", description = "Проверяет, что сервис данных о состоянии бортовых систем работает")
