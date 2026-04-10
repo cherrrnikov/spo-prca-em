@@ -104,7 +104,7 @@ export function createIntervalHandlers(
         );
         
         if (sameModeOverlap.overlaps) {
-            modal.alert("Ошибка", `Ошибка: интервал пересекается с существующим интервалом\n` +
+            modal.alert("Ошибка", `Интервал пересекается с существующим интервалом\n` +
                 `Время конфликта: ${sameModeOverlap.conflictingInterval?.startTime} - ${sameModeOverlap.conflictingInterval?.endTime}`, 'error');
             return;
         }

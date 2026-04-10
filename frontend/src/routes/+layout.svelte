@@ -7,8 +7,22 @@
   let { children } = $props();
   let keepaliveInterval: ReturnType<typeof setInterval>;
   
+  function refreshUserDataFromCookie() {
+    try {
+      const userDataCookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('user_data='));
+      
+      if (!userDataCookie) return;
+      
+      // Диспатчим событие чтобы компоненты могли обновиться
+      window.dispatchEvent(new CustomEvent('user-data-updated'));
+    } catch (e) {
+      // тихо
+    }
+  }
+  
   onMount(() => {
-    // Keepalive каждые 13 минут (токен живет 15 минут)
     keepaliveInterval = setInterval(async () => {
       try {
         const response = await fetch('/api/auth/validate', {
@@ -17,12 +31,16 @@
         });
         
         if (response.ok) {
-          console.log('🔄 Keepalive: сессия продлена');
+          console.log('🔄 Keepalive: сессия активна');
+          refreshUserDataFromCookie();
+        } else if (response.status === 401) {
+          console.log('❌ Keepalive: сессия истекла, редирект');
+          window.location.href = '/';
         }
       } catch (e) {
         // тихо падаем
       }
-    }, 780000); // 13 минут
+    }, 600000);
   });
   
   onDestroy(() => {
@@ -31,7 +49,6 @@
 </script>
 
 <svelte:head>
-  <!-- <link rel="icon" href={favicon} /> -->
 </svelte:head>
 
 <Modal

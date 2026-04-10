@@ -114,6 +114,12 @@ export function createDataLoaders(
         loadBortData(date);
     }
 
+    if (typeof window !== 'undefined') {
+        window.addEventListener('user-data-updated', () => {
+            loadUserData();
+        })
+    }
+
     return {
         loadUserData,
         loadBortData,
