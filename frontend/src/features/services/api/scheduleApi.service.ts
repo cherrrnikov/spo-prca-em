@@ -40,8 +40,8 @@ export class ScheduleApiService {
         };
     }
 
-    static async saveProgram(programData: CreateProgramRequest): Promise<any> {
-        const response = await fetch(`http://localhost:8081/api/programs/create`, {
+    static async saveProgram(programData: CreateProgramRequest): Promise<{ numRp: number }> {
+        const response = await fetch(`${this.BASE_URL}/schedule/programs-proxy`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(programData)
@@ -56,7 +56,7 @@ export class ScheduleApiService {
     }
 
     static async loadModeDurations(): Promise<Record<string, number>> {
-        const response = await fetch('http://localhost:8081/api/schedule/mode-durations');
+        const response = await fetch(`${this.BASE_URL}/schedule/durations-proxy`);
         if (!response.ok) return {};
         return await response.json();
     }
