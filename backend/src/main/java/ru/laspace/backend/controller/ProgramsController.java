@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.laspace.backend.dto.programs.ProgramCreateRequest;
@@ -35,18 +36,8 @@ public class ProgramsController {
             @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера", content = @Content)
     })
     @PostMapping("/create")
-    public ResponseEntity<Map<String, Long>> createProgram(@RequestBody ProgramCreateRequest request) {
+    public ResponseEntity<Map<String, Long>> createProgram(@Valid @RequestBody ProgramCreateRequest request) {
         log.info("=== Получен запрос на создание ПРЦА ===");
-
-        if (request == null) {
-            log.error("request is null");
-            return ResponseEntity.badRequest().build();
-        }
-
-        if (request.getMainData() == null) {
-            log.error("mainData is null! Request: {}", request);
-            return ResponseEntity.badRequest().build();
-        }
 
         log.info("Номер ПРЦА: {}, Номер КА: {}",
                 request.getMainData().getNumRp(),

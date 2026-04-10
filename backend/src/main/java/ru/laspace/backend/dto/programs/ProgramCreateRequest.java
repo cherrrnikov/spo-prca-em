@@ -9,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -29,9 +31,13 @@ import lombok.ToString;
 @Schema(description = "Запрос на создание ПРЦА")
 public class ProgramCreateRequest {
 
+    @NotNull(message = "Основные данные ПРЦА обязательны")
+    @Valid
     @Schema(description = "Основные данные ПРЦА")
     private MainData mainData;
 
+    @NotNull(message = "Список режимов обязателен")
+    @Valid
     @Schema(description = "Список режимов")
     private List<ModeData> modes;
 
@@ -46,15 +52,21 @@ public class ProgramCreateRequest {
     @ToString
     public static class MainData {
         private Long numRp;
+
+        @NotNull(message = "Номер КА обязателен")
         private Long numKa;
 
+        @NotNull(message = "Дата начала обязательна")
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         private LocalDateTime dateOn;
 
+        @NotNull(message = "Дата окончания обязательна")
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         private LocalDateTime dateOff;
 
+        @NotNull(message = "Тип рабочей программы обязателен")
         private Integer typeRp;
+
         private Integer prOtpr;
     }
 
