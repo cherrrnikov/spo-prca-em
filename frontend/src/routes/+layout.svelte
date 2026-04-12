@@ -5,37 +5,66 @@
   import '../app.css';
   
   let { children } = $props();
-  let keepaliveInterval: ReturnType<typeof setInterval>;
+  let refreshInterval: ReturnType<typeof setInterval> | null = null;
+  let isRefreshing = false;
   
-  async function doKeepalive() {
-    console.log('🔄 Keepalive: отправляю запрос...');
+  // Рассчитываем интервал обновления (обновляем каждые 13 минут, но токен живет 15)
+  const REFRESH_INTERVAL = 13 * 60 * 1000; // 13 минут
+  
+  async function refreshSession() {
+    if (isRefreshing) return;
+    
+    isRefreshing = true;
+    
     try {
+      console.log('🔄 Keepalive: refreshing session...');
       const response = await fetch('/api/auth/validate', {
         method: 'GET',
         credentials: 'same-origin'
       });
       
-      console.log('🔄 Keepalive: ответ', response.status);
-      
       if (response.ok) {
-        console.log('✅ Keepalive: сессия продлена');
-        window.dispatchEvent(new CustomEvent('user-data-updated'));
+        const data = await response.json();
+        
+        if (data.status === 'refreshed') {
+          console.log('✅ Session extended successfully');
+          // Уведомляем компоненты о обновлении данных пользователя
+          window.dispatchEvent(new CustomEvent('user-data-updated'));
+        } else if (data.status === 'valid') {
+          console.log('✅ Session still valid');
+        }
       } else if (response.status === 401) {
-        console.log('❌ Keepalive: сессия истекла');
-        window.location.href = '/';
+        console.log('❌ Session expired, redirecting to login...');
+        window.location.href = '/login';
       }
-    } catch (e) {
-      console.error('❌ Keepalive: ошибка', e);
+    } catch (error) {
+      console.error('Keepalive error:', error);
+    } finally {
+      isRefreshing = false;
     }
   }
   
   onMount(() => {
-    console.log('📌 Layout: keepalive запущен');
-    keepaliveInterval = setInterval(doKeepalive, 780000); // 2 минуты для теста
+    console.log('📌 Starting keepalive service');
+    
+    // Запускаем интервал
+    refreshInterval = setInterval(refreshSession, REFRESH_INTERVAL);
+    
+    // Опционально: делаем первый запрос через 1 минуту после загрузки
+    setTimeout(refreshSession, 60 * 1000);
+    
+    // Очищаем интервал при размонтировании
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    };
   });
   
   onDestroy(() => {
-    if (keepaliveInterval) clearInterval(keepaliveInterval);
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+    }
   });
 </script>
 

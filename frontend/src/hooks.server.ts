@@ -1,196 +1,223 @@
-import type { JwtResponse } from '$lib/types/auth';
-import { decodeJWT, isTokenExpiringSoon } from '$lib/utils/jwt';
+// src/hooks.server.ts
 import type { Handle } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 
+interface JwtPayload {
+  sub?: string;
+  exp?: number;
+  roles?: string | string[];
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+// Функция для декодирования JWT (без валидации)
+function decodeJWT(token: string): JwtPayload | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1];
+    return JSON.parse(Buffer.from(payload, 'base64').toString());
+  } catch {
+    return null;
+  }
+}
+
+// Проверка, истекает ли токен в ближайшие N минут
+function isTokenExpiringSoon(token: string, minutesBeforeExpiry: number = 2): boolean {
+  try {
+    const payload = decodeJWT(token);
+    if (!payload?.exp) return true;
+    
+    const currentTime = Math.floor(Date.now() / 1000);
+    const timeUntilExpiry = payload.exp - currentTime;
+    const threshold = minutesBeforeExpiry * 60;
+    
+    return timeUntilExpiry <= threshold;
+  } catch {
+    return true;
+  }
+}
+
+// Проверка, истек ли токен
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = decodeJWT(token);
+    if (!payload?.exp) return true;
+    
+    const currentTime = Math.floor(Date.now() / 1000);
+    return payload.exp <= currentTime;
+  } catch {
+    return true;
+  }
+}
+
+// Глобальный promise для предотвращения множественных обновлений
 let refreshPromise: Promise<boolean> | null = null;
 
+// Функция обновления токенов
+async function refreshTokens(cookies: any, refreshToken: string): Promise<boolean> {
+  try {
+    const response = await fetch('http://localhost:8080/api/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      console.error('❌ Refresh failed:', response.status);
+      return false;
+    }
+
+    const tokens = await response.json();
+    
+    // Обновляем cookies
+    cookies.set('access_token', tokens.accessToken, {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 // 15 минут
+    });
+
+    if (tokens.refreshToken) {
+      cookies.set('refresh_token', tokens.refreshToken, {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 // 7 дней
+      });
+    }
+
+    // Обновляем user_data
+    const payload = decodeJWT(tokens.accessToken);
+    let roles: string[] = [];
+    if (payload?.roles) {
+      if (typeof payload.roles === 'string') {
+        roles = payload.roles.split(',').map(r => r.trim());
+      } else if (Array.isArray(payload.roles)) {
+        roles = payload.roles;
+      }
+    }
+
+    const userData = {
+      username: tokens.username || payload?.sub || '',
+      firstName: tokens.firstName || '',
+      lastName: tokens.lastName || '',
+      roles: roles
+    };
+
+    cookies.set('user_data', JSON.stringify(userData), {
+      path: '/',
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60
+    });
+
+    console.log('✅ Tokens refreshed successfully');
+    return true;
+
+  } catch (error) {
+    console.error('❌ Refresh error:', error);
+    return false;
+  }
+}
+
+// Очистка cookies
+async function clearAuthCookies(cookies: any) {
+  ['access_token', 'refresh_token', 'user_data'].forEach(name => {
+    cookies.delete(name, { path: '/' });
+  });
+}
+
+// Главный хук
 export const handle: Handle = async ({ event, resolve }) => {
-  const publicRoutes = ['/', '/api/auth/login', '/api/auth/refresh'];
+  const { cookies, url } = event;
   
-  if (publicRoutes.includes(event.url.pathname)) {
+  // Публичные маршруты - пропускаем
+  const publicRoutes = ['/', '/login', '/api/auth/login', '/api/auth/refresh'];
+  if (publicRoutes.includes(url.pathname)) {
     return await resolve(event);
   }
 
-  const accessToken = event.cookies.get('access_token');
-  const refreshToken = event.cookies.get('refresh_token');
+  const accessToken = cookies.get('access_token');
+  const refreshToken = cookies.get('refresh_token');
 
-  // Если нет refresh_token, отправляем на логин
-  if (!refreshToken && event.url.pathname.startsWith('/schedule')) {
-    await cleanupCookies(event.cookies);
-    throw redirect(303, '/');
+  // Нет refresh_token - отправляем на логин
+  if (!refreshToken) {
+    if (url.pathname.startsWith('/schedule')) {
+      await clearAuthCookies(cookies);
+      throw redirect(303, '/login');
+    }
+    return await resolve(event);
   }
 
-  // Восстанавливаем user_data, если она пропала, но токен валидный
-  if (accessToken && !event.cookies.get('user_data')) {
-    try {
-      const payload = decodeJWT(accessToken);
-      if (payload && payload.exp * 1000 > Date.now()) {
-        let roles: string[] = [];
-        if (payload.roles) {
-          if (typeof payload.roles === 'string') {
-            roles = payload.roles.split(',').map(r => r.trim());
-          } else if (Array.isArray(payload.roles)) {
-            roles = payload.roles;
-          }
-        }
-        
-        const userData = {
-          username: payload.sub,
-          firstName: '',
-          lastName: '',
-          roles: roles
-        };
-        
-        event.cookies.set('user_data', JSON.stringify(userData), {
-          path: '/',
-          httpOnly: false,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          maxAge: 900
-        });
-        
-        console.log('🔄 Восстановлена user_data из токена');
+  // Нет access_token, но есть refresh_token - пробуем обновить
+  if (!accessToken && refreshToken) {
+    console.log('🔄 No access token, refreshing...');
+    const success = await refreshTokens(cookies, refreshToken);
+    if (!success) {
+      await clearAuthCookies(cookies);
+      throw redirect(303, '/login');
+    }
+    return await resolve(event);
+  }
+
+  // Есть оба токена - проверяем нужно ли обновление
+  if (accessToken && refreshToken) {
+    const needsRefresh = isTokenExpiringSoon(accessToken, 2) || isTokenExpired(accessToken);
+    
+    if (needsRefresh) {
+      console.log('🔄 Token expiring soon, refreshing...');
+      
+      // Используем глобальный promise для предотвращения дублирования
+      if (!refreshPromise) {
+        refreshPromise = refreshTokens(cookies, refreshToken);
       }
-    } catch (e) {
-      console.log('Ошибка восстановления user_data:', e);
+      
+      const success = await refreshPromise;
+      refreshPromise = null;
+      
+      if (!success) {
+        await clearAuthCookies(cookies);
+        throw redirect(303, '/login');
+      }
     }
   }
 
-  // Проверяем, нужно ли обновлять access_token
-  if (accessToken && refreshToken && isTokenExpiringSoon(accessToken, 2)) {
-    console.log(`🔄 Хук: токен истекает для ${event.url.pathname}, пробую обновить...`);
-    
-    if (refreshPromise) {
-      console.log('⏳ Обновление уже выполняется, ждем...');
-      const success = await refreshPromise;
-      if (!success) {
-        await cleanupCookies(event.cookies);
-        if (event.url.pathname.startsWith('/schedule')) {
-          throw redirect(303, '/');
+  // Восстанавливаем user_data если она пропала
+  if (accessToken && !cookies.get('user_data')) {
+    const payload = decodeJWT(accessToken);
+    if (payload && !isTokenExpired(accessToken)) {
+      let roles: string[] = [];
+      if (payload?.roles) {
+        if (typeof payload.roles === 'string') {
+          roles = payload.roles.split(',').map(r => r.trim());
+        } else if (Array.isArray(payload.roles)) {
+          roles = payload.roles;
         }
       }
-    } else {
-      refreshPromise = refreshAccessToken(event.cookies, refreshToken);
       
-      try {
-        const success = await refreshPromise;
-        if (!success) {
-          await cleanupCookies(event.cookies);
-          if (event.url.pathname.startsWith('/schedule')) {
-            throw redirect(303, '/');
-          }
-        }
-      } finally {
-        refreshPromise = null;
-      }
+      const userData = {
+        username: payload.sub || '',
+        firstName: '',
+        lastName: '',
+        roles: roles
+      };
+      
+      cookies.set('user_data', JSON.stringify(userData), {
+        path: '/',
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60
+      });
+      
+      console.log('🔄 Restored user_data from token');
     }
   }
 
   return await resolve(event);
 };
-
-async function refreshAccessToken(cookies: any, refreshToken: string): Promise<boolean> {
-  const MAX_RETRIES = 2;
-  const RETRY_DELAY = 500;
-
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      console.log(`🔄 Попытка обновления токена #${attempt}`);
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const refreshResponse = await fetch('http://localhost:8080/api/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (refreshResponse.ok) {
-        const newTokens: JwtResponse = await refreshResponse.json();
-        
-        cookies.set('access_token', newTokens.accessToken, {
-          path: '/',
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          maxAge: 900
-        });
-
-        if (newTokens.refreshToken) {
-          cookies.set('refresh_token', newTokens.refreshToken, {
-            path: '/',
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 604800
-          });
-        }
-
-        const payload = decodeJWT(newTokens.accessToken);
-        
-        let roles: string[] = [];
-        if (payload?.roles) {
-          if (typeof payload.roles === 'string') {
-            roles = payload.roles.split(',').map(r => r.trim());
-          } else if (Array.isArray(payload.roles)) {
-            roles = payload.roles;
-          }
-        }
-        
-        const userData = {
-          username: newTokens.username || payload?.sub || '',
-          firstName: newTokens.firstName || '',
-          lastName: newTokens.lastName || '',
-          roles: roles
-        };
-
-        cookies.set('user_data', JSON.stringify(userData), {
-          path: '/',
-          httpOnly: false,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          maxAge: 900
-        });
-
-        console.log('✅ Хук: токен и user_data успешно обновлены');
-        return true;
-      }
-
-      if (refreshResponse.status === 401) {
-        console.log('❌ Хук: refresh token недействителен (401)');
-        return false;
-      }
-
-      console.log(`⚠️ Хук: ошибка ${refreshResponse.status}, попытка ${attempt}/${MAX_RETRIES}`);
-      
-      if (attempt < MAX_RETRIES) {
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
-      }
-
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        console.log(`⏱️ Таймаут при попытке ${attempt}`);
-      } else {
-        console.error(`❌ Хук: ошибка при попытке ${attempt}:`, error);
-      }
-      
-      if (attempt < MAX_RETRIES) {
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
-      }
-    }
-  }
-
-  console.log('❌ Хук: все попытки обновления токена исчерпаны');
-  return false;
-}
-
-async function cleanupCookies(cookies: any) {
-  ['access_token', 'refresh_token', 'user_data'].forEach(name => {
-    cookies.delete(name, { path: '/' });
-  });
-}
