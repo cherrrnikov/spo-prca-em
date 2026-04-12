@@ -1,23 +1,15 @@
-import type { JwtResponse } from '$lib/types/auth';
-import { decodeJWT, isTokenExpiringSoon } from '$lib/utils/jwt';
-import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { json } from '@sveltejs/kit';
+import { decodeJWT } from '$lib/utils/jwt';
+import type { JwtResponse } from '$lib/types/auth';
 
 export const GET: RequestHandler = async ({ cookies, fetch }) => {
-    const accessToken = cookies.get('access_token');
     const refreshToken = cookies.get('refresh_token');
 
-    // Нет refresh токена — сессия мертва
     if (!refreshToken) {
         return json({ status: 'unauthorized' }, { status: 401 });
     }
 
-    // Токен ещё живой и не скоро истекает — всё ок
-    if (accessToken && !isTokenExpiringSoon(accessToken, 3)) {
-        return json({ status: 'ok' });
-    }
-
-    // Токен истекает скоро или уже истёк — обновляем
     try {
         const refreshResponse = await fetch('http://localhost:8080/api/auth/refresh', {
             method: 'POST',
@@ -26,7 +18,6 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
         });
 
         if (!refreshResponse.ok) {
-            // Refresh токен невалиден — чистим всё
             ['access_token', 'refresh_token', 'user_data'].forEach(name => {
                 cookies.delete(name, { path: '/' });
             });

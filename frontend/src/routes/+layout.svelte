@@ -7,40 +7,31 @@
   let { children } = $props();
   let keepaliveInterval: ReturnType<typeof setInterval>;
   
-  function refreshUserDataFromCookie() {
+  async function doKeepalive() {
+    console.log('🔄 Keepalive: отправляю запрос...');
     try {
-      const userDataCookie = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('user_data='));
+      const response = await fetch('/api/auth/validate', {
+        method: 'GET',
+        credentials: 'same-origin'
+      });
       
-      if (!userDataCookie) return;
+      console.log('🔄 Keepalive: ответ', response.status);
       
-      // Диспатчим событие чтобы компоненты могли обновиться
-      window.dispatchEvent(new CustomEvent('user-data-updated'));
+      if (response.ok) {
+        console.log('✅ Keepalive: сессия продлена');
+        window.dispatchEvent(new CustomEvent('user-data-updated'));
+      } else if (response.status === 401) {
+        console.log('❌ Keepalive: сессия истекла');
+        window.location.href = '/';
+      }
     } catch (e) {
-      // тихо
+      console.error('❌ Keepalive: ошибка', e);
     }
   }
   
   onMount(() => {
-    keepaliveInterval = setInterval(async () => {
-      try {
-        const response = await fetch('/api/auth/validate', {
-          method: 'GET',
-          credentials: 'same-origin'
-        });
-        
-        if (response.ok) {
-          console.log('🔄 Keepalive: сессия активна');
-          refreshUserDataFromCookie();
-        } else if (response.status === 401) {
-          console.log('❌ Keepalive: сессия истекла, редирект');
-          window.location.href = '/';
-        }
-      } catch (e) {
-        // тихо падаем
-      }
-    }, 600000);
+    console.log('📌 Layout: keepalive запущен');
+    keepaliveInterval = setInterval(doKeepalive, 780000); // 2 минуты для теста
   });
   
   onDestroy(() => {
