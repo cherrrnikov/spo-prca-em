@@ -1,13 +1,19 @@
 spring:
-    datasource:
-        url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
-        username: ${POSTGRES_USER}
-        password: ${POSTGRES_PASSWORD}
-    jpa:
-        hibernate:
-            ddl-auto: update 
-        show-sql: false
+  datasource:
+    url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+jwt:
+  secret: ${JWT_SECRET}
+  issuer: ${JWT_ISSUER}
+
 logging:
-    level:
-        root: INFO
-        '[ru.laspace.backend]': DEBUG
+  level:
+    root: INFO
+    '[ru.laspace.backend]': DEBUG

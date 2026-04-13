@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:16-alpine
     container_name: db
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -11,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -38,16 +38,65 @@ services:
     build: ./auth
     container_name: auth-service
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}  
-      SPRING_PROFILES_ACTIVE: docker  
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
+      MAX_FAILED_ATTEMPTS: ${MAX_FAILED_ATTEMPTS}
+      ACCOUNT_LOCK_DURATION: ${ACCOUNT_LOCK_DURATION}
     ports:
-     - "8080:8080"
+      - "${AUTH_PORT}:8080"
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: backend-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+    ports:
+      - "${BACKEND_PORT}:8081"
+    restart: unless-stopped
+
+  frontend:
+      build: ./frontend
+      container_name: frontend-service
+      depends_on:
+        - auth
+        - backend
+      environment:
+        AUTH_INTERNAL_URL: http://auth:8080
+        BACKEND_INTERNAL_URL: http://backend:8081
+      ports:
+        - "${FRONTEND_PORT}:3000"
+      restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    depends_on:
+      - auth
+      - backend
+      - frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
 
 volumes:
   postgres_data:

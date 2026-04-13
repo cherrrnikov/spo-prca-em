@@ -3,18 +3,28 @@ spring:
     url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
-  
+
   cache:
     type: redis
     redis:
       time-to-live: 1800000
-  
+
   data:
     redis:
       host: redis
       port: 6379
 
+jwt:
+  secret: ${JWT_SECRET}
+  issuer: ${JWT_ISSUER}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION}
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION}
+
+security:
+  max-failed-attempts: ${MAX_FAILED_ATTEMPTS}
+  account-lock-duration-minutes: ${ACCOUNT_LOCK_DURATION}
+
 logging:
   level:
     root: INFO
-    '[ru.laspace.spo]': DEBUG
+    '[ru.laspace.auth]': DEBUG

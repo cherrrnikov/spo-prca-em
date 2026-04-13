@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: spo-auth-service
+
+  profiles:
+    active: local
+  
+  security:
+    user:
+      name: admin
+      password: admin
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/spo-prca-em
+    username: YOUR_DB_USER
+    password: YOUR_DB_PASSWORD
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+      
+  cache:
+    type: redis
+    redis:
+      time-to-live: 1800000
+      cache-null-values: false
+  
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    '[ru.laspace.auth]': DEBUG
+    '[org.springframework.web]': DEBUG
+
+jwt:
+  secret: YOUR_JWT_SECRET
+  access-token-expiration: 900000
+  refresh-token-expiration: 604800000
+  issuer: spo-auth-service
+
+security:
+  max-failed-attempts: 5
+  account-lock-duration-minutes: 15
+  enable-brute-force-protection: true
+  login-delay-millis: 1000
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    default-model-expand-depth: 2
+    default-model-rendering: example
+    doc-expansion: none
+    filter: true
+    display-operation-id: false
+    try-it-out-enabled: true
+  show-actuator: true
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json

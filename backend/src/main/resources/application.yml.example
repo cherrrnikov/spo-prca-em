@@ -1,0 +1,49 @@
+spring:
+  profiles:
+    active: local
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/spo-prca-em
+    username: YOUR_DB_USER
+    password: YOUR_DB_PASSWORD
+  
+  jpa:
+    hibernate:
+      ddl-auto: update  
+    show-sql: true
+  
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    date-format: yyyy-MM-dd'T'HH:mm:ss
+
+server:
+  port: 8081  
+
+logging:
+  level:
+    root: INFO
+    '[ru.laspace.backend]': DEBUG
+    '[org.springframework.jdbc.core]': TRACE 
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    default-model-expand-depth: 2
+    default-model-rendering: example
+    doc-expansion: none
+    filter: true
+    display-operation-id: false
+    try-it-out-enabled: true
+  show-actuator: true
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+
+jwt:
+  secret: YOUR_JWT_SECRET
+  issuer: spo-auth-service
