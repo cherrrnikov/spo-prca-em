@@ -3,17 +3,15 @@
     
     import {
     	CITIES,
-    	CUSTOMER_CODES,
     	WORK_MODES
     } from '$lib/constants/schedule';
     
     import CityLegend from '$lib/components/CityLegend.svelte';
     import FileMenu from '$lib/components/FileMenu.svelte';
     import ScheduleGrid from '$lib/components/ScheduleGrid.svelte';
+    import { useScheduleState } from '$lib/hooks/useScheduleState/index';
     import CreationHeader from '../../features/schedule-creation/components/CreationHeader.svelte';
     import ModeCreationFormComponent from '../../features/schedule-creation/components/ModeCreationForm.svelte';
-    
-    import { useScheduleState } from '$lib/hooks/useScheduleState/index';
     
     import { ScheduleApiService } from '../../features/services/api/scheduleApi.service';
     import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
@@ -22,11 +20,11 @@
     import { TimeUtils } from '$lib/utils/time';
     
     import { modal } from '$lib/services/modal.service';
-    import type { CreatedProgramData, OperatorData, PpiAssignment, ProgramModeData, TimeInterval } from '$lib/types';
+    import type { OperatorData, PpiAssignment } from '$lib/types';
     import { checkAllConflicts } from '$lib/utils/interval/index';
-    import { ModeUtils } from '$lib/utils/mode';
     import AnalysisModal from '../../features/schedule-creation/components/AnalysisModal.svelte';
     import ProgramsSelector from '../../features/schedule-creation/components/ProgramsSelector.svelte';
+    import { ProgramCreatorService } from '../../features/services/data/programCreator.service';
 
     const cities = CITIES;
     const workModes = WORK_MODES;
@@ -203,11 +201,12 @@
             );
             
             // СОЗДАЁМ createdPrograms ДЛЯ ВСЕХ ИНТЕРВАЛОВ ИЗ ИД06
-            const newCreatedPrograms = createProgramsFromOperatorData(
+            const newCreatedPrograms = ProgramCreatorService.createProgramsFromOperatorData(
                 newOperatorData,
                 newPpiAssignments,
                 date,
-                newIntervals
+                newIntervals,
+                bortDataForDate
             );
             
             // Добавляем астрокоррекции
@@ -230,231 +229,6 @@
             createdPrograms.set(newCreatedPrograms); 
             isEditing.set(false);
         }
-    }
-
-    // Функция создания createdPrograms из ИД06
-    function createProgramsFromOperatorData(
-        operatorData: OperatorData,
-        ppiAssignments: PpiAssignment[],
-        date: string,
-        intervals: TimeInterval[]
-    ): CreatedProgramData[] {
-        const programs: CreatedProgramData[] = [];
-        const mainId = operatorData.main.id;
-        const numKa = operatorData.main.n_ka;
-        
-        // КВД
-        if (operatorData.kvd_list) {
-            operatorData.kvd_list.forEach((kvd: any) => {
-                const assignment = ppiAssignments.find(a => 
-                    a.recordId === kvd.id && a.recordType === 'kvd'
-                );
-                
-                if (assignment) {
-                    const modeData: ProgramModeData = {
-                        numRp: 0,
-                        numKa: numKa,
-                        dateOn: kvd.dn,
-                        dateOff: kvd.dk,
-                        kodMode: 7,
-                        numPpi: assignment.ppiNum,
-                        dlit: TimeUtils.calculateDuration(kvd.dn, kvd.dk),
-                        zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
-                        kvdData: {
-                            id: kvd.id,
-                            idMain: mainId,
-                            prMsu: kvd.pr_msu,
-                            prBssd: kvd.pr_bssd,
-                            prZg: kvd.pr_zg
-                        }
-                    };
-                    
-                    const timeInterval = intervals.find(i => 
-                        i.id === `kvd_${kvd.id}`
-                    );
-                    
-                    if (timeInterval) {
-                        timeInterval.customerCode = 1;
-                        timeInterval.kvdConfig = {
-                            prMsu: kvd.pr_msu,
-                            prBssd: kvd.pr_bssd,
-                            prZg: kvd.pr_zg
-                        };
-                        
-                        programs.push({
-                            tempId: `kvd_${kvd.id}`,
-                            modeData,
-                            timeInterval
-                        });
-                    }
-                }
-            });
-        }
-        
-        // ТНП
-        if (operatorData.tnp_list) {
-            operatorData.tnp_list.forEach((tnp: any) => {
-                const assignment = ppiAssignments.find(a => 
-                    a.recordId === tnp.id && a.recordType === 'tnp'
-                );
-                
-                if (assignment) {
-                    const modeData: ProgramModeData = {
-                        numRp: 0,
-                        numKa: numKa,
-                        dateOn: tnp.dn,
-                        dateOff: tnp.dk,
-                        kodMode: 4,
-                        numPpi: assignment.ppiNum,
-                        dlit: tnp.dlit,
-                        zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
-                        tnpData: {
-                            id: tnp.id,
-                            idMain: mainId,
-                            prMsu: 1,  // заглушка
-                            prBssd: 1,  // заглушка
-                            prZg: 1     // заглушка
-                        }
-                    };
-                    
-                    const timeInterval = intervals.find(i => 
-                        i.id === `tnp_${tnp.id}`
-                    );
-                    
-                    if (timeInterval) {
-                        timeInterval.customerCode = 1;
-                        programs.push({
-                            tempId: `tnp_${tnp.id}`,
-                            modeData,
-                            timeInterval
-                        });
-                    }
-                }
-            });
-        }
-        
-        // ТС
-        if (operatorData.ts_list) {
-            operatorData.ts_list.forEach((ts: any) => {
-                const assignment = ppiAssignments.find(a => 
-                    a.recordId === ts.id && a.recordType === 'ts'
-                );
-                
-                if (assignment) {
-                    // Находим все подынтервалы для этого ТС
-                    const tsSubIntervals = intervals.filter(i => 
-                        i.id.startsWith(`ts_${ts.id}`)
-                    );
-
-                    const currentBortData = $bortData;
-
-                    tsSubIntervals.forEach((subInterval, idx) => {
-                        subInterval.customerCode = 1;
-
-                        const tsData = {
-                            id: ts.id,
-                            idMain: mainId,
-                            tip: ts.tip ?? 1,                   
-                            reg: ts.reg ?? 0,
-                            dlit: subInterval.dlit || 420,
-                            prMsu1: ts.pr_msu1,
-                            vd1Msu1: ts.pr_vd1_1,
-                            vd2Msu1: ts.pr_vd2_1,
-                            vd3Msu1: ts.pr_vd3_1,
-                            ik4Msu1: ts.pr_ik4_1,
-                            ik5Msu1: ts.pr_ik5_1,
-                            ik6Msu1: ts.pr_ik6_1,
-                            ik7Msu1: ts.pr_ik7_1,
-                            ik8Msu1: ts.pr_ik8_1,
-                            ik9Msu1: ts.pr_ik9_1,
-                            ik10Msu1: ts.pr_ik10_1,
-                            prMsu2: ts.pr_msu2,
-                            vd1Msu2: ts.pr_vd1_2,
-                            vd2Msu2: ts.pr_vd2_2,
-                            vd3Msu2: ts.pr_vd3_2,
-                            ik4Msu2: ts.pr_ik4_2,
-                            ik5Msu2: ts.pr_ik5_2,
-                            ik6Msu2: ts.pr_ik6_2,
-                            ik7Msu2: ts.pr_ik7_2,
-                            ik8Msu2: ts.pr_ik8_2,
-                            ik9Msu2: ts.pr_ik9_2,
-                            ik10Msu2: ts.pr_ik10_2,
-                            prBssd: currentBortData?.pr_bssd ?? 0,
-                            prZg: currentBortData?.pr_zg ?? 0,
-                            prOtklZgBssd: ts.pr_otkl_zg
-                        };
-
-                        subInterval.tsData = tsData;
-
-                        const modeData: ProgramModeData = {
-                            numRp: 0,
-                            numKa: numKa,
-                            dateOn: `${date}T${subInterval.startTime}`,
-                            dateOff: `${date}T${subInterval.endTime}`,
-                            kodMode: 8,
-                            numPpi: assignment.ppiNum,
-                            dlit: subInterval.dlit || 420,
-                            zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
-                            tsData: tsData
-                        };
-
-                        console.log('tsData:', modeData.tsData);
-                        
-                        programs.push({
-                            tempId: `ts_${ts.id}_${idx}`,
-                            modeData,
-                            timeInterval: subInterval
-                        });
-                    });
-                }
-            });
-        }
-        
-        // ОНА
-        if (operatorData.ona_list) {
-            operatorData.ona_list.forEach((ona: any) => {
-                const assignment = ppiAssignments.find(a => 
-                    a.recordId === ona.id && a.recordType === 'ona'
-                );
-                
-                if (assignment) {
-                    const modeData: ProgramModeData = {
-                        numRp: 0,
-                        numKa: numKa,
-                        dateOn: ona.dn,
-                        dateOff: ona.dk,
-                        kodMode: 6,
-                        numPpi: assignment.ppiNum,
-                        dlit: ona.dlit,
-                        zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
-                        onaData: {
-                            id: ona.id,
-                            idMain: ona.id_main,
-                            typeOmi: 1,
-                            dN: ona.dn,
-                            dK: ona.dk,
-                            nOna: ona.n_ona,
-                            nPpi: assignment.ppiNum
-                        }
-                    };
-                    
-                    const timeInterval = intervals.find(i => 
-                        i.id === `ona_${ona.id}`
-                    );
-                    
-                    if (timeInterval) {
-                        timeInterval.customerCode = 1;
-                        programs.push({
-                            tempId: `ona_${ona.id}`,
-                            modeData,
-                            timeInterval
-                        });
-                    }
-                }
-            });
-        }
-        
-        return programs;
     }
 
     function formatDate(dateString: string): string {
