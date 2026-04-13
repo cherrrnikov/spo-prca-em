@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type { TsMsuConfig } from '$lib/types';
+    import type { MsuConfig } from '$lib/types';
     
     export let msu: 'msu1' | 'msu2';
-    export let config: TsMsuConfig;
-    export let onUpdate: (config: TsMsuConfig) => void;
+    export let config: MsuConfig;
+    export let onUpdate: (config: MsuConfig) => void;
     export let disableVd: boolean = false;
 
     // Все каналы в массиве для удобства
@@ -20,14 +20,14 @@
         { type: 'ik', num: 10, key: 'ik10' }
     ];
 
-    $: isAllSelected = allChannels.every(channel => config[channel.key as keyof TsMsuConfig] === 1);
+    $: isAllSelected = allChannels.every(channel => config[channel.key as keyof MsuConfig] === 1);
 
     // Выбрать/снять все каналы
     function toggleAll(checked: boolean) {
         const updatedConfig = { ...config };
         
         allChannels.forEach(channel => {
-            updatedConfig[channel.key as keyof TsMsuConfig] = checked ? 1 : 0;
+            updatedConfig[channel.key as keyof MsuConfig] = checked ? 1 : 0;
         });
         
         updatedConfig.prVdMsu = hasAnyVd(updatedConfig) ? 1 : 0;
@@ -39,7 +39,7 @@
 
     function handleVdChange(vdNumber: number, checked: boolean) {
         const updatedConfig = { ...config };
-        const vdKey = `vd${vdNumber}` as keyof TsMsuConfig;
+        const vdKey = `vd${vdNumber}` as keyof MsuConfig;
         updatedConfig[vdKey] = checked ? 1 : 0;
         
         updatedConfig.prVdMsu = hasAnyVd(updatedConfig) ? 1 : 0;
@@ -50,7 +50,7 @@
 
     function handleIkChange(ikNumber: number, checked: boolean) {
         const updatedConfig = { ...config };
-        const ikKey = `ik${ikNumber}` as keyof TsMsuConfig;
+        const ikKey = `ik${ikNumber}` as keyof MsuConfig;
         updatedConfig[ikKey] = checked ? 1 : 0;
         
         updatedConfig.prIkMsu = hasAnyIk(updatedConfig) ? 1 : 0;
@@ -59,11 +59,11 @@
         onUpdate(updatedConfig);
     }
 
-    function hasAnyVd(config: TsMsuConfig): boolean {
+    function hasAnyVd(config: MsuConfig): boolean {
         return config.vd1 === 1 || config.vd2 === 1 || config.vd3 === 1;
     }
 
-    function hasAnyIk(config: TsMsuConfig): boolean {
+    function hasAnyIk(config: MsuConfig): boolean {
         return [config.ik4, config.ik5, config.ik6, config.ik7, config.ik8, config.ik9, config.ik10]
             .some(value => value === 1);
     }
@@ -85,7 +85,7 @@
             <label class="checkbox-label">
                 <input 
                     type="checkbox"
-                    checked={config[channel.key as keyof TsMsuConfig] === 1}
+                    checked={config[channel.key as keyof MsuConfig] === 1}
                     on:change={(e) => {
                         if (channel.type === 'vd') {
                             handleVdChange(channel.num, e.target.checked);
