@@ -1,4 +1,4 @@
-import { AUTH_BASE_URL } from '$lib/config/api.config';
+import { ACCESS_TOKEN_MAX_AGE, AUTH_BASE_URL, TOKEN_REFRESH_THRESHOLD_MINUTES } from '$lib/config/api.config';
 import { decodeJWT } from '$lib/utils/jwt';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
@@ -18,7 +18,7 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
     const payload = decodeJWT(accessToken);
     if (payload?.exp) {
       const timeUntilExpiry = payload.exp - Math.floor(Date.now() / 1000);
-      needsRefresh = timeUntilExpiry <= 13 * 60; // 2 минуты
+      needsRefresh = timeUntilExpiry <= TOKEN_REFRESH_THRESHOLD_MINUTES * 60; // 2 минуты
     }
   } catch {
     needsRefresh = true;
@@ -53,7 +53,7 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60
+      maxAge: ACCESS_TOKEN_MAX_AGE
     });
 
     // Обновляем user_data
@@ -82,7 +82,7 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60
+      maxAge: ACCESS_TOKEN_MAX_AGE
     });
 
     return json({ status: 'refreshed' });

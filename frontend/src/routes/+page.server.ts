@@ -1,4 +1,4 @@
-import { AUTH_BASE_URL } from "$lib/config/api.config.js";
+import { ACCESS_TOKEN_MAX_AGE, AUTH_BASE_URL, REFRESH_TOKEN_MAX_AGE } from "$lib/config/api.config.js";
 import type { JwtResponse, LoginRequest } from "$lib/types/auth";
 import { fail, redirect, type Actions } from "@sveltejs/kit";
 
@@ -70,7 +70,7 @@ export const actions = {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 900 // 15 минут
+                maxAge: ACCESS_TOKEN_MAX_AGE 
             });
             
             cookies.set('refresh_token', data.refreshToken, {
@@ -78,7 +78,7 @@ export const actions = {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 604800 // 7 дней
+                maxAge: REFRESH_TOKEN_MAX_AGE
             });
 
             const userData = {
@@ -97,7 +97,7 @@ export const actions = {
                 httpOnly: false, 
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 900 // 15 минут
+                maxAge: ACCESS_TOKEN_MAX_AGE
             });
 
             console.log('Куки установлены, делаю редирект на /schedule');
