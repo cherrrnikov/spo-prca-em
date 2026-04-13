@@ -6,14 +6,14 @@
     	ZG_OPTIONS
     } from "$lib/constants/schedule";
     import { modal } from "$lib/services/modal.service";
-    import type { ModeCreationForm, TimeInterval, TsMsuConfig } from "$lib/types";
+    import type { ModeCreationForm, MsuConfig, TimeInterval } from "$lib/types";
     import { IntervalValidationService } from "$lib/utils/intervalValidation";
     import { TimeUtils } from "$lib/utils/time";
     import { onMount } from "svelte";
     import { ScheduleConverterService } from "../../services/data/scheduleConverter.service";
     import { ManualIntervalSplitService } from '../../services/utils/manualIntervalSplit.service';
     import { ModeDurationService } from "../../services/utils/modeDuration.service";
-    import TsCheckboxGroup from "./TsCheckboxGroup.svelte";
+    import MsuCheckboxGroup from "./MsuCheckboxGroup.svelte";
 
     const customerCodes = CUSTOMER_CODES;
     const zgOptions = ZG_OPTIONS;
@@ -109,7 +109,7 @@
         };
     }
 
-    function getDefaultMsuConfig(): TsMsuConfig {
+    function getDefaultMsuConfig(): MsuConfig {
         return ScheduleConverterService.getDefaultMsuConfig();
     }
 
@@ -302,7 +302,7 @@
         }
     }
 
-    function handleMsuConfigUpdate(msu: 'msu1' | 'msu2', config: TsMsuConfig) {
+    function handleMsuConfigUpdate(msu: 'msu1' | 'msu2', config: MsuConfig) {
         if (msu === 'msu1') {
             localFormData.msu1Config = config;
         } else {
@@ -410,7 +410,7 @@
         {:else if selectedMode === 8 || selectedMode === 1}
             <div class="form-section">
                 <span class="form-section_title">Комплект МСУ-ГС 1</span>
-                <TsCheckboxGroup 
+                <MsuCheckboxGroup 
                     msu="msu1"
                     config={localFormData.msu1Config}
                     onUpdate={(config) => handleMsuConfigUpdate('msu1', config)}
@@ -420,7 +420,7 @@
 
             <div class="form-section">
                 <span class="form-section_title">Комплект МСУ-ГС 2</span>
-                <TsCheckboxGroup 
+                <MsuCheckboxGroup 
                     msu="msu2"
                     config={localFormData.msu2Config}
                     onUpdate={(config) => handleMsuConfigUpdate('msu2', config)}
