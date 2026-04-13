@@ -1,7 +1,7 @@
 // src/routes/api/auth/validate/+server.ts
-import type { RequestHandler } from './$types';
-import { json } from '@sveltejs/kit';
 import { decodeJWT } from '$lib/utils/jwt';
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ cookies, fetch }) => {
   const accessToken = cookies.get('access_token');
@@ -18,7 +18,7 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
     const payload = decodeJWT(accessToken);
     if (payload?.exp) {
       const timeUntilExpiry = payload.exp - Math.floor(Date.now() / 1000);
-      needsRefresh = timeUntilExpiry <= 2 * 60; // 2 минуты
+      needsRefresh = timeUntilExpiry <= 13 * 60; // 2 минуты
     }
   } catch {
     needsRefresh = true;
@@ -56,22 +56,17 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
       maxAge: 15 * 60
     });
 
-    if (tokens.refreshToken) {
-      cookies.set('refresh_token', tokens.refreshToken, {
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60
-      });
-    }
-
     // Обновляем user_data
     const payload = decodeJWT(tokens.accessToken);
     let roles: string[] = [];
     if (payload?.roles) {
       if (typeof payload.roles === 'string') {
-        roles = payload.roles.split(',').map(r => r.trim());
+        roles = payload.roles.split(',').map(r => r.trim().replace('ROLE_', ''));
+        roles.sort((a, b) => {
+          if (a === 'ADMIN') return -1;
+          if (b === 'ADMIN') return 1;
+          return 0;
+        });
       } else if (Array.isArray(payload.roles)) {
         roles = payload.roles;
       }

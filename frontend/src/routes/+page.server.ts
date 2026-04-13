@@ -84,7 +84,11 @@ export const actions = {
                 username: data.username,
                 firstName: data.firstName,
                 lastName: data.lastName,
-                roles: data.roles || []
+                roles: (data.roles || []).sort((a: string, b: string) => {
+                    if (a === 'ADMIN') return -1;
+                    if (b === 'ADMIN') return 1;
+                    return 0;
+                })
             };
 
             cookies.set('user_data', JSON.stringify(userData), {

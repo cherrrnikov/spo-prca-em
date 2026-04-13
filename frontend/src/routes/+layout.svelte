@@ -9,7 +9,7 @@
   let isRefreshing = false;
   
   // Рассчитываем интервал обновления (обновляем каждые 13 минут, но токен живет 15)
-  const REFRESH_INTERVAL = 13 * 60 * 1000; // 13 минут
+  const REFRESH_INTERVAL = 2 * 60 * 1000; // 13 минут
   
   async function refreshSession() {
     if (isRefreshing) return;

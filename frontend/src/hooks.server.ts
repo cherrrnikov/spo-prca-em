@@ -80,22 +80,17 @@ async function refreshTokens(cookies: any, refreshToken: string): Promise<boolea
       maxAge: 15 * 60 // 15 минут
     });
 
-    if (tokens.refreshToken) {
-      cookies.set('refresh_token', tokens.refreshToken, {
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 // 7 дней
-      });
-    }
-
     // Обновляем user_data
     const payload = decodeJWT(tokens.accessToken);
     let roles: string[] = [];
     if (payload?.roles) {
       if (typeof payload.roles === 'string') {
-        roles = payload.roles.split(',').map(r => r.trim());
+        roles = payload.roles.split(',').map(r => r.trim().replace('ROLE_', ''));
+        roles.sort((a, b) => {
+          if (a === 'ADMIN') return -1;
+          if (b === 'ADMIN') return 1;
+          return 0;
+        });
       } else if (Array.isArray(payload.roles)) {
         roles = payload.roles;
       }
