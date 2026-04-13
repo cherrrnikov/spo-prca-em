@@ -1,3 +1,4 @@
+import { ONA_CONSTRAINT_IDS } from '$lib/config/schedule.config';
 import type { TimeInterval } from '$lib/types';
 import { TooltipFormatter } from '$lib/utils/tooltipFormatter';
 import { get } from 'svelte/store';
@@ -17,7 +18,7 @@ export function createUiHelpers(stores: ReturnType<typeof createStores>) {
         
         if (interval.constraintViolations?.length) {
             const onlySpecialViolations = interval.constraintViolations.every(
-                v => v.constraintId === 77 || v.constraintId === 78
+                v => ONA_CONSTRAINT_IDS.includes(v.constraintId)
             );
             return onlySpecialViolations ? '#ff0000' : '#ffffff';
         }

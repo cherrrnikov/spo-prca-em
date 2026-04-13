@@ -1,3 +1,4 @@
+import { AUTH_BASE_URL } from "$lib/config/api.config.js";
 import type { JwtResponse, LoginRequest } from "$lib/types/auth";
 import { fail, redirect, type Actions } from "@sveltejs/kit";
 
@@ -30,7 +31,7 @@ export const actions = {
         try {
             console.log('Отправляем запрос на логин для:', username);
             
-            const response = await fetch('http://localhost:8080/api/auth/login', {
+            const response = await fetch(`${AUTH_BASE_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -130,7 +131,7 @@ export const actions = {
             if (refreshToken) {
                 console.log('Выполняем logout на сервере');
                 
-                const response = await fetch('http://localhost:8080/api/auth/logout', {
+                const response = await fetch(`${AUTH_BASE_URL}/api/auth/logout`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',

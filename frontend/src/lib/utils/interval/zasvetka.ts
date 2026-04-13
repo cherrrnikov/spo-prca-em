@@ -1,3 +1,4 @@
+import { ZASVETKA_SAFETY_BUFFER } from '$lib/config/schedule.config';
 import type { ZasvetkaInterval } from '$lib/types';
 import { TimeUtils } from '../time';
 import { checkTwoIntervalsOverlap } from './conflicts';
@@ -13,7 +14,6 @@ export function checkZasvetkaProximity(
 } {
     const intervalStartSeconds = TimeUtils.timeToSeconds(intervalStart);
     const intervalEndSeconds = TimeUtils.timeToSeconds(intervalEnd);
-    const SAFETY_BUFFER = 60;
     
     let minDistance = Infinity;
     let nearZasvetka = false;
@@ -38,7 +38,7 @@ export function checkZasvetkaProximity(
         
         if (intervalEndSeconds <= zasvetkaStart) {
             const distance = zasvetkaStart - intervalEndSeconds;
-            if (distance < SAFETY_BUFFER) {
+            if (distance < ZASVETKA_SAFETY_BUFFER) {
                 nearZasvetka = true;
                 minDistance = Math.min(minDistance, distance);
             }
@@ -46,7 +46,7 @@ export function checkZasvetkaProximity(
         
         if (intervalStartSeconds >= zasvetkaEnd) {
             const distance = intervalStartSeconds - zasvetkaEnd;
-            if (distance < SAFETY_BUFFER) {
+            if (distance < ZASVETKA_SAFETY_BUFFER) {
                 nearZasvetka = true;
                 minDistance = Math.min(minDistance, distance);
             }

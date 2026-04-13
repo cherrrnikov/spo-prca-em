@@ -1,4 +1,5 @@
 // src/hooks.server.ts
+import { AUTH_BASE_URL } from '$lib/config/api.config';
 import type { Handle } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 
@@ -58,7 +59,7 @@ let refreshPromise: Promise<boolean> | null = null;
 // Функция обновления токенов
 async function refreshTokens(cookies: any, refreshToken: string): Promise<boolean> {
   try {
-    const response = await fetch('http://localhost:8080/api/auth/refresh', {
+    const response = await fetch(`${AUTH_BASE_URL}/api/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),

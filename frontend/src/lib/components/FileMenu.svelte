@@ -6,6 +6,8 @@
   import type { UserResponse } from '$lib/types/auth';
   import { mergeMsuIntervals } from '$lib/utils/interval/mergeMsuIntervals';
   import { onMount } from 'svelte';
+  import { ScheduleApiService } from '../../features/services/api/scheduleApi.service';
+  import { VpPreparerService } from '../../features/services/data/vpPreparer.service';
   import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
   
   let isOpen = $state(false);
@@ -135,6 +137,22 @@
                   // Сохраняем
                   const result = await ScheduleCreationService.saveProgram(programRequest);
                   console.log(`✅ ПРЦА для ${program.date} сохранена`);
+
+                  // Сохранение ВПРЦА 
+                  try {
+                    const vpRequest = VpPreparerService.prepareVpData(
+                      createdPrograms.filter(p => p.timeInterval.willBeSaved === true),
+                      numKa || programRequest.mainData.numKa,
+                      result?.numRp || 0,
+                      programRequest.mainData.dateOn,
+                      programRequest.mainData.dateOff
+                      );
+
+                      await ScheduleApiService.saveVp(vpRequest);
+                      console.log(`ВПРЦА для ${program.date} успешно сохранена`);
+                  } catch (vpError) {
+                      console.error(`Ошибка сохранения ВПРЦА для ${program.date}:`, vpError);
+                  }
 
                   if (result?.numRp) {
                       program.numRp = result.numRp;
@@ -307,6 +325,22 @@
           
           console.log("=== РЕЗУЛЬТАТ СОХРАНЕНИЯ ===");
           console.log("Успешно! Ответ сервера:", result);
+
+          // Сохранение ВПРЦА 
+          try {
+            const vpRequest = VpPreparerService.prepareVpData(
+              createdPrograms.filter(p => p.timeInterval.willBeSaved === true),
+              numKa || programRequest.mainData.numKa,
+              result?.numRp || programRequest.mainData.numRp,
+              programRequest.mainData.dateOn,
+              programRequest.mainData.dateOff
+              );
+
+              await ScheduleApiService.saveVp(vpRequest);
+              console.log("ВПРЦА успешно сохранена");
+          } catch (vpError) {
+              console.error("Ошибка сохранения ВПРЦА:", vpError);
+          }
           
           if (result?.numRp) {
               if (onNumRpSaved) {

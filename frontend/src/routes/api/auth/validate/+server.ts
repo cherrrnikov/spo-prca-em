@@ -1,4 +1,4 @@
-// src/routes/api/auth/validate/+server.ts
+import { AUTH_BASE_URL } from '$lib/config/api.config';
 import { decodeJWT } from '$lib/utils/jwt';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
@@ -31,7 +31,7 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
 
   // Токен истекает - обновляем
   try {
-    const refreshResponse = await fetch('http://localhost:8080/api/auth/refresh', {
+    const refreshResponse = await fetch(`${AUTH_BASE_URL}/api/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken })

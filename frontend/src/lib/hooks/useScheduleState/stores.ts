@@ -1,3 +1,4 @@
+import { DEFAULT_NUM_KA } from '$lib/constants/schedule';
 import type {
     CreatedProgramData,
     ForecastData,
@@ -60,7 +61,7 @@ export function createStores() {
     const isAnalysisMode = writable<boolean>(false);
 
     // Номер КА
-    const numKa = writable<number>(1525);
+    const numKa = writable<number>(DEFAULT_NUM_KA);
 
     // Номер РП
     const currentNumRp = writable<number | null>(null);
