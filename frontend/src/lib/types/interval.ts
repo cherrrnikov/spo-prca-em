@@ -1,4 +1,4 @@
-import type { Ppi, TsMsuConfig } from "./constants";
+import type { MsuConfig, Ppi } from "./constants";
 import type { ConstraintViolation } from "./constraints";
 import type { CreatedProgramData } from "./program";
 
@@ -66,8 +66,8 @@ export interface TimeInterval {
         dlit: number;
     };
 
-    msu1Config?: TsMsuConfig;
-    msu2Config?: TsMsuConfig;
+    msu1Config?: MsuConfig;
+    msu2Config?: MsuConfig;
     
     hasConflict?: boolean;
     conflictWith?: number[];
@@ -94,8 +94,8 @@ export interface ModeCreationForm {
         prBssd: number;
         prZg: number;
     };
-    msu1Config: TsMsuConfig;
-    msu2Config: TsMsuConfig;
+    msu1Config: MsuConfig;
+    msu2Config: MsuConfig;
     nOna?: number;
     tip?: number;
     reg?: number;
