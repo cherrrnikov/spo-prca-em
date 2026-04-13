@@ -4,7 +4,8 @@ import type {
     Id02Dto,
     Kr01DataResponse,
     OperatorData,
-    Ro02DataResponse
+    Ro02DataResponse,
+    VpCreateRequest
 } from '$lib/types';
 
 export class ScheduleApiService {
@@ -53,6 +54,21 @@ export class ScheduleApiService {
 
         const text = await response.text();
         return text ? JSON.parse(text) : null;
+    }
+
+    static async saveVp(vpData: VpCreateRequest): Promise<{vpId: number}> {
+        const response = await fetch(`${this.BASE_URL}/schedule/vp-proxy`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(vpData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ошибка сохранения: ${response.status}`);
+        }
+
+        const text = await response.text();
+        return text  ? JSON.parse(text) : null;
     }
 
     static async loadModeDurations(): Promise<Record<string, number>> {

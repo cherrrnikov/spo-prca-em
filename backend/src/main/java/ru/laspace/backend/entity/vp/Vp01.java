@@ -47,8 +47,8 @@ public class Vp01 {
     @Column(name = "s")
     private Integer s = 0; // ... vp01_tnp
 
-    @Column(name = "t")
-    private Integer t = 0; // ... vp01_tehns
+    // @Column(name = "t")
+    // private Integer t = 0; // ... vp01_tehns
 
     @Column(name = "p")
     private Integer p = 0; // ... vp01_vd
