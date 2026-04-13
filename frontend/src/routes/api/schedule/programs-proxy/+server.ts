@@ -1,3 +1,4 @@
+import { BACKEND_BASE_URL } from "$lib/config/api.config";
 import type { RequestHandler } from "@sveltejs/kit";
 import { json } from '@sveltejs/kit';
 
@@ -5,7 +6,7 @@ export const POST: RequestHandler = async ({request, fetch, cookies}) => {
     const token = cookies.get('access_token');
     const body = await request.json();
 
-    const response = await fetch('http://localhost:8081/api/programs/create', {
+    const response = await fetch(`${BACKEND_BASE_URL}/api/programs/create`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

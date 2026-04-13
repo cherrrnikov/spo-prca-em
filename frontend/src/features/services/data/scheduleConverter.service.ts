@@ -2,18 +2,18 @@ import type {
     ForecastData,
     Kr01DataResponse,
     Kr01ImpulseDto,
+    MsuConfig,
     Ro02DataResponse,
     Ro02Dto,
     RotationInterval,
     ShadowInterval,
-    TsMsuConfig,
     VkiInterval,
     ZasvetkaInterval
 } from '$lib/types';
 import { TimeUtils } from '$lib/utils/time';
 
 export class ScheduleConverterService {
-    static getDefaultMsuConfig(): TsMsuConfig {
+    static getDefaultMsuConfig(): MsuConfig {
         return {
             prMsu: 0,
             prVdMsu: 0,

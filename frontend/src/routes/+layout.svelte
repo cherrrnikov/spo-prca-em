@@ -1,5 +1,6 @@
 <script lang="ts">
   import Modal from '$lib/components/Modal.svelte';
+  import { KEEPALIVE_INTERVAL_MS } from '$lib/config/api.config';
   import { modal } from '$lib/services/modal.service';
   import { onDestroy, onMount } from 'svelte';
   import '../app.css';
@@ -7,9 +8,6 @@
   let { children } = $props();
   let refreshInterval: ReturnType<typeof setInterval> | null = null;
   let isRefreshing = false;
-  
-  // Рассчитываем интервал обновления (обновляем каждые 13 минут, но токен живет 15)
-  const REFRESH_INTERVAL = 2 * 60 * 1000; // 13 минут
   
   async function refreshSession() {
     if (isRefreshing) return;
@@ -48,7 +46,7 @@
     console.log('📌 Starting keepalive service');
     
     // Запускаем интервал
-    refreshInterval = setInterval(refreshSession, REFRESH_INTERVAL);
+    refreshInterval = setInterval(refreshSession, KEEPALIVE_INTERVAL_MS);
     
     // Опционально: делаем первый запрос через 1 минуту после загрузки
     setTimeout(refreshSession, 60 * 1000);

@@ -26,7 +26,7 @@ export interface ZgOption {
     label: string;
 }
 
-export interface TsMsuConfig {
+export interface MsuConfig {
     prMsu: number;
     prVdMsu: number;
     prIkMsu: number;

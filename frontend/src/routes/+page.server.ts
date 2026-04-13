@@ -1,3 +1,4 @@
+import { ACCESS_TOKEN_MAX_AGE, AUTH_BASE_URL, REFRESH_TOKEN_MAX_AGE } from "$lib/config/api.config.js";
 import type { JwtResponse, LoginRequest } from "$lib/types/auth";
 import { fail, redirect, type Actions } from "@sveltejs/kit";
 
@@ -30,7 +31,7 @@ export const actions = {
         try {
             console.log('Отправляем запрос на логин для:', username);
             
-            const response = await fetch('http://localhost:8080/api/auth/login', {
+            const response = await fetch(`${AUTH_BASE_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -69,7 +70,7 @@ export const actions = {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 900 // 15 минут
+                maxAge: ACCESS_TOKEN_MAX_AGE 
             });
             
             cookies.set('refresh_token', data.refreshToken, {
@@ -77,7 +78,7 @@ export const actions = {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 604800 // 7 дней
+                maxAge: REFRESH_TOKEN_MAX_AGE
             });
 
             const userData = {
@@ -96,7 +97,7 @@ export const actions = {
                 httpOnly: false, 
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 900 // 15 минут
+                maxAge: ACCESS_TOKEN_MAX_AGE
             });
 
             console.log('Куки установлены, делаю редирект на /schedule');
@@ -130,7 +131,7 @@ export const actions = {
             if (refreshToken) {
                 console.log('Выполняем logout на сервере');
                 
-                const response = await fetch('http://localhost:8080/api/auth/logout', {
+                const response = await fetch(`${AUTH_BASE_URL}/api/auth/logout`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',

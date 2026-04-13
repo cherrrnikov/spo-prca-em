@@ -1,3 +1,4 @@
+import { MIN_VISIBLE_DURATION } from "$lib/config/schedule.config";
 import { TimeUtils } from "./time";
 
 export class GridPositionUtils {
@@ -6,8 +7,6 @@ export class GridPositionUtils {
     static readonly ROW_HEIGHT = 40;
     static readonly TIME_HEIGHT = 40;
     static readonly HOURS = Array.from({length: 24}, (_, i) => i);
-    static readonly SECONDS_IN_DAY = 86400;
-    static readonly MIN_VISIBLE_DURATION = 300;
 
     static calculateCellWidth(containerWidth: number): number {
         const availableWidth = containerWidth;
@@ -27,7 +26,7 @@ export class GridPositionUtils {
     }
 
     static getVisibleDuration(actualDuration: number): number {
-        return Math.max(actualDuration, this.MIN_VISIBLE_DURATION);
+        return Math.max(actualDuration, MIN_VISIBLE_DURATION);
     }
 
     static getPositionForInterval(

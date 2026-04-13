@@ -1,3 +1,4 @@
+import { BACKEND_BASE_URL } from '$lib/config/api.config';
 import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
 
@@ -10,7 +11,7 @@ export const GET: RequestHandler = async ({ url, fetch, cookies }) => {
     
     const token = cookies.get('access_token');
     
-    const response = await fetch(`http://localhost:8081/api/forecast/operator/${date}`, {
+    const response = await fetch(`${BACKEND_BASE_URL}/api/forecast/operator/${date}`, {
         headers: {
             ...(token ? {'Authorization': `Bearer ${token}`} : {})
         }

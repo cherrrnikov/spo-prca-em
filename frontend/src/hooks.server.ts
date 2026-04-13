@@ -1,4 +1,5 @@
 // src/hooks.server.ts
+import { ACCESS_TOKEN_MAX_AGE, AUTH_BASE_URL } from '$lib/config/api.config';
 import type { Handle } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 
@@ -58,7 +59,7 @@ let refreshPromise: Promise<boolean> | null = null;
 // Функция обновления токенов
 async function refreshTokens(cookies: any, refreshToken: string): Promise<boolean> {
   try {
-    const response = await fetch('http://localhost:8080/api/auth/refresh', {
+    const response = await fetch(`${AUTH_BASE_URL}/api/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -77,7 +78,7 @@ async function refreshTokens(cookies: any, refreshToken: string): Promise<boolea
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60 // 15 минут
+      maxAge: ACCESS_TOKEN_MAX_AGE
     });
 
     // Обновляем user_data
@@ -108,7 +109,7 @@ async function refreshTokens(cookies: any, refreshToken: string): Promise<boolea
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60
+      maxAge: ACCESS_TOKEN_MAX_AGE
     });
 
     console.log('✅ Tokens refreshed successfully');
@@ -132,7 +133,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   const { cookies, url } = event;
   
   // Публичные маршруты - пропускаем
-  const publicRoutes = ['/', '/login', '/api/auth/login', '/api/auth/refresh'];
+  const publicRoutes = ['/', '/api/auth/login', '/api/auth/refresh'];
   if (publicRoutes.includes(url.pathname)) {
     return await resolve(event);
   }
@@ -144,7 +145,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   if (!refreshToken) {
     if (url.pathname.startsWith('/schedule')) {
       await clearAuthCookies(cookies);
-      throw redirect(303, '/login');
+      throw redirect(303, '/');
     }
     return await resolve(event);
   }
@@ -155,7 +156,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     const success = await refreshTokens(cookies, refreshToken);
     if (!success) {
       await clearAuthCookies(cookies);
-      throw redirect(303, '/login');
+      throw redirect(303, '/');
     }
     return await resolve(event);
   }
@@ -207,7 +208,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 15 * 60
+        maxAge: ACCESS_TOKEN_MAX_AGE
       });
       
       console.log('🔄 Restored user_data from token');

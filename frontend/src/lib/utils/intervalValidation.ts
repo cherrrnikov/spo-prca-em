@@ -5,7 +5,7 @@ export class IntervalValidationService {
         isValid: boolean;
         message?: string;
     } {
-        if (!this.isTimeValid(startTime) || !this.isTimeValid(endTime)) {
+        if (!TimeUtils.isTimeValid(startTime) || !TimeUtils.isTimeValid(endTime)) {
             if (endTime === '24:00:00' || endTime === '24:00') {
                 return {
                     isValid: false,
@@ -43,7 +43,7 @@ export class IntervalValidationService {
         isValid: boolean;
         message?: string;
     } {
-        if (!this.isTimeValid(startTime)) {
+        if (!TimeUtils.isTimeValid(startTime)) {
             return {
                 isValid: false,
                 message: 'Некорректное время начала. Используйте HH:MM:SS'
@@ -65,23 +65,5 @@ export class IntervalValidationService {
         }
         
         return this.validateInterval(startTime, endTime);
-    }
-
-    static isTimeValid(timeStr: string): boolean {
-        if (timeStr === '24:00:00' || timeStr === '24:00') {
-            return false;
-        }
-        
-        const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])(:([0-5][0-9]))?$/;
-        if (!timeRegex.test(timeStr)) return false;
-        
-        const parts = timeStr.split(':');
-        const hours = parseInt(parts[0]);
-        const minutes = parseInt(parts[1]);
-        const seconds = parts[2] ? parseInt(parts[2]) : 0;
-        
-        return hours >= 0 && hours <= 23 && 
-               minutes >= 0 && minutes <= 59 && 
-               seconds >= 0 && seconds <= 59;
     }
 }
