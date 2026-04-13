@@ -1,4 +1,5 @@
-import { ACCESS_TOKEN_MAX_AGE, AUTH_BASE_URL, REFRESH_TOKEN_MAX_AGE } from "$lib/config/api.config.js";
+import { ACCESS_TOKEN_MAX_AGE, REFRESH_TOKEN_MAX_AGE } from "$lib/config/api.config.js";
+import { AUTH_BASE_URL } from "$lib/config/api.server.config.js";
 import type { JwtResponse, LoginRequest } from "$lib/types/auth";
 import { fail, redirect, type Actions } from "@sveltejs/kit";
 

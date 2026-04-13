@@ -1,4 +1,5 @@
-import { ACCESS_TOKEN_MAX_AGE, AUTH_BASE_URL, TOKEN_REFRESH_THRESHOLD_MINUTES } from '$lib/config/api.config';
+import { ACCESS_TOKEN_MAX_AGE, TOKEN_REFRESH_THRESHOLD_MINUTES } from '$lib/config/api.config';
+import { AUTH_BASE_URL } from '$lib/config/api.server.config';
 import { decodeJWT } from '$lib/utils/jwt';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';

@@ -1,4 +1,4 @@
-import { BACKEND_BASE_URL } from "$lib/config/api.config";
+import { BACKEND_BASE_URL } from "$lib/config/api.server.config";
 import type { RequestHandler } from "@sveltejs/kit";
 import { json } from '@sveltejs/kit';
 

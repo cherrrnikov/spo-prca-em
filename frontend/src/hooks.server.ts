@@ -1,5 +1,6 @@
 // src/hooks.server.ts
-import { ACCESS_TOKEN_MAX_AGE, AUTH_BASE_URL } from '$lib/config/api.config';
+import { ACCESS_TOKEN_MAX_AGE } from '$lib/config/api.config';
+import { AUTH_BASE_URL } from '$lib/config/api.server.config';
 import type { Handle } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 

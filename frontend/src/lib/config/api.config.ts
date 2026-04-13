@@ -1,11 +1,3 @@
-import { env } from '$env/dynamic/private';
-
-/** Адрес сервиса аутентификации (серверная сторона) */
-export const AUTH_BASE_URL = env.AUTH_INTERNAL_URL || 'http://localhost:8080';
-
-/** Адрес сервиса данных планирования (серверная сторона) */
-export const BACKEND_BASE_URL = env.BACKEND_INTERNAL_URL || 'http://localhost:8081';
-
 /** Время жизни access_token в секундах (15 минут) */
 export const ACCESS_TOKEN_MAX_AGE = 15 * 60;
 
