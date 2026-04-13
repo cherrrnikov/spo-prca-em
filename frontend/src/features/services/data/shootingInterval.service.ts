@@ -1,7 +1,7 @@
-import type { Id02Dto, Id06TsDto, TimeInterval, TsMsuConfig } from '$lib/types';
+import type { Id02Dto, Id06TsDto, MsuConfig, TimeInterval } from '$lib/types';
 import { CityService } from '../utils/cities.service';
 
-export class TsIntervalService {
+export class ShootingIntervalService {
     static convertTsToSubIntervals(
         tsRecord: Id06TsDto,
         ppiNum: number,
@@ -98,7 +98,7 @@ export class TsIntervalService {
         return subIntervals;
     }
 
-    private static getMsuConfigFromTsRecord(tsRecord: Id06TsDto, msuNumber: 1 | 2): TsMsuConfig {
+    private static getMsuConfigFromTsRecord(tsRecord: Id06TsDto, msuNumber: 1 | 2): MsuConfig {
         if (msuNumber === 1) {
             return {
                 prMsu: tsRecord.pr_msu1 || 0,

@@ -18,7 +18,7 @@ import type { ScheduleStatus } from '../schedule-creation/types';
 import { ScheduleApiService } from './api/scheduleApi.service';
 import { ProgramPreparerService } from './data/programPreparer.service';
 import { ScheduleConverterService } from './data/scheduleConverter.service';
-import { TsIntervalService } from './data/tsInterval.service';
+import { ShootingIntervalService } from './data/shootingInterval.service';
 import { CityService } from './utils/cities.service';
 
 export class ScheduleCreationService {
@@ -118,7 +118,7 @@ export class ScheduleCreationService {
         if (operatorData.ts_list?.length) {
             operatorData.ts_list.forEach(ts => {
                 const ppiNum = this.getPpiNumber(ts.id, 'ts', ppiAssignments, defaultPpi);
-                const tsSubIntervals = TsIntervalService.convertTsToSubIntervals(ts, ppiNum, bortData);
+                const tsSubIntervals = ShootingIntervalService.convertTsToSubIntervals(ts, ppiNum, bortData);
                 intervals.push(...tsSubIntervals);
             });
         }
