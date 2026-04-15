@@ -232,10 +232,6 @@
         }
     }
 
-    function formatDate(dateString: string): string {
-        return TimeUtils.formatDate(dateString);
-    }
-
     function logAllIntervals(action: string) {
         console.log(`${action} - Все интервалы:`, $intervals);
         console.log(`Статистика: Всего: ${$intervals.length}, Сохраняемых: ${$intervals.filter(i => i.willBeSaved).length}`);
@@ -275,15 +271,15 @@
                     <h2 class="program-date-title">
                         {#if $isReadOnly}
                             ПРЦА действует с 
-                            <strong>{formatDate($selectedProgramDate)} 00:00:00</strong> 
-                            по <strong>{formatDate($selectedProgramDate)} 23:59:59</strong>
+                            <strong>{TimeUtils.formatDate($selectedProgramDate)} 00:00:00</strong> 
+                            по <strong>{TimeUtils.formatDate($selectedProgramDate)} 23:59:59</strong>
                             {#if $operatorData?.main?.n_ka}
                                 <span class="program-details">(КА {$operatorData.main.n_ka}, РП {$currentNumRp})</span>
                             {/if}
                         {:else}
                             ПРЦА действует с 
-                            <strong>{formatDate($selectedProgramDate)} 00:00:00</strong> 
-                            по <strong>{formatDate($selectedProgramDate)} 23:59:59</strong>
+                            <strong>{TimeUtils.formatDate($selectedProgramDate)} 00:00:00</strong> 
+                            по <strong>{TimeUtils.formatDate($selectedProgramDate)} 23:59:59</strong>
                         {/if}
                     </h2>
                 </div>
@@ -314,15 +310,15 @@
                 <h2 class="program-date-title">
                     {#if $isReadOnly}
                         ПРЦА действует с 
-                        <strong>{formatDate($selectedProgramDate)} 00:00:00</strong> 
-                        по <strong>{formatDate($selectedProgramDate)} 23:59:59</strong>
+                        <strong>{TimeUtils.formatDate($selectedProgramDate)} 00:00:00</strong> 
+                        по <strong>{TimeUtils.formatDate($selectedProgramDate)} 23:59:59</strong>
                         {#if $operatorData?.main?.n_ka}
                             <span class="program-details">(Номер КА: {$operatorData.main.n_ka}, Номер РП: {$currentNumRp})</span>
                         {/if}
                     {:else}
                         ПРЦА действует с 
-                        <strong>{formatDate($selectedProgramDate)} 00:00:00</strong> 
-                        по <strong>{formatDate($selectedProgramDate)} 23:59:59</strong>
+                        <strong>{TimeUtils.formatDate($selectedProgramDate)} 00:00:00</strong> 
+                        по <strong>{TimeUtils.formatDate($selectedProgramDate)} 23:59:59</strong>
                     {/if}
                 </h2>
             </div>

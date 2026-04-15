@@ -10,6 +10,7 @@
     import { IntervalValidationService } from "$lib/utils/intervalValidation";
     import { TimeUtils } from "$lib/utils/time";
     import { onMount } from "svelte";
+    import { ScheduleApiService } from "../../services/api/scheduleApi.service";
     import { ScheduleConverterService } from "../../services/data/scheduleConverter.service";
     import { ManualIntervalSplitService } from '../../services/utils/manualIntervalSplit.service';
     import { ModeDurationService } from "../../services/utils/modeDuration.service";
@@ -51,7 +52,7 @@
     const isEditMode = $derived(!!editingInterval);
 
     onMount(async () => {
-        modeDurations = await ModeDurationService.loadModeDurations();
+        modeDurations = await ScheduleApiService.loadModeDurations();
     });
 
     $effect(() => {
