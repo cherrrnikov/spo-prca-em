@@ -1,4 +1,5 @@
 export { checkIntervalOverlap, checkTwoIntervalsOverlap } from './conflicts';
+export { getDefaultIntervalFlags } from './defaults';
 export { checkShadowPriority } from './shadow';
 export { checkZasvetkaProximity } from './zasvetka';
 
@@ -11,6 +12,7 @@ import type {
     ZasvetkaInterval
 } from '$lib/types';
 import { checkTwoIntervalsOverlap } from './conflicts';
+import { getDefaultIntervalFlags } from './defaults';
 import { checkShadowPriority } from './shadow';
 import { checkZasvetkaProximity } from './zasvetka';
 
@@ -40,11 +42,7 @@ export function checkAllConflicts(
         return {
             ...interval,
             constraintViolations: violations || [],
-            hasConflict: false,
-            conflictWith: [],
-            nearZasvetka: false,
-            zasvetkaConflict: false,
-            zasvetkaDistance: 0,
+            ...getDefaultIntervalFlags()
         };
     });
     

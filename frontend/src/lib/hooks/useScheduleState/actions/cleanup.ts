@@ -1,4 +1,5 @@
 import type { ProgramsListItem } from '$lib/types/analysis';
+import { getDefaultIntervalFlags } from '$lib/utils/interval';
 import { TooltipFormatter } from '$lib/utils/tooltipFormatter';
 import { get } from 'svelte/store';
 import { CityService } from '../../../../features/services/utils/cities.service';
@@ -41,12 +42,8 @@ export function createCleanup(stores: ReturnType<typeof createStores>) {
             // Сбрасываем все временные флаги
             newInterval = {
                 ...newInterval,
-                hasConflict: false,
-                conflictWith: [],
                 constraintViolations: [],
-                nearZasvetka: false,
-                zasvetkaConflict: false,
-                zasvetkaDistance: 0,
+                ...getDefaultIntervalFlags(),
                 inShadow: false,
                 willBeSavedInShadow: false,
                 shadowPriority: 0
@@ -99,12 +96,8 @@ export function createCleanup(stores: ReturnType<typeof createStores>) {
             let newInterval = { ...interval };
             newInterval = {
                 ...newInterval,
-                hasConflict: false,
-                conflictWith: [],
                 constraintViolations: [],
-                nearZasvetka: false,
-                zasvetkaConflict: false,
-                zasvetkaDistance: 0,
+                ...getDefaultIntervalFlags(),
                 inShadow: false,
                 willBeSavedInShadow: false,
                 shadowPriority: 0

@@ -1,4 +1,5 @@
 import type { ModeCreationForm, TimeInterval } from '$lib/types';
+import { getDefaultIntervalFlags } from '$lib/utils/interval';
 import { CityService } from './cities.service';
 
 export class ManualIntervalSplitService {
@@ -85,12 +86,7 @@ export class ManualIntervalSplitService {
                     prOtklZgBssd: formData.prOtklZg ?? 0
                 } : undefined,
                 
-                hasConflict: false,
-                conflictWith: [],
-                willBeSaved: true,
-                nearZasvetka: false,
-                zasvetkaConflict: false,
-                zasvetkaDistance: 0
+                ...getDefaultIntervalFlags()
             };
             
             subIntervals.push(subInterval);

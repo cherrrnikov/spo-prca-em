@@ -4,6 +4,7 @@ import type {
     ProgramModeData,
     TimeInterval
 } from '$lib/types';
+import { getDefaultIntervalFlags } from '$lib/utils/interval';
 import { ModeUtils } from '$lib/utils/mode';
 import { TimeUtils } from '$lib/utils/time';
 import { get } from 'svelte/store';
@@ -46,12 +47,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             ppi: formData.ppiNum,
             dlit: formData.duration,
             customerCode: formData.customerCode,
-            hasConflict: false,
-            conflictWith: [],
-            nearZasvetka: false,
-            zasvetkaConflict: false,
-            zasvetkaDistance: 0,
-            willBeSaved: true,
+            ...getDefaultIntervalFlags()
         };
 
         if (formData.modeType === 7 && formData.kvdConfig) {

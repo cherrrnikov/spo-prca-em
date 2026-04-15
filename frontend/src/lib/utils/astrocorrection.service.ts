@@ -1,4 +1,5 @@
 import type { TimeInterval } from '$lib/types';
+import { getDefaultIntervalFlags } from './interval';
 
 export class AstrocorrectionService {
     private static readonly ASTRO_MODE_ID = 9;
@@ -35,16 +36,11 @@ export class AstrocorrectionService {
             duration: this.ASTRO_DURATION,
             customerCode: 0,
             
-            hasConflict: false,
-            conflictWith: [],
-            nearZasvetka: false,
-            zasvetkaConflict: false,
-            zasvetkaDistance: 0,
+            ...getDefaultIntervalFlags(),
             inShadow: false,
             willBeSavedInShadow: false,
             shadowPriority: 0,
             isAstrocorrection: true,
-            willBeSaved: false
         }));
     }
 

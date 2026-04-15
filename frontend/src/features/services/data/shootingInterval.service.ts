@@ -1,4 +1,5 @@
 import type { Id02Dto, Id06TsDto, MsuConfig, TimeInterval } from '$lib/types';
+import { getDefaultIntervalFlags } from '$lib/utils/interval';
 import { CityService } from '../utils/cities.service';
 
 export class ShootingIntervalService {
@@ -82,12 +83,7 @@ export class ShootingIntervalService {
                     prOtklZgBssd: tsRecord.pr_otkl_zg
                 },
                 
-                hasConflict: false,
-                conflictWith: [],
-                willBeSaved: true,
-                nearZasvetka: false,
-                zasvetkaConflict: false,
-                zasvetkaDistance: 0
+                ...getDefaultIntervalFlags()
             };
             
             subIntervals.push(subInterval);

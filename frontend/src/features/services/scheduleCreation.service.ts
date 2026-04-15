@@ -6,6 +6,7 @@ import type {
     TimeInterval,
     WorkMode
 } from '$lib/types';
+import { getDefaultIntervalFlags } from '$lib/utils/interval';
 import { TimeUtils } from '$lib/utils/time';
 import { ScheduleConverterService } from './data/scheduleConverter.service';
 import { ShootingIntervalService } from './data/shootingInterval.service';
@@ -88,12 +89,7 @@ export class ScheduleCreationService {
             ppi: ppiNum,
             dlit: TimeUtils.calculateDuration(kvd.dn, kvd.dk),
             customerCode: customerCode || 5,
-            hasConflict: false,
-            conflictWith: [],
-            nearZasvetka: false,
-            zasvetkaConflict: false,
-            zasvetkaDistance: 0,
-            willBeSaved: true,
+            ...getDefaultIntervalFlags(),
             kvdConfig: {
                 prMsu: kvd.pr_msu,
                 prBssd: kvd.pr_bssd,
@@ -117,12 +113,7 @@ export class ScheduleCreationService {
             ppi: ppiNum,
             dlit: tnp.dlit,
             customerCode: customerCode || 5,
-            hasConflict: false,
-            conflictWith: [],
-            nearZasvetka: false,
-            zasvetkaConflict: false,
-            zasvetkaDistance: 0,
-            willBeSaved: true
+            ...getDefaultIntervalFlags()
         };
     }
 
@@ -146,12 +137,7 @@ export class ScheduleCreationService {
             dlit: ona.dlit,
             nOna: ona.n_ona,  
             customerCode: customerCode || 5,
-            hasConflict: false,
-            conflictWith: [],
-            nearZasvetka: false,
-            zasvetkaConflict: false,
-            zasvetkaDistance: 0,
-            willBeSaved: true
+            ...getDefaultIntervalFlags()
         };
     }
 
@@ -162,12 +148,7 @@ export class ScheduleCreationService {
             msu2Config: interval.msu2Config || ScheduleConverterService.getDefaultMsuConfig(),
             customerCode: interval.customerCode || customerCode || 1,
             nOna: interval.nOna || (interval.mode === 6 ? 1 : undefined),
-            hasConflict: false,
-            conflictWith: [],
-            nearZasvetka: false,
-            zasvetkaConflict: false,
-            zasvetkaDistance: 0,
-            willBeSaved: true
+            ...getDefaultIntervalFlags()
         };
     }
 }

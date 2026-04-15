@@ -33,7 +33,7 @@
         }
       } else if (response.status === 401) {
         console.log('❌ Session expired, redirecting to login...');
-        window.location.href = '/login';
+        window.location.href = '/';
       }
     } catch (error) {
       console.error('Keepalive error:', error);
