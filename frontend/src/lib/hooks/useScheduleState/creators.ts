@@ -7,6 +7,7 @@ import type {
 import { ModeUtils } from '$lib/utils/mode';
 import { TimeUtils } from '$lib/utils/time';
 import { get } from 'svelte/store';
+import { ScheduleConverterService } from '../../../features/services/data/scheduleConverter.service';
 import { ScheduleCreationService } from '../../../features/services/scheduleCreation.service';
 
 export function createCreators(stores: ReturnType<typeof import('./stores').createStores>) {
@@ -18,10 +19,6 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
 
     function generateTempId(): string {
         return `created_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    }
-
-    function getDefaultMsuConfig() {
-        return ScheduleCreationService.getDefaultMsuConfig();
     }
 
     function getCustomerLabel(code: number): string {
@@ -281,8 +278,8 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                 }
             };
         } else if (formData.modeType === 8 || formData.modeType === 1) {
-            const msu1Config = formData.msu1Config || getDefaultMsuConfig();
-            const msu2Config = formData.msu2Config || getDefaultMsuConfig();
+            const msu1Config = formData.msu1Config || ScheduleConverterService.getDefaultMsuConfig();
+            const msu2Config = formData.msu2Config || ScheduleConverterService.getDefaultMsuConfig();
             const tip = (formData as any).tip || 1;  
             const reg = (formData as any).reg || 1;
 
@@ -383,7 +380,6 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
 
     return {
         generateTempId,
-        getDefaultMsuConfig,
         createTimeInterval,
         createUpdatedInterval,
         createProgramModeData

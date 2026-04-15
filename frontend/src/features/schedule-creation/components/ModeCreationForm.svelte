@@ -92,8 +92,8 @@
             customerCode: 1,
             startTime: '10:00:00',
             endTime: '23:00:00',
-            msu1Config: getDefaultMsuConfig(),
-            msu2Config: getDefaultMsuConfig(),
+            msu1Config: ScheduleConverterService.getDefaultMsuConfig(),
+            msu2Config: ScheduleConverterService.getDefaultMsuConfig(),
             kvdConfig: {
                 prMsu: 0,
                 prBssd: 0,
@@ -107,10 +107,6 @@
             tip: 1,
             typeOmi: 1
         };
-    }
-
-    function getDefaultMsuConfig(): MsuConfig {
-        return ScheduleConverterService.getDefaultMsuConfig();
     }
 
     function fillFormFromInterval(interval: TimeInterval) {
@@ -128,8 +124,8 @@
         } else if (interval.mode === 6) {
             localFormData.nOna = interval.nOna || 1;
         } else if (interval.mode === 8 || interval.mode === 1) {
-            localFormData.msu1Config = interval.msu1Config || getDefaultMsuConfig();
-            localFormData.msu2Config = interval.msu2Config || getDefaultMsuConfig();
+            localFormData.msu1Config = interval.msu1Config || ScheduleConverterService.getDefaultMsuConfig();
+            localFormData.msu2Config = interval.msu2Config || ScheduleConverterService.getDefaultMsuConfig();
 
             if (interval.tsData) {
                 localFormData.prBssd = interval.tsData.prBssd ?? 0;

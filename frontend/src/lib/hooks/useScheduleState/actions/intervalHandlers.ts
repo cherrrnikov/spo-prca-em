@@ -4,7 +4,7 @@ import { checkIntervalOverlap } from '$lib/utils/interval/conflicts';
 import { IntervalValidationService } from '$lib/utils/intervalValidation';
 import { TimeUtils } from '$lib/utils/time';
 import { get } from 'svelte/store';
-import { ScheduleCreationService } from '../../../../features/services/scheduleCreation.service';
+import { ScheduleConverterService } from '../../../../features/services/data/scheduleConverter.service';
 import type { createCreators } from '../creators';
 import type { createStores } from '../stores';
 import type { createValidation } from '../validation';
@@ -38,8 +38,8 @@ export function createIntervalHandlers(
 
         const intervalWithDefaults = {
             ...interval,
-            msu1Config: interval.msu1Config || ScheduleCreationService.getDefaultMsuConfig(),
-            msu2Config: interval.msu2Config || ScheduleCreationService.getDefaultMsuConfig(),
+            msu1Config: interval.msu1Config || ScheduleConverterService.getDefaultMsuConfig(),
+            msu2Config: interval.msu2Config || ScheduleConverterService.getDefaultMsuConfig(),
             customerCode: interval.customerCode || 1
         };
         

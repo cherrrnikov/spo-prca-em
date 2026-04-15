@@ -161,10 +161,6 @@ export class ScheduleCreationService {
         return TimeUtils.formatTimeOnly(dateStr);
     }
 
-    static getDefaultMsuConfig() {
-        return ScheduleConverterService.getDefaultMsuConfig();
-    }
-
     static getCityByPpi(ppiNum: number): string {
         return CityService.getCityByPpi(ppiNum);
     }
@@ -278,8 +274,8 @@ export class ScheduleCreationService {
     private static applyDefaultIntervalValues(interval: TimeInterval, customerCode?: number): TimeInterval {
         return {
             ...interval,
-            msu1Config: interval.msu1Config || this.getDefaultMsuConfig(),
-            msu2Config: interval.msu2Config || this.getDefaultMsuConfig(),
+            msu1Config: interval.msu1Config || ScheduleConverterService.getDefaultMsuConfig(),
+            msu2Config: interval.msu2Config || ScheduleConverterService.getDefaultMsuConfig(),
             customerCode: interval.customerCode || customerCode || 1,
             nOna: interval.nOna || (interval.mode === 6 ? 1 : undefined),
             hasConflict: false,
