@@ -1,7 +1,7 @@
 import type { ProgramsListItem } from '$lib/types/analysis';
 import { TooltipFormatter } from '$lib/utils/tooltipFormatter';
 import { get } from 'svelte/store';
-import { ScheduleCreationService } from '../../../../features/services/scheduleCreation.service';
+import { CityService } from '../../../../features/services/utils/cities.service';
 import type { createStores } from '../stores';
 
 export function createCleanup(stores: ReturnType<typeof createStores>) {
@@ -54,7 +54,7 @@ export function createCleanup(stores: ReturnType<typeof createStores>) {
             
             // Восстанавливаем цвет по ППИ
             if (!interval.isAstrocorrection) {
-                const originalColor = ScheduleCreationService.getColorByPpi(interval.ppi || 1);
+                const originalColor = CityService.getColorByPpi(interval.ppi || 1);
                 newInterval.color = originalColor;
             }
             
@@ -111,7 +111,7 @@ export function createCleanup(stores: ReturnType<typeof createStores>) {
             };
             
             if (!interval.isAstrocorrection) {
-                const originalColor = ScheduleCreationService.getColorByPpi(interval.ppi || 1);
+                const originalColor = CityService.getColorByPpi(interval.ppi || 1);
                 newInterval.color = originalColor;
             }
             

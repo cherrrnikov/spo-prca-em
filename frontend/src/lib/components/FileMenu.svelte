@@ -7,8 +7,8 @@
   import { mergeMsuIntervals } from '$lib/utils/interval/mergeMsuIntervals';
   import { onMount } from 'svelte';
   import { ScheduleApiService } from '../../features/services/api/scheduleApi.service';
+  import { ProgramPreparerService } from '../../features/services/data/programPreparer.service';
   import { VpPreparerService } from '../../features/services/data/vpPreparer.service';
-  import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
   
   let isOpen = $state(false);
   let isSubMenuOpen = $state(false);
@@ -115,7 +115,7 @@
 
 
                   // Подготавливаем данные для этой ПРЦА
-                  const programRequest = ScheduleCreationService.prepareFullProgramData(
+                  const programRequest = ProgramPreparerService.prepareFullProgramData(
                       program.operatorData,
                       program.ppiAssignments,
                       mergedCreatedPrograms,
@@ -135,7 +135,7 @@
                   })));
 
                   // Сохраняем
-                  const result = await ScheduleCreationService.saveProgram(programRequest);
+                  const result = await ScheduleApiService.saveProgram(programRequest);
                   console.log(`✅ ПРЦА для ${program.date} сохранена`);
 
                   // Сохранение ВПРЦА 
@@ -199,8 +199,6 @@
       }
       
       try {
-          const { ScheduleCreationService } = await import('../../features/services/scheduleCreation.service');
-          
           console.log("=== ПОДГОТОВКА ДАННЫХ ДЛЯ СОХРАНЕНИЯ ===");
           await updateAllConflicts();
 
@@ -216,7 +214,7 @@
           console.log(`После объединения: ${mergedCreatedPrograms.length} интервалов (было ${createdPrograms.length})`);
 
           // Подготавливаем данные программы
-          const programRequest = ScheduleCreationService.prepareFullProgramData(
+          const programRequest = ProgramPreparerService.prepareFullProgramData(
               operatorData,
               ppiAssignments,
               mergedCreatedPrograms,
@@ -321,7 +319,7 @@
           // 5. РЕАЛЬНОЕ СОХРАНЕНИЕ
           console.log("\n=== ОТПРАВКА ЗАПРОСА НА БЭКЕНД ===");
           
-          const result = await ScheduleCreationService.saveProgram(programRequest);
+          const result = await ScheduleApiService.saveProgram(programRequest);
           
           console.log("=== РЕЗУЛЬТАТ СОХРАНЕНИЯ ===");
           console.log("Успешно! Ответ сервера:", result);

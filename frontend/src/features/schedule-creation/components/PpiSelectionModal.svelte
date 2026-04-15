@@ -7,7 +7,7 @@
     	Ppi,
     	PpiSelectionModal as PpiModalType
     } from '$lib/types';
-    import { ScheduleCreationService } from '../../services/scheduleCreation.service';
+    import { TimeUtils } from '$lib/utils/time';
 
     let {
         modalData,
@@ -26,7 +26,7 @@
     }>();
 
     function formatDateTime(dateStr: string): string {
-        return ScheduleCreationService.formatDateTime(dateStr);
+        return TimeUtils.formatDateTime(dateStr);
     }
     
     function handleApply() {

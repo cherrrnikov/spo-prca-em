@@ -25,6 +25,7 @@
     import AnalysisModal from '../../features/schedule-creation/components/AnalysisModal.svelte';
     import ProgramsSelector from '../../features/schedule-creation/components/ProgramsSelector.svelte';
     import { ProgramCreatorService } from '../../features/services/data/programCreator.service';
+    import { ScheduleConverterService } from '../../features/services/data/scheduleConverter.service';
 
     const cities = CITIES;
     const workModes = WORK_MODES;
@@ -146,9 +147,9 @@
     // Загрузка данных
     async function loadForecastData(date: string) {
         try {
-            const data = await ScheduleCreationService.loadForecastData(date);
+            const data = await ScheduleApiService.loadForecastData(date);
             
-            const forecastIntervals = ScheduleCreationService.convertForecastToIntervals(data);
+            const forecastIntervals = ScheduleConverterService.convertForecastToIntervals(data);
             shadowIntervals.set(forecastIntervals.shadows);
             zasvetkaIntervals.set(forecastIntervals.zasvetki);
         } catch (error) {

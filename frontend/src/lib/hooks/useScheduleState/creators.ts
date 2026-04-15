@@ -8,7 +8,7 @@ import { ModeUtils } from '$lib/utils/mode';
 import { TimeUtils } from '$lib/utils/time';
 import { get } from 'svelte/store';
 import { ScheduleConverterService } from '../../../features/services/data/scheduleConverter.service';
-import { ScheduleCreationService } from '../../../features/services/scheduleCreation.service';
+import { CityService } from '../../../features/services/utils/cities.service';
 
 export function createCreators(stores: ReturnType<typeof import('./stores').createStores>) {
     const {
@@ -40,8 +40,8 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             date: currentContextDate,
             startTime: formData.startTime,
             endTime: endTime, 
-            city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
-            color: ScheduleCreationService.getColorByPpi(formData.ppiNum),
+            city: CityService.getCityByPpi(formData.ppiNum),
+            color: CityService.getColorByPpi(formData.ppiNum),
             title: ModeUtils.getModeTitle(formData.modeType!),
             ppi: formData.ppiNum,
             dlit: formData.duration,
@@ -168,8 +168,8 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             endTime: endTime, 
             ppi: formData.ppiNum,
             dlit: formData.duration,
-            city: ScheduleCreationService.getCityByPpi(formData.ppiNum),
-            color: ScheduleCreationService.getColorByPpi(formData.ppiNum),
+            city: CityService.getCityByPpi(formData.ppiNum),
+            color: CityService.getColorByPpi(formData.ppiNum),
             customerCode: formData.customerCode,
         };
         

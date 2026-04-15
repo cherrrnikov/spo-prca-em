@@ -2,7 +2,7 @@
 	import { modal } from "$lib/services/modal.service";
 	import type { OperatorData, Ppi, PpiAssignment, PpiSelectionModal as PpiSelectionModalType } from "$lib/types";
 	import { onMount } from "svelte";
-	import { ScheduleCreationService } from "../../services/scheduleCreation.service";
+	import { ScheduleApiService } from "../../services/api/scheduleApi.service";
 	import type { ScheduleStatus } from "../types";
 	import CreationForm from "./CreationForm.svelte";
 	import PpiSelectionModal from "./PpiSelectionModal.svelte";
@@ -60,7 +60,7 @@
         isLoading = true;
 
         try {
-            operatorData = await ScheduleCreationService.loadOperatorData(selectedDate);
+            operatorData = await ScheduleApiService.loadOperatorData(selectedDate);
             console.log('ИД06:', operatorData);
 
             if (operatorData) {

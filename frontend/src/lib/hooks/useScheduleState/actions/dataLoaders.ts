@@ -1,7 +1,7 @@
 import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
 import { get } from 'svelte/store';
 import { ScheduleApiService } from '../../../../features/services/api/scheduleApi.service';
-import { ScheduleCreationService } from '../../../../features/services/scheduleCreation.service';
+import { ScheduleConverterService } from '../../../../features/services/data/scheduleConverter.service';
 import type { createStores } from '../stores';
 import type { createValidation } from '../validation';
 
@@ -67,12 +67,12 @@ export function createDataLoaders(
     async function loadAstroEvents(date: string) {
         try {
             const [vkiData, rotationData] = await Promise.all([
-                ScheduleCreationService.loadVkiData(date),
-                ScheduleCreationService.loadRotationData(date)
+                ScheduleApiService.loadVkiData(date),
+                ScheduleApiService.loadRotationData(date)
             ]);
             
-            const vkiList = ScheduleCreationService.convertVkiToIntervals(vkiData);
-            const rotationList = ScheduleCreationService.convertRotationToIntervals(rotationData, date);
+            const vkiList = ScheduleConverterService.convertVkiToIntervals(vkiData);
+            const rotationList = ScheduleConverterService.convertRotationToIntervals(rotationData, date);
             
             vkiIntervals.set(vkiList);
             rotationIntervals.set(rotationList);
