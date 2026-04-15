@@ -1,3 +1,4 @@
+import type { RecordType } from "$lib/constants/recordTypes";
 import type { MsuConfig, Ppi } from "./constants";
 import type { ConstraintViolation } from "./constraints";
 import type { CreatedProgramData } from "./program";
@@ -108,7 +109,7 @@ export interface ModeCreationForm {
 export interface PpiSelectionModal {
     isOpen: boolean;
     currentRecord: any; // TODO: уточнить тип
-    recordType: 'kvd' | 'tnp' | 'ts' | 'ona' | null;
+    recordType: RecordType | null;
     recordIndex: number;
     totalRecords: number;
     selectedPpi: Ppi | null;
@@ -117,7 +118,7 @@ export interface PpiSelectionModal {
 
 export interface ScheduleCreationState {
     step: 'form' | 'ppi_selection' | 'review' | 'saving';
-    currentRecordType: 'kvd' | 'tnp' | 'ts' | 'ona' | null;
+    currentRecordType: RecordType | null;
     currentRecordIndex: number;
     processedRecords: number;
     totalRecords: number;

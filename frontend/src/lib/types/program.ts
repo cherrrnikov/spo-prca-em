@@ -1,3 +1,4 @@
+import type { RecordType } from "$lib/constants/recordTypes";
 import type { TimeInterval } from "./interval";
 
 export interface CreateProgramRequest {
@@ -94,7 +95,7 @@ export interface ProgramModeData {
 
 export interface PpiAssignment {
     recordId: number;
-    recordType: 'kvd' | 'tnp' | 'ts' | 'ona';
+    recordType: RecordType;
     ppiId: number;
     ppiNum: number;
 }

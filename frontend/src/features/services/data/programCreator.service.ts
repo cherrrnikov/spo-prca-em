@@ -1,4 +1,5 @@
 import { DEFAULT_SHOOTING_DURATION } from '$lib/config/schedule.config';
+import { RECORD_TYPES } from '$lib/constants/recordTypes';
 import { CUSTOMER_CODES } from '$lib/constants/schedule';
 import type {
     CreatedProgramData,
@@ -48,7 +49,7 @@ export class ProgramCreatorService {
 
         operatorData.kvd_list.forEach((kvd: any) => {
             const assignment = ppiAssignments.find(a =>
-                a.recordId === kvd.id && a.recordType === 'kvd'
+                a.recordId === kvd.id && a.recordType === RECORD_TYPES.KVD
             );
             if (!assignment) return;
 
@@ -95,7 +96,7 @@ export class ProgramCreatorService {
 
         operatorData.tnp_list.forEach((tnp: any) => {
             const assignment = ppiAssignments.find(a =>
-                a.recordId === tnp.id && a.recordType === 'tnp'
+                a.recordId === tnp.id && a.recordType === RECORD_TYPES.TNP
             );
             if (!assignment) return;
 
@@ -139,7 +140,7 @@ export class ProgramCreatorService {
 
         operatorData.ts_list.forEach((ts: any) => {
             const assignment = ppiAssignments.find(a =>
-                a.recordId === ts.id && a.recordType === 'ts'
+                a.recordId === ts.id && a.recordType === RECORD_TYPES.TS
             );
             if (!assignment) return;
 
@@ -218,7 +219,7 @@ export class ProgramCreatorService {
 
         operatorData.ona_list.forEach((ona: any) => {
             const assignment = ppiAssignments.find(a =>
-                a.recordId === ona.id && a.recordType === 'ona'
+                a.recordId === ona.id && a.recordType === RECORD_TYPES.ONA
             );
             if (!assignment) return;
 

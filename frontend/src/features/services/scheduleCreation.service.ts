@@ -1,3 +1,4 @@
+import { RECORD_TYPES } from '$lib/constants/recordTypes';
 import type {
     Id02Dto,
     Id06OnaDto,
@@ -44,21 +45,21 @@ export class ScheduleCreationService {
         
         if (operatorData.kvd_list?.length) {
             operatorData.kvd_list.forEach(kvd => {
-                const ppiNum = this.getPpiNumber(kvd.id, 'kvd', ppiAssignments, defaultPpi);
+                const ppiNum = this.getPpiNumber(kvd.id, RECORD_TYPES.KVD, ppiAssignments, defaultPpi);
                 intervals.push(this.createKvdInterval(kvd, ppiNum, operatorData.main?.k_zajv));
             });
         }
         
         if (operatorData.tnp_list?.length) {
             operatorData.tnp_list.forEach(tnp => {
-                const ppiNum = this.getPpiNumber(tnp.id, 'tnp', ppiAssignments, defaultPpi);
+                const ppiNum = this.getPpiNumber(tnp.id, RECORD_TYPES.TNP, ppiAssignments, defaultPpi);
                 intervals.push(this.createTnpInterval(tnp, ppiNum, operatorData.main?.k_zajv));
             });
         }
         
         if (operatorData.ts_list?.length) {
             operatorData.ts_list.forEach(ts => {
-                const ppiNum = this.getPpiNumber(ts.id, 'ts', ppiAssignments, defaultPpi);
+                const ppiNum = this.getPpiNumber(ts.id, RECORD_TYPES.TS, ppiAssignments, defaultPpi);
                 const tsSubIntervals = ShootingIntervalService.convertTsToSubIntervals(ts, ppiNum, bortData);
                 intervals.push(...tsSubIntervals);
             });
@@ -66,7 +67,7 @@ export class ScheduleCreationService {
 
         if (operatorData.ona_list?.length) {
             operatorData.ona_list.forEach(ona => {
-                const ppiNum = this.getPpiNumber(ona.id, 'ona', ppiAssignments, defaultPpi);
+                const ppiNum = this.getPpiNumber(ona.id, RECORD_TYPES.ONA, ppiAssignments, defaultPpi);
                 intervals.push(this.createOnaInterval(ona, ppiNum, operatorData.main?.k_zajv));
             });
         }

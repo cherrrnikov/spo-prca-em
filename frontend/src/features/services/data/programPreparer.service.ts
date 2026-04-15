@@ -1,3 +1,4 @@
+import { RECORD_TYPES } from '$lib/constants/recordTypes';
 import { DEFAULT_NUM_KA } from '$lib/constants/schedule';
 import type {
     CreatedProgramData,
@@ -33,7 +34,7 @@ export class ProgramPreparerService {
 
         if (operatorData.kvd_list?.length) {
             operatorData.kvd_list.forEach(kvd => {
-                const assignment = ppiAssignments.find(a => a.recordId === kvd.id && a.recordType === 'kvd');
+                const assignment = ppiAssignments.find(a => a.recordId === kvd.id && a.recordType === RECORD_TYPES.KVD);
                 if (assignment) {
                     modes.push(this.createKvdModeData(numRp, numKa, kvd, assignment));
                 }
@@ -42,7 +43,7 @@ export class ProgramPreparerService {
 
         if (operatorData.tnp_list?.length) {
             operatorData.tnp_list.forEach(tnp => {
-                const assignment = ppiAssignments.find(a => a.recordId === tnp.id && a.recordType === 'tnp');
+                const assignment = ppiAssignments.find(a => a.recordId === tnp.id && a.recordType === RECORD_TYPES.TNP);
                 if (assignment) {
                     modes.push(this.createTnpModeData(numRp, numKa, tnp, assignment));
                 }
@@ -51,7 +52,7 @@ export class ProgramPreparerService {
 
         if (operatorData.ts_list?.length) {
             operatorData.ts_list.forEach(ts => {
-                const assignment = ppiAssignments.find(a => a.recordId === ts.id && a.recordType === 'ts');
+                const assignment = ppiAssignments.find(a => a.recordId === ts.id && a.recordType === RECORD_TYPES.TS);
                 if (assignment) {
                     modes.push(this.createTsModeData(numRp, numKa, ts, assignment, operatorData.main?.k_zajv));
                 }
@@ -61,7 +62,7 @@ export class ProgramPreparerService {
         if (operatorData.ona_list?.length) {
             operatorData.ona_list.forEach(ona => {
                 const assignment = ppiAssignments.find(a => 
-                    a.recordId === ona.id && a.recordType === 'ona'
+                    a.recordId === ona.id && a.recordType === RECORD_TYPES.ONA
                 );
                 if (assignment) {
                     modes.push(this.createOnaModeData(numRp, numKa, ona, assignment));

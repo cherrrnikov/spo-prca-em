@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { DEFAULT_MODE_DURATION } from "$lib/config/schedule.config";
     import {
     	CUSTOMER_CODES,
     	MODE_ID_TO_CODE,
@@ -89,7 +90,7 @@
         return {
             modeType: null,
             ppiNum: 1,
-            duration: 300,
+            duration: DEFAULT_MODE_DURATION,
             customerCode: 1,
             startTime: '10:00:00',
             endTime: '23:00:00',
@@ -113,7 +114,7 @@
     function fillFormFromInterval(interval: TimeInterval) {
         localFormData.modeType = interval.mode;
         localFormData.ppiNum = interval.ppi || 1;
-        localFormData.duration = interval.dlit || 300;
+        localFormData.duration = interval.dlit || DEFAULT_MODE_DURATION;
         localFormData.startTime = interval.startTime;
         localFormData.endTime = interval.endTime;
         localFormData.customerCode = interval.customerCode || 1;

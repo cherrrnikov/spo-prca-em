@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { RECORD_TYPES, type RecordType } from "$lib/constants/recordTypes";
 	import { modal } from "$lib/services/modal.service";
 	import type { OperatorData, Ppi, PpiAssignment, PpiSelectionModal as PpiSelectionModalType } from "$lib/types";
 	import { onMount } from "svelte";
@@ -107,19 +108,19 @@
         if (!operatorData) return;
         
         if (operatorData.kvd_list && operatorData.kvd_list.length > 0) {
-            await processRecordBatch(operatorData.kvd_list, 'kvd', 'Калибровка ВД');
+            await processRecordBatch(operatorData.kvd_list, RECORD_TYPES.KVD, 'Калибровка ВД');
         }
         
         if (operatorData.tnp_list && operatorData.tnp_list.length > 0) {
-            await processRecordBatch(operatorData.tnp_list, 'tnp', 'Режим ТНП');
+            await processRecordBatch(operatorData.tnp_list, RECORD_TYPES.TNP, 'Режим ТНП');
         }
         
         if (operatorData.ts_list && operatorData.ts_list.length > 0) {
-            await processRecordBatch(operatorData.ts_list, 'ts', 'Технологическая съемка');
+            await processRecordBatch(operatorData.ts_list, RECORD_TYPES.TS, 'Технологическая съемка');
         }
 
         if (operatorData.ona_list && operatorData.ona_list.length > 0) {
-            await processRecordBatch(operatorData.ona_list, 'ona', 'Юстировка ОНА');
+            await processRecordBatch(operatorData.ona_list, RECORD_TYPES.ONA, 'Юстировка ОНА');
         }
         
         completePpiSelection();
@@ -138,7 +139,7 @@
     
     async function processRecordBatch(
         records: any[],
-        recordType: 'kvd' | 'tnp' | 'ts' | 'ona',
+        recordType: RecordType,
         recordTitle: string
     ) {
         for (let i = 0; i < records.length; i++) {
@@ -158,7 +159,7 @@
     
     async function showPpiModal(
         record: any,
-        recordType: 'kvd' | 'tnp' | 'ts' | 'ona',
+        recordType: RecordType,
         index: number,
         total: number,
         title: string
@@ -190,16 +191,16 @@
             let records: any[] = [];
             
             switch (ppiModal.recordType) {
-                case 'kvd':
+                case RECORD_TYPES.KVD:
                     records = operatorData.kvd_list || [];
                     break;
-                case 'tnp':
+                case RECORD_TYPES.TNP:
                     records = operatorData.tnp_list || [];
                     break;
-                case 'ts':
+                case RECORD_TYPES.TS:
                     records = operatorData.ts_list || [];
                     break;
-                case 'ona':
+                case RECORD_TYPES.ONA:
                     records = operatorData.ona_list || [];
             }
             
@@ -216,7 +217,7 @@
     
     function addPpiAssignment(
         recordId: number,
-        recordType: 'kvd' | 'tnp' | 'ts' | 'ona',
+        recordType: RecordType,
         ppi: Ppi
     ) {
         ppiAssignments = ppiAssignments.filter(a => 
