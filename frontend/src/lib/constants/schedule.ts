@@ -14,34 +14,44 @@ export const CUSTOMER_CODES: CustomerCode[] = [
     { value: 5, label: '05 - Заказчик 5'}
 ];
 
+export const MODE_CODES = {
+    SHOOTING: 1,
+    OMI: 2,
+    TNP: 4,
+    ONA: 6,
+    KVD: 7,
+    TS: 8,
+    ASTROCORRECTION: 9
+} as const;
+
 export const WORK_MODES: WorkMode[] = [
-    { id: 9, label: 'Астрокорр.', order: '0' },
-    { id: 1, label: 'Съемки', order: '1' },
-    { id: 2, label: 'Распр. ОМИ', order: '2' },
-    { id: 4, label: 'Режимы ТНП', order: '3' },
-    { id: 7, label: 'Калибр. ВД', order: '4' },
-    { id: 8, label: 'Техн. съемки', order: '5' },
-    { id: 6, label: 'Юстировки ОНА', order: '6' }
+    { id: MODE_CODES.ASTROCORRECTION, label: 'Астрокорр.', order: '0' },
+    { id: MODE_CODES.SHOOTING, label: 'Съемки', order: '1' },
+    { id: MODE_CODES.OMI, label: 'Распр. ОМИ', order: '2' },
+    { id: MODE_CODES.TNP, label: 'Режимы ТНП', order: '3' },
+    { id: MODE_CODES.KVD, label: 'Калибр. ВД', order: '4' },
+    { id: MODE_CODES.TS, label: 'Техн. съемки', order: '5' },
+    { id: MODE_CODES.ONA, label: 'Юстировки ОНА', order: '6' }
 ];
 
 export const MODE_ID_TO_CODE: Record<number, string> = {
-    9: 'astr',  // Астрокоррекция
-    1: 's',     // Съемки
-    2: 'omi',   // ОМИ
-    4: 'tnp',   // ТНП
-    7: 'kvd',   // КВД
-    8: 'ts',    // ТС
-    6: 'ona'    // Юстировка ОНА
+    [MODE_CODES.ASTROCORRECTION]: 'astr',
+    [MODE_CODES.SHOOTING]: 's',
+    [MODE_CODES.OMI]: 'omi',
+    [MODE_CODES.TNP]: 'tnp',
+    [MODE_CODES.KVD]: 'kvd',
+    [MODE_CODES.TS]: 'ts',
+    [MODE_CODES.ONA]: 'ona'
 };
 
 export const MODE_NAMES: Record<number, string> = {
-    9: 'Астрокоррекция',
-    1: 'Съемки',
-    2: 'Распр. ОМИ',
-    4: 'Режимы ТНП',
-    7: 'Калибр. ВД',
-    8: 'Техн. съемки',
-    6: 'Юстировки ОНА'
+    [MODE_CODES.ASTROCORRECTION]: 'Астрокоррекция',
+    [MODE_CODES.SHOOTING]: 'Съемки',
+    [MODE_CODES.OMI]: 'Распр. ОМИ',
+    [MODE_CODES.TNP]: 'Режимы ТНП',
+    [MODE_CODES.KVD]: 'Калибр. ВД',
+    [MODE_CODES.TS]: 'Техн. съемки',
+    [MODE_CODES.ONA]: 'Юстировки ОНА'
 };
 
 export const PPI_LIST: Ppi[] = [
