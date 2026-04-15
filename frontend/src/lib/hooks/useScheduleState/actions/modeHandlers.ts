@@ -1,3 +1,4 @@
+import { DEFAULT_MODE_DURATION } from '$lib/config/schedule.config';
 import { CUSTOMER_CODES } from '$lib/constants/schedule';
 import { modal } from '$lib/services/modal.service';
 import type { CreatedProgramData, ModeCreationForm, ProgramModeData, TimeInterval } from '$lib/types';
@@ -150,7 +151,7 @@ export function createModeHandlers(
             dateOff: `${interval.date}T${interval.endTime}`,
             kodMode: interval.mode,
             numPpi: interval.ppi || 1,
-            dlit: interval.dlit || 300,
+            dlit: interval.dlit || DEFAULT_MODE_DURATION,
             zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, interval.customerCode || 1)
         };
         
@@ -163,7 +164,7 @@ export function createModeHandlers(
                 idMain: mainId,
                 tip: 1,
                 reg: 0,
-                dlit: interval.dlit || 300,
+                dlit: interval.dlit || DEFAULT_MODE_DURATION,
                 prMsu1: interval.msu1Config?.prMsu || 0,
                 vd1Msu1: interval.msu1Config?.vd1 || 0,
                 vd2Msu1: interval.msu1Config?.vd2 || 0,
@@ -236,7 +237,7 @@ export function createModeHandlers(
                 typeOmi: 1,
                 dateNach: baseData.dateOn,
                 dateCon: baseData.dateOff,
-                dlit: interval.dlit || 300
+                dlit: interval.dlit || DEFAULT_MODE_DURATION
             };
             
             return {

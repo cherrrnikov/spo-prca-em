@@ -1,3 +1,4 @@
+import { DEFAULT_MODE_DURATION } from '$lib/config/schedule.config';
 import type {
     ForecastData,
     Kr01DataResponse,
@@ -71,7 +72,7 @@ export class ScheduleConverterService {
             const date = impulse.date_im.split('T')[0];
 
             const vkiType = impulse.n_du >= 1 && impulse.n_du <= 4 ? 'vki1' : 'vki2';
-            const duration = impulse.dlit || 300;
+            const duration = impulse.dlit || DEFAULT_MODE_DURATION;
             const endTime = TimeUtils.calculateEndTime(time, duration / 60);
             
             return {
@@ -107,7 +108,7 @@ export class ScheduleConverterService {
             .map((rotation: Ro02Dto, index: number) => {
                 const time = TimeUtils.extractTimeFromTimestamp(rotation.data_razv);
                 const date = rotation.data_razv.split('T')[0];
-                const duration = 300;
+                const duration = DEFAULT_MODE_DURATION;
                 const endTime = TimeUtils.calculateEndTime(time, duration / 60);
                 
                 return {

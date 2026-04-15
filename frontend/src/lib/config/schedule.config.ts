@@ -24,3 +24,6 @@ export const SUB_INTERVAL_DURATION_MIN = 7;
 
 /** Количество секунд в сутках */
 export const SECONDS_IN_DAY = 86400;
+
+/** Длительность режима по умолчанию (секунды) */
+export const DEFAULT_MODE_DURATION = 300;

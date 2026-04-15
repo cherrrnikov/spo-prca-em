@@ -1,3 +1,5 @@
+import { DEFAULT_MODE_DURATION } from "$lib/config/schedule.config";
+
 export class ModeDurationService {
     static getDurationForMode(
         modeId: number, 
@@ -7,6 +9,6 @@ export class ModeDurationService {
         const modeCode = modeIdToCode[modeId];
         return modeCode && modeDurations[modeCode] !== undefined 
             ? modeDurations[modeCode] 
-            : 300; // дефолтное значение
+            : DEFAULT_MODE_DURATION; 
     }
 }
