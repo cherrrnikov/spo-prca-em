@@ -15,7 +15,6 @@ export class ScheduleApiService {
         const response = await fetch(`${this.BASE_URL}/schedule/proxy?date=${date}`);
         if (!response.ok) {
             if (response.status === 404) {
-                console.log(`Нет данных ИД06 для даты ${date}`);
                 return null; // возвращаем null вместо ошибки
             }
             throw new Error(`Ошибка сервера: ${response.status}`);
@@ -83,7 +82,6 @@ export class ScheduleApiService {
             
             if (!response.ok) {
                 if (response.status === 404) {
-                    console.log(`Данные ВКИ не найдены для даты: ${date}`);
                     return null;
                 }
                 throw new Error(`Ошибка сервера при загрузке данных ВКИ: ${response.status}`);
@@ -105,7 +103,6 @@ export class ScheduleApiService {
             
             if (!response.ok) {
                 if (response.status === 404) {
-                    console.log(`Данные разворотов не найдены для даты: ${date}`);
                     return null;
                 }
                 throw new Error(`Ошибка сервера при загрузке данных разворотов: ${response.status}`);
@@ -126,7 +123,6 @@ export class ScheduleApiService {
 
             if (!response.ok) {
                 if (response.status === 404) {
-                    console.log(`Данные о состоянии бортовых систем не найдены для даты: ${date}`);
                     return null;
                 }
                 throw new Error(`Ошибка сервера при загрузке данных о состоянии бортовых систем: ${response.status}`);
@@ -164,8 +160,6 @@ export class ScheduleApiService {
                                     data.rotations && 
                                     data.rotations.length > 0;
             }
-
-            console.log(`Астрокоррекция для ${date}: ${hasVkiData || hasRotationData ? 'ЕСТЬ' : 'НЕТ'}`);
             
             return hasVkiData || hasRotationData;
             

@@ -159,10 +159,7 @@ export class ConstraintValidator {
                 }
             }
         }
-
-        console.log(`ConstraintValidator: найдено нарушений для ${violations.size} интервалов`);
         violations.forEach((v, id) => {
-            console.log(`  Интервал ${id}: ${v.length} нарушений`);
         });
 
         return violations;

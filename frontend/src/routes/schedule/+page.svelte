@@ -88,9 +88,6 @@
     });
 
     $effect(() => {
-        console.log("creationMode изменился:", $creationMode);
-        console.log("operatorDataLoaded:", $operatorDataLoaded);
-        console.log("intervals length:", $intervals.length);
     });
 
     function resetAndStartOperatorCreation() {
@@ -233,8 +230,6 @@
     }
 
     function logAllIntervals(action: string) {
-        console.log(`${action} - Все интервалы:`, $intervals);
-        console.log(`Статистика: Всего: ${$intervals.length}, Сохраняемых: ${$intervals.filter(i => i.willBeSaved).length}`);
     }
 </script>
 

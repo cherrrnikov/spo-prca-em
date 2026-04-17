@@ -1,5 +1,5 @@
 import { DEFAULT_MODE_DURATION } from '$lib/config/schedule.config';
-import { CUSTOMER_CODES } from '$lib/constants/schedule';
+import { CUSTOMER_CODES, MODE_CODES } from '$lib/constants/schedule';
 import { MsuMapper } from '$lib/mappers/msuMapper';
 import { modal } from '$lib/services/modal.service';
 import type { CreatedProgramData, ModeCreationForm, ProgramModeData, TimeInterval } from '$lib/types';
@@ -157,7 +157,7 @@ export function createModeHandlers(
         };
         
         // Для ТС (8) и обычных съемок (1)
-        if (interval.mode === 8 || interval.mode === 1) {
+        if (interval.mode === MODE_CODES.TS || interval.mode === MODE_CODES.SHOOTING) {
             // tsData уже должен быть заполнен при создании интервала через ManualIntervalSplitService
             // если нет — создаем на основе msuConfig
             const msuData = interval.msuData || MsuMapper.fromForm(
@@ -184,7 +184,7 @@ export function createModeHandlers(
         }
         
         // Для КВД (7)
-        if (interval.mode === 7 && interval.kvdConfig) {
+        if (interval.mode === MODE_CODES.KVD && interval.kvdConfig) {
             return {
                 ...baseData,
                 kvdData: {
@@ -198,7 +198,7 @@ export function createModeHandlers(
         }
         
         // Для Юстировки ОНА (6)
-        if (interval.mode === 6) {
+        if (interval.mode === MODE_CODES.ONA) {
             return {
                 ...baseData,
                 onaData: {
@@ -214,7 +214,7 @@ export function createModeHandlers(
         }
         
         // Для ОМИ (2)
-        if (interval.mode === 2) {
+        if (interval.mode === MODE_CODES.OMI) {
             const omiData = interval.omiData || {
                 id: 0,
                 idMain: mainId,
@@ -232,7 +232,7 @@ export function createModeHandlers(
         }
         
         // Для ТНП (4)
-        if (interval.mode === 4) {
+        if (interval.mode === MODE_CODES.TNP) {
             return {
                 ...baseData,
                 tnpData: {

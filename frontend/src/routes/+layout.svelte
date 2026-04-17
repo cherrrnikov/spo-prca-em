@@ -15,7 +15,6 @@
     isRefreshing = true;
     
     try {
-      console.log('🔄 Keepalive: refreshing session...');
       const response = await fetch('/api/auth/validate', {
         method: 'GET',
         credentials: 'same-origin'
@@ -25,14 +24,11 @@
         const data = await response.json();
         
         if (data.status === 'refreshed') {
-          console.log('✅ Session extended successfully');
           // Уведомляем компоненты о обновлении данных пользователя
           window.dispatchEvent(new CustomEvent('user-data-updated'));
         } else if (data.status === 'valid') {
-          console.log('✅ Session still valid');
         }
       } else if (response.status === 401) {
-        console.log('❌ Session expired, redirecting to login...');
         window.location.href = '/';
       }
     } catch (error) {
@@ -43,7 +39,6 @@
   }
   
   onMount(() => {
-    console.log('📌 Starting keepalive service');
     
     // Запускаем интервал
     refreshInterval = setInterval(refreshSession, KEEPALIVE_INTERVAL_MS);

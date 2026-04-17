@@ -70,15 +70,6 @@ export class ProgramPreparerService {
             });
         }
 
-        console.log('ПРЦА подготовлена:', {
-            main: mainData,
-            modesCount: modes.length,
-            kvd: modes.filter(m => m.kodMode === 7).length,
-            tnp: modes.filter(m => m.kodMode === 4).length,
-            ts: modes.filter(m => m.kodMode === 8).length,
-            ona: modes.filter(m => m.kodMode === 6).length
-        });
-
         return { mainData, modes };
     }
 
@@ -116,8 +107,6 @@ export class ProgramPreparerService {
                 modes.push(modeData);
             }
         });
-
-        console.log(`Подготовлено ${modes.length} режимов для сохранения (только из createdPrograms)`);
 
         return { mainData, modes };
     }

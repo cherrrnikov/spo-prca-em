@@ -1,4 +1,5 @@
-import { CUSTOMER_CODES } from '$lib/constants/schedule';
+import { CUSTOMER_CODES, MODE_CODES } from '$lib/constants/schedule';
+import { MsuMapper } from '$lib/mappers/msuMapper';
 import type {
     ModeCreationForm,
     ProgramModeData,
@@ -50,80 +51,30 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             ...getDefaultIntervalFlags()
         };
 
-        if (formData.modeType === 7 && formData.kvdConfig) {
+        if (formData.modeType === MODE_CODES.KVD && formData.kvdConfig) {
             interval.kvdConfig = { ...formData.kvdConfig };
         }
         
-        if (formData.modeType === 8 || formData.modeType === 1) {
+        if (formData.modeType === MODE_CODES.TS || formData.modeType === MODE_CODES.SHOOTING) {
             interval.msu1Config = { ...formData.msu1Config };
             interval.msu2Config = { ...formData.msu2Config };
 
-            if (formData.modeType === 8) {
-                // ТС - берем ВСЕ из формы (данные из ИД06)
+            const baseMsuData = MsuMapper.fromMsuConfigs(
+                formData.msu1Config,
+                formData.msu2Config,
+                { tip: formData.tip ?? 1, reg: formData.reg ?? 0, dlit: formData.duration }
+            );
+
+            if (formData.modeType === MODE_CODES.TS) {
                 interval.msuData = {
-                    id: 0,
-                    idMain: 0,
-                    tip: formData.tip ?? 1,
-                    reg: formData.reg ?? 0,
-                    dlit: formData.duration,
-                    prMsu1: formData.msu1Config.prMsu || 0,
-                    vd1Msu1: formData.msu1Config.vd1 || 0,
-                    vd2Msu1: formData.msu1Config.vd2 || 0,
-                    vd3Msu1: formData.msu1Config.vd3 || 0,
-                    ik4Msu1: formData.msu1Config.ik4 || 0,
-                    ik5Msu1: formData.msu1Config.ik5 || 0,
-                    ik6Msu1: formData.msu1Config.ik6 || 0,
-                    ik7Msu1: formData.msu1Config.ik7 || 0,
-                    ik8Msu1: formData.msu1Config.ik8 || 0,
-                    ik9Msu1: formData.msu1Config.ik9 || 0,
-                    ik10Msu1: formData.msu1Config.ik10 || 0,
-                    prMsu2: formData.msu2Config.prMsu || 0,
-                    vd1Msu2: formData.msu2Config.vd1 || 0,
-                    vd2Msu2: formData.msu2Config.vd2 || 0,
-                    vd3Msu2: formData.msu2Config.vd3 || 0,
-                    ik4Msu2: formData.msu2Config.ik4 || 0,
-                    ik5Msu2: formData.msu2Config.ik5 || 0,
-                    ik6Msu2: formData.msu2Config.ik6 || 0,
-                    ik7Msu2: formData.msu2Config.ik7 || 0,
-                    ik8Msu2: formData.msu2Config.ik8 || 0,
-                    ik9Msu2: formData.msu2Config.ik9 || 0,
-                    ik10Msu2: formData.msu2Config.ik10 || 0,
-                    // Для ТС - берем из формы (это данные из ИД06)
+                    ...baseMsuData,
                     prBssd: currentBortData?.pr_bssd ?? 0,
                     prZg: currentBortData?.pr_zg ?? 0,
                     prOtklZgBssd: formData.prOtklZg ?? 0
                 };
             } else {
-                // Обычная съемка (mode 1) - берем prBssd и prZg из ИД02
                 interval.msuData = {
-                    id: 0,
-                    idMain: 0,
-                    tip: formData.tip ?? 1,
-                    reg: formData.reg ?? 0,
-                    dlit: formData.duration,
-                    prMsu1: formData.msu1Config.prMsu || 0,
-                    vd1Msu1: formData.msu1Config.vd1 || 0,
-                    vd2Msu1: formData.msu1Config.vd2 || 0,
-                    vd3Msu1: formData.msu1Config.vd3 || 0,
-                    ik4Msu1: formData.msu1Config.ik4 || 0,
-                    ik5Msu1: formData.msu1Config.ik5 || 0,
-                    ik6Msu1: formData.msu1Config.ik6 || 0,
-                    ik7Msu1: formData.msu1Config.ik7 || 0,
-                    ik8Msu1: formData.msu1Config.ik8 || 0,
-                    ik9Msu1: formData.msu1Config.ik9 || 0,
-                    ik10Msu1: formData.msu1Config.ik10 || 0,
-                    prMsu2: formData.msu2Config.prMsu || 0,
-                    vd1Msu2: formData.msu2Config.vd1 || 0,
-                    vd2Msu2: formData.msu2Config.vd2 || 0,
-                    vd3Msu2: formData.msu2Config.vd3 || 0,
-                    ik4Msu2: formData.msu2Config.ik4 || 0,
-                    ik5Msu2: formData.msu2Config.ik5 || 0,
-                    ik6Msu2: formData.msu2Config.ik6 || 0,
-                    ik7Msu2: formData.msu2Config.ik7 || 0,
-                    ik8Msu2: formData.msu2Config.ik8 || 0,
-                    ik9Msu2: formData.msu2Config.ik9 || 0,
-                    ik10Msu2: formData.msu2Config.ik10 || 0,
-                    // Для съемки - берем из ИД02
+                    ...baseMsuData,
                     prBssd: currentBortData?.pr_bssd ?? 0,
                     prZg: currentBortData?.pr_zg ?? 0,
                     prOtklZgBssd: currentBortData?.pr_otkl_zg ?? 0
@@ -131,11 +82,11 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             }
         }
 
-        if (formData.modeType === 6) {
+        if (formData.modeType === MODE_CODES.ONA) {
             interval.nOna = formData.nOna || 1;
         }
 
-        if (formData.modeType === 2) {
+        if (formData.modeType === MODE_CODES.OMI) {
             interval.omiData = {
                 id: 0,
                 idMain: 0,
@@ -163,65 +114,42 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             startTime: formData.startTime,
             endTime: endTime, 
             ppi: formData.ppiNum,
-            dlit: formData.duration,
-            city: CityService.getCityByPpi(formData.ppiNum),
+            dlit: formData.duration,city: CityService.getCityByPpi(formData.ppiNum),
             color: CityService.getColorByPpi(formData.ppiNum),
             customerCode: formData.customerCode,
         };
         
-        if (formData.modeType === 7 && formData.kvdConfig) {
+        if (formData.modeType === MODE_CODES.KVD && formData.kvdConfig) {
             updatedInterval.kvdConfig = { ...formData.kvdConfig };
         }
         
-        if (formData.modeType === 8 || formData.modeType === 1) {
+        if (formData.modeType === MODE_CODES.TS || formData.modeType === MODE_CODES.SHOOTING) {
             updatedInterval.msu1Config = { ...formData.msu1Config };
             updatedInterval.msu2Config = { ...formData.msu2Config };
 
             updatedInterval.msuData = {
-                id: editingInterval.msuData?.id ?? 0,
-                idMain: editingInterval.msuData?.idMain ?? 0,
-                
-                // ВСЕ редактируемые поля берем ИЗ ФОРМЫ
-                tip: formData.tip ?? 1,
-                reg: formData.reg ?? 0,
-                dlit: formData.duration,
-                
-                // Настройки МСУ - из formData.msu1Config/msu2Config
-                prMsu1: formData.msu1Config.prMsu || 0,
-                vd1Msu1: formData.msu1Config.vd1 || 0,
-                vd2Msu1: formData.msu1Config.vd2 || 0,
-                vd3Msu1: formData.msu1Config.vd3 || 0,
-                ik4Msu1: formData.msu1Config.ik4 || 0,
-                ik5Msu1: formData.msu1Config.ik5 || 0,
-                ik6Msu1: formData.msu1Config.ik6 || 0,
-                ik7Msu1: formData.msu1Config.ik7 || 0,
-                ik8Msu1: formData.msu1Config.ik8 || 0,
-                ik9Msu1: formData.msu1Config.ik9 || 0,
-                ik10Msu1: formData.msu1Config.ik10 || 0,
-                prMsu2: formData.msu2Config.prMsu || 0,
-                vd1Msu2: formData.msu2Config.vd1 || 0,
-                vd2Msu2: formData.msu2Config.vd2 || 0,
-                vd3Msu2: formData.msu2Config.vd3 || 0,
-                ik4Msu2: formData.msu2Config.ik4 || 0,
-                ik5Msu2: formData.msu2Config.ik5 || 0,
-                ik6Msu2: formData.msu2Config.ik6 || 0,
-                ik7Msu2: formData.msu2Config.ik7 || 0,
-                ik8Msu2: formData.msu2Config.ik8 || 0,
-                ik9Msu2: formData.msu2Config.ik9 || 0,
-                ik10Msu2: formData.msu2Config.ik10 || 0,
-                
-                // Параметры БССД/ЗГ из формы
+                ...MsuMapper.fromMsuConfigs(
+                    formData.msu1Config,
+                    formData.msu2Config,
+                    {
+                        id: editingInterval.msuData?.id ?? 0,
+                        idMain: editingInterval.msuData?.idMain ?? 0,
+                        tip: formData.tip ?? 1,
+                        reg: formData.reg ?? 0,
+                        dlit: formData.duration
+                    }
+                ),
                 prBssd: formData.prBssd ?? 0,
                 prZg: formData.prZg ?? 0,
                 prOtklZgBssd: formData.prOtklZg ?? 0
             };
         }
 
-        if (formData.modeType === 6) {
+        if (formData.modeType === MODE_CODES.ONA) {
             updatedInterval.nOna = formData.nOna || editingInterval.nOna || 1;
         }
 
-        if (formData.modeType === 2) {
+        if (formData.modeType === MODE_CODES.OMI) {
             updatedInterval.omiData = {
                 id: editingInterval.omiData?.id ?? 0,
                 idMain: editingInterval.omiData?.idMain ?? 0,
@@ -238,7 +166,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
 
     function createProgramModeData(formData: ModeCreationForm, tempId: string): ProgramModeData {
         const currentOperatorData = get(operatorData);
-        const currentBortData = get(bortData)
+        const currentBortData = get(bortData);
         const currentContextDate = get(contextDate);
         const mainId = currentOperatorData?.main.id || 0;
         const endDisplayTime = TimeUtils.calculateEndTimeSeconds(formData.startTime, formData.duration);
@@ -256,13 +184,8 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             zakazchik: getCustomerLabel(formData.customerCode)
         };
         
-        if (formData.modeType === 7) {
-            const kvdConfig = formData.kvdConfig || {
-                prMsu: 0,
-                prBssd: 0,
-                prZg: 0
-            };
-            
+        if (formData.modeType === MODE_CODES.KVD) {
+            const kvdConfig = formData.kvdConfig || { prMsu: 0, prBssd: 0, prZg: 0 };
             return {
                 ...baseData,
                 kvdData: {
@@ -273,44 +196,20 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     prZg: kvdConfig.prZg
                 }
             };
-        } else if (formData.modeType === 8 || formData.modeType === 1) {
+        } else if (formData.modeType === MODE_CODES.TS || formData.modeType === MODE_CODES.SHOOTING) {
             const msu1Config = formData.msu1Config || ScheduleConverterService.getDefaultMsuConfig();
             const msu2Config = formData.msu2Config || ScheduleConverterService.getDefaultMsuConfig();
-            const tip = (formData as any).tip || 1;  
-            const reg = (formData as any).reg || 1;
+            const tip = formData.tip ?? 1;
+            const reg = formData.reg ?? 1;
 
-            const baseMsuData = {
-                id: 0,
+            const baseMsuData = MsuMapper.fromMsuConfigs(msu1Config, msu2Config, {
                 idMain: mainId,
-                tip: tip,
-                reg: reg,
-                dlit: baseData.dlit,
-                prMsu1: msu1Config.prMsu || 0,
-                vd1Msu1: msu1Config.vd1 || 0,
-                vd2Msu1: msu1Config.vd2 || 0,
-                vd3Msu1: msu1Config.vd3 || 0,
-                ik4Msu1: msu1Config.ik4 || 0,
-                ik5Msu1: msu1Config.ik5 || 0,
-                ik6Msu1: msu1Config.ik6 || 0,
-                ik7Msu1: msu1Config.ik7 || 0,
-                ik8Msu1: msu1Config.ik8 || 0,
-                ik9Msu1: msu1Config.ik9 || 0,
-                ik10Msu1: msu1Config.ik10 || 0,
-                prMsu2: msu2Config.prMsu || 0,
-                vd1Msu2: msu2Config.vd1 || 0,
-                vd2Msu2: msu2Config.vd2 || 0,
-                vd3Msu2: msu2Config.vd3 || 0,
-                ik4Msu2: msu2Config.ik4 || 0,
-                ik5Msu2: msu2Config.ik5 || 0,
-                ik6Msu2: msu2Config.ik6 || 0,
-                ik7Msu2: msu2Config.ik7 || 0,
-                ik8Msu2: msu2Config.ik8 || 0,
-                ik9Msu2: msu2Config.ik9 || 0,
-                ik10Msu2: msu2Config.ik10 || 0,
-            };
+                tip,
+                reg,
+                dlit: baseData.dlit
+            });
 
-            if (formData.modeType === 8) {
-                // ТС - берем из формы (данные из ИД06)
+            if (formData.modeType === MODE_CODES.TS) {
                 return {
                     ...baseData,
                     msuData: {
@@ -321,7 +220,6 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     }
                 };
             } else {
-                // Обычная съемка - берем из ИД02
                 return {
                     ...baseData,
                     msuData: {
@@ -332,7 +230,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     }
                 };
             }
-        } else if (formData.modeType === 4) {
+        } else if (formData.modeType === MODE_CODES.TNP) {
             return {
                 ...baseData,
                 tnpData: {
@@ -343,7 +241,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     prZg: 1
                 }
             };
-        } else if (formData.modeType === 6) {
+        } else if (formData.modeType === MODE_CODES.ONA) {
             return {
                 ...baseData,
                 onaData: {
@@ -356,7 +254,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     nPpi: formData.ppiNum
                 }
             };
-        } else if (formData.modeType === 2) {
+        } else if (formData.modeType === MODE_CODES.OMI) {
             return {
                 ...baseData,
                 omiData: {

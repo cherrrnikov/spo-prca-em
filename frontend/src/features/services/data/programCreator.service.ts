@@ -5,6 +5,10 @@ import { MsuMapper } from '$lib/mappers/msuMapper';
 import type {
     CreatedProgramData,
     Id02Dto,
+    Id06KvdDto,
+    Id06OnaDto,
+    Id06TnpDto,
+    Id06TsDto,
     OperatorData,
     PpiAssignment,
     ProgramModeData,
@@ -48,7 +52,7 @@ export class ProgramCreatorService {
     ): void {
         if (!operatorData.kvd_list) return;
 
-        operatorData.kvd_list.forEach((kvd: any) => {
+        operatorData.kvd_list.forEach((kvd: Id06KvdDto) => {
             const assignment = ppiAssignments.find(a =>
                 a.recordId === kvd.id && a.recordType === RECORD_TYPES.KVD
             );
@@ -95,7 +99,7 @@ export class ProgramCreatorService {
     ): void {
         if (!operatorData.tnp_list) return;
 
-        operatorData.tnp_list.forEach((tnp: any) => {
+        operatorData.tnp_list.forEach((tnp: Id06TnpDto) => {
             const assignment = ppiAssignments.find(a =>
                 a.recordId === tnp.id && a.recordType === RECORD_TYPES.TNP
             );
@@ -139,7 +143,7 @@ export class ProgramCreatorService {
     ): void {
         if (!operatorData.ts_list) return;
 
-        operatorData.ts_list.forEach((ts: any) => {
+        operatorData.ts_list.forEach((ts: Id06TsDto) => {
             const assignment = ppiAssignments.find(a =>
                 a.recordId === ts.id && a.recordType === RECORD_TYPES.TS
             );
@@ -192,7 +196,7 @@ export class ProgramCreatorService {
     ): void {
         if (!operatorData.ona_list) return;
 
-        operatorData.ona_list.forEach((ona: any) => {
+        operatorData.ona_list.forEach((ona: Id06OnaDto) => {
             const assignment = ppiAssignments.find(a =>
                 a.recordId === ona.id && a.recordType === RECORD_TYPES.ONA
             );

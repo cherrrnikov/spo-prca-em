@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { MODE_CODES } from '$lib/constants/schedule';
   import { modal } from '$lib/services/modal.service';
   import type { TimeInterval } from '$lib/types';
   import type { ProgramsListItem } from '$lib/types/analysis';
@@ -89,19 +90,15 @@
   }
 
   async function handleSave() {
-      console.log("=== СОХРАНЕНИЕ ПРЦА ===");
 
         // В режиме анализа сохраняем все ПРЦА из списка
       if (isAnalysisMode && programsList.length > 0) {
-          console.log(`Режим анализа: сохраняем ${programsList.length} ПРЦА`);
           
           let savedCount = 0;
           let failedCount = 0;
           
           for (const program of programsList) {
               try {
-                  console.log(`\n--- Сохранение ПРЦА для даты ${program.date} ---`);
-                  console.log(`program.numKa для ${program.date}:`, program.numKa);
                   
                   const redIntervals = createdPrograms.filter(p => p.timeInterval.hasConflict === true);
 
@@ -111,7 +108,6 @@
                   }
 
                   const mergedCreatedPrograms = mergeMsuIntervals(createdPrograms);
-                  console.log(`После объединения: ${mergedCreatedPrograms.length} интервалов (было ${createdPrograms.length})`);
 
 
                   // Подготавливаем данные для этой ПРЦА
@@ -125,18 +121,9 @@
                       program.numKa,
                       undefined
                   );
-                  
-                  console.log(`Количество режимов для ${program.date}: ${programRequest.modes.length}`);
-                  console.log(`Режимы для ${program.date}:`, programRequest.modes.map(m => ({
-                      kodMode: m.kodMode,
-                      dateOn: m.dateOn,
-                      dateOff: m.dateOff,
-                      dlit: m.dlit
-                  })));
 
                   // Сохраняем
                   const result = await ScheduleApiService.saveProgram(programRequest);
-                  console.log(`✅ ПРЦА для ${program.date} сохранена`);
 
                   // Сохранение ВПРЦА 
                   try {
@@ -149,7 +136,6 @@
                       );
 
                       await ScheduleApiService.saveVp(vpRequest);
-                      console.log(`ВПРЦА для ${program.date} успешно сохранена`);
                   } catch (vpError) {
                       console.error(`Ошибка сохранения ВПРЦА для ${program.date}:`, vpError);
                   }
@@ -168,8 +154,6 @@
                   failedCount++;
               }
           }
-          
-          console.log("🔧 Вызываем onAfterSave, onAfterSave =", onAfterSave);
           onAfterSave?.();
 
 
@@ -179,11 +163,6 @@
       }
       
       // 1. Логируем текущее состояние
-      console.log("Intervals (количество):", intervals.length);
-      console.log("Operator Data:", operatorData);
-      console.log("PPI Assignments:", ppiAssignments);
-      console.log("Selected Date:", selectedProgramDate);
-      console.log("Created Programs:", createdPrograms);
       
       // 2. Проверяем данные
       if (!operatorData || !selectedProgramDate) {
@@ -199,7 +178,6 @@
       }
       
       try {
-          console.log("=== ПОДГОТОВКА ДАННЫХ ДЛЯ СОХРАНЕНИЯ ===");
           await updateAllConflicts();
 
 
@@ -211,7 +189,6 @@
           }
 
           const mergedCreatedPrograms = mergeMsuIntervals(createdPrograms);
-          console.log(`После объединения: ${mergedCreatedPrograms.length} интервалов (было ${createdPrograms.length})`);
 
           // Подготавливаем данные программы
           const programRequest = ProgramPreparerService.prepareFullProgramData(
@@ -225,80 +202,15 @@
               undefined
           );
           
-          // 3. ЛОГИРУЕМ ВСЕ ДАННЫЕ, КОТОРЫЕ БУДУТ ОТПРАВЛЕНЫ
-          console.log("=== СОЗДАННЫЙ ЗАПРОС НА СОХРАНЕНИЕ ===");
-          console.log("Полный запрос (JSON):", JSON.stringify(programRequest, null, 2));
-          
-          console.log("\n=== ДЕТАЛЬНЫЙ АНАЛИЗ ===");
-          console.log("Основные данные программы:");
-          console.log("- Номер РП:", programRequest.mainData.numRp);
-          console.log("- Номер КА:", programRequest.mainData.numKa);
-          console.log("- Дата начала:", programRequest.mainData.dateOn);
-          console.log("- Дата окончания:", programRequest.mainData.dateOff);
-          console.log("- Тип ПРЦА:", programRequest.mainData.typeRp);
-          
-          console.log("\nРежимы работы (" + programRequest.modes.length + " шт.):");
-          programRequest.modes.forEach((mode, index) => {
-              console.log(`\n--- Режим ${index + 1} ---`);
-              console.log("- Код режима:", mode.kodMode);
-              console.log("- Дата начала:", mode.dateOn);
-              console.log("- Дата окончания:", mode.dateOff);
-              console.log("- Номер ППИ:", mode.numPpi);
-              console.log("- Длительность:", mode.dlit, "сек");
-              console.log("- Заказчик:", mode.zakazchik || "не указан");
-              
-              if (mode.kvdData) {
-                  console.log("- Тип: КВД");
-                  console.log("  МСУ:", mode.kvdData.prMsu === 0 ? "МСУ-1" : "МСУ-2");
-                  console.log("  БССД:", mode.kvdData.prBssd === 0 ? "БССД1" : "БССД2");
-                  console.log("  ЗГ:", "ЗГ" + (mode.kvdData.prZg + 1));
-              }
-              
-              if (mode.msuData) {
-                  console.log("- Тип: ТС");
-                  console.log("  Тип съемки:", mode.msuData.tip === 1 ? "штатная" : "учащенная");
-                  console.log("  Режим:", mode.msuData.reg);
-                  console.log("  МСУ1:", mode.msuData.prMsu1 ? "задействован" : "не задействован");
-                  console.log("  МСУ2:", mode.msuData.prMsu2 ? "задействован" : "не задействован");
-                  console.log("  БССД:", mode.msuData.prBssd ? "включен" : "выключен");
-                  console.log("  ЗГ:", "ЗГ" + (mode.msuData.prZg + 1));
-              }
-              
-              if (mode.tnpData) {
-                  console.log("- Тип: ТНП");
-                  console.log("  Длительность:", mode.dlit, "сек");
-              }
-              
-              if (mode.omiData) {
-                  console.log("- Тип: ОМИ");
-                  console.log("  Номер ОМИ:", mode.omiData.numOmi);
-                  console.log("  Тип ОМИ:", mode.omiData.typeOmi);
-              }
-              
-              if (mode.onaData) {
-                  console.log("- Тип: Юстировка ОНА");
-                  console.log("  Номер антенны:", mode.onaData.nOna);
-              }
-          });
-          
-          console.log("\n=== СВОДКА ===");
-          const kvdCount = programRequest.modes.filter(m => m.kodMode === 7).length;
-          const tnpCount = programRequest.modes.filter(m => m.kodMode === 4).length;
-          const tsCount = programRequest.modes.filter(m => m.kodMode === 8).length;
-          const omiCount = programRequest.modes.filter(m => m.kodMode === 2).length;
-          const onaCount = programRequest.modes.filter(m => m.kodMode === 6).length;
-          const shootingCount = programRequest.modes.filter(m => m.kodMode === 1).length;
-          
-          console.log(`Всего режимов: ${programRequest.modes.length}`);
-          console.log(`КВД: ${kvdCount}`);
-          console.log(`ТНП: ${tnpCount}`);
-          console.log(`ТС: ${tsCount}`);
-          console.log(`ОМИ: ${omiCount}`);
-          console.log(`Юст.ОНА: ${onaCount}`);
-          console.log(`Съемки: ${shootingCount}`);
+          // 3. Считаем для сохранения
+          const kvdCount = programRequest.modes.filter(m => m.kodMode === MODE_CODES.KVD).length;
+          const tnpCount = programRequest.modes.filter(m => m.kodMode === MODE_CODES.TNP).length;
+          const tsCount = programRequest.modes.filter(m => m.kodMode === MODE_CODES.TS).length;
+          const omiCount = programRequest.modes.filter(m => m.kodMode === MODE_CODES.OMI).length;
+          const onaCount = programRequest.modes.filter(m => m.kodMode === MODE_CODES.ONA).length;
+          const shootingCount = programRequest.modes.filter(m => m.kodMode === MODE_CODES.SHOOTING).length;
           
           // 4. Проверка времени интервалов
-          console.log("\n=== ПРОВЕРКА ВРЕМЕНИ ИНТЕРВАЛОВ ===");
           let hasCrossDayIntervals = false;
           programRequest.modes.forEach((mode, index) => {
               const startDate = new Date(mode.dateOn);
@@ -317,12 +229,8 @@
           }
           
           // 5. РЕАЛЬНОЕ СОХРАНЕНИЕ
-          console.log("\n=== ОТПРАВКА ЗАПРОСА НА БЭКЕНД ===");
           
           const result = await ScheduleApiService.saveProgram(programRequest);
-          
-          console.log("=== РЕЗУЛЬТАТ СОХРАНЕНИЯ ===");
-          console.log("Успешно! Ответ сервера:", result);
 
           // Сохранение ВПРЦА 
           try {
@@ -335,7 +243,6 @@
               );
 
               await ScheduleApiService.saveVp(vpRequest);
-              console.log("ВПРЦА успешно сохранена");
           } catch (vpError) {
               console.error("Ошибка сохранения ВПРЦА:", vpError);
           }
@@ -345,12 +252,9 @@
                   onNumRpSaved(result.numRp);
               }
           }
-
-          console.log("🔧 Вызываем onAfterSave, onAfterSave =", onAfterSave);
           onAfterSave?.();
 
           modal.alert('Успех', `ПРЦА успешно сохранена!\n\nНомер РП: ${result?.numRp || programRequest.mainData.numRp}\nДата: ${selectedProgramDate}\nСохранено режимов: ${programRequest.modes.length}\n(КВД: ${kvdCount}, ТНП: ${tnpCount}, ТС: ${tsCount}, ОМИ: ${omiCount}, ОНА: ${onaCount}, Съемки: ${shootingCount})`, 'success');
-          console.log('modal.alert вызван');
 
       } catch (error) {
           console.error("❌ ОШИБКА ПРИ СОХРАНЕНИИ:", error);

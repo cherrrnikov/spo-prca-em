@@ -2,6 +2,7 @@
     import { DEFAULT_MODE_DURATION } from "$lib/config/schedule.config";
     import {
     	CUSTOMER_CODES,
+    	MODE_CODES,
     	MODE_ID_TO_CODE,
     	PPI_LIST,
     	ZG_OPTIONS
@@ -74,12 +75,12 @@
     $effect(() => {
         // При создании нового интервала (не редактирование)
         if (!isEditMode && bortData) {
-            if (selectedMode === 1) {
+            if (selectedMode === MODE_CODES.SHOOTING) {
                 // Для обычных съемок - берем из ИД02
                 localFormData.prBssd = bortData.pr_bssd ?? 0;
                 localFormData.prZg = bortData.pr_zg ?? 0;
                 localFormData.prOtklZg = bortData.pr_otkl_zg ?? 0;
-            } else if (selectedMode === 8) {
+            } else if (selectedMode === MODE_CODES.TS) {
                 localFormData.prBssd = bortData.pr_bssd ?? 0;
                 localFormData.prZg = bortData.pr_zg ?? 0;
             }
@@ -119,13 +120,13 @@
         localFormData.endTime = interval.endTime;
         localFormData.customerCode = interval.customerCode || 1;
         
-        if (interval.mode === 7) {
+        if (interval.mode === MODE_CODES.KVD) {
             localFormData.kvdConfig = interval.kvdConfig 
                 ? { ...interval.kvdConfig }
                 : { prMsu: 0, prBssd: 0, prZg: 0 };
-        } else if (interval.mode === 6) {
+        } else if (interval.mode === MODE_CODES.ONA) {
             localFormData.nOna = interval.nOna || 1;
-        } else if (interval.mode === 8 || interval.mode === 1) {
+        } else if (interval.mode === MODE_CODES.TS || interval.mode === MODE_CODES.SHOOTING) {
             localFormData.msu1Config = interval.msu1Config || ScheduleConverterService.getDefaultMsuConfig();
             localFormData.msu2Config = interval.msu2Config || ScheduleConverterService.getDefaultMsuConfig();
 
@@ -136,7 +137,7 @@
                 localFormData.reg = interval.msuData.reg ?? 0;
                 localFormData.tip = interval.msuData.tip ?? 1;
             }
-        } else if (interval.mode === 2) {
+        } else if (interval.mode === MODE_CODES.OMI) {
             if (interval.omiData) {
                 localFormData.typeOmi = interval.omiData.typeOmi ?? 1;
             }
@@ -148,7 +149,7 @@
         newFormData.modeType = modeId;
         newFormData.duration = ModeDurationService.getDurationForMode(modeId, modeDurations, modeIdToCode);
         
-        if (modeId === 6) {
+        if (modeId === MODE_CODES.ONA) {
             newFormData.nOna = 1;
         }
 
@@ -167,7 +168,7 @@
             onUpdate?.(dataToSubmit);
         } else {
             // Создание
-            if (selectedMode === 8 || selectedMode === 1) {
+            if (selectedMode === MODE_CODES.TS || selectedMode === MODE_CODES.SHOOTING) {
                 // Для съемок — разбиваем на несколько интервалов
                 const currentDate = contextDate; // или получить из пропса
                 
@@ -203,7 +204,7 @@
             return false;
         }
 
-        if (!isEditMode && (selectedMode === 8 || selectedMode === 1)) {
+        if (!isEditMode && (selectedMode === MODE_CODES.TS || selectedMode === MODE_CODES.SHOOTING)) {
             if (!localFormData.endTime) {
                 modal.alert('Ошибка', 'Укажите время начала диапазона', 'error');
                 return false;
@@ -267,18 +268,8 @@
             typeOmi: localFormData.typeOmi
         };
         
-        if (localFormData.modeType === 6) {
+        if (localFormData.modeType === MODE_CODES.ONA) {
             submitData.nOna = localFormData.nOna || 1;
-        }
-
-        if (localFormData.modeType === 8) {
-            console.log('=== СОХРАНЕНИЕ ТС ===');
-            console.log('ПОСЛЕ редактирования - новые значения из формы:', {
-                prBssd: localFormData.prBssd,
-                prZg: localFormData.prZg,
-                prOtklZg: localFormData.prOtklZg,
-                reg: localFormData.reg
-            });
         }
         
         return submitData;
@@ -295,7 +286,7 @@
                 modeIdToCode
             );
 
-            if (selectedMode === 6) {
+            if (selectedMode === MODE_CODES.ONA) {
                 localFormData.nOna = 1;
             }
         }
@@ -327,7 +318,7 @@
             </div>
         </div>
 
-        {#if selectedMode === 7}
+        {#if selectedMode === MODE_CODES.KVD}
             <div class="form-section">
                 <div class="kvd-config-grid">
                     <div class="form-group">
@@ -393,7 +384,7 @@
                     </div>
                 </div>
             </div>
-        {:else if selectedMode === 2}
+        {:else if selectedMode === MODE_CODES.OMI}
             <div class="form-section">
                 <div class="form-grid">
                     <div class="form-group">
@@ -406,7 +397,7 @@
                     </div>
                 </div>
             </div>
-        {:else if selectedMode === 8 || selectedMode === 1}
+        {:else if selectedMode === MODE_CODES.TS || selectedMode === MODE_CODES.SHOOTING}
             <div class="form-section">
                 <span class="form-section_title">Комплект МСУ-ГС 1</span>
                 <MsuCheckboxGroup 
@@ -504,7 +495,7 @@
                     </div>
                 </div>
             {/if}
-        {:else if selectedMode === 6}
+        {:else if selectedMode === MODE_CODES.ONA}
             <div class="form-section">
                 <div class="kvd-config-grid">
                     <div class="form-group">
@@ -565,13 +556,13 @@
                             bind:value={localFormData.duration}
                             min="60"
                             step="60"
-                            disabled={selectedMode === 8}
+                            disabled={selectedMode === MODE_CODES.TS}
                             on:change={handleDurationChange}
                         />
                     </div>
                 {:else}
                     <!-- Режим создания -->
-                    {#if selectedMode === 8 || selectedMode === 1}
+                    {#if selectedMode === MODE_CODES.TS || selectedMode === MODE_CODES.SHOOTING}
                         <!-- Для съемок (1 и 8) — два инпута в одной строке -->
                         <div class="form-group">
                             <label>Диапазон времени:</label>
@@ -598,7 +589,7 @@
                                 bind:value={localFormData.duration}
                                 min="60"
                                 step="60"
-                                disabled={selectedMode === 8}
+                                disabled={selectedMode === MODE_CODES.TS}
                                 on:change={handleDurationChange}
                             />
                         </div>
@@ -626,7 +617,7 @@
                     {/if}
                 {/if}
                 
-                {#if selectedMode === 8 || selectedMode === 1}
+                {#if selectedMode === MODE_CODES.TS || selectedMode === MODE_CODES.SHOOTING}
                     <div class="form-group">
                         <label>Тип съёмки:</label>
                         <div class="radio-group">
