@@ -1,3 +1,4 @@
+import { MODE_CODES } from '$lib/constants/schedule';
 import type { CreatedProgramData, VpCreateRequest, VpKvdData, VpMsuData, VpOmiData, VpOnaData, VpTnpData } from '$lib/types';
 
 export class VpPreparerService {
@@ -23,30 +24,30 @@ export class VpPreparerService {
             const mode = program.modeData;
 
             switch (mode.kodMode) {
-                case 1: // обычная съёмка
-                case 8: // технологическая съёмка
+                case MODE_CODES.SHOOTING: // обычная съёмка
+                case MODE_CODES.TS: // технологическая съёмка
                     if (mode.tsData) {
                         msuList.push(this.createMsuData(program));
                     }
                     break;
 
-                case 7: // КВД
+                case MODE_CODES.KVD: // КВД
                     if (mode.kvdData) {
                         kvdList.push(this.createKvdData(program));
                     }
                     break;
 
-                case 4: // ТНП
+                case MODE_CODES.TNP: // ТНП
                     tnpList.push(this.createTnpData(program));
                     break;
 
-                case 2: // ОМИ
+                case MODE_CODES.OMI: // ОМИ
                     if (mode.omiData) {
                         omiList.push(this.createOmiData(program));
                     }
                     break;
 
-                case 6: // юстировка ОНА
+                case MODE_CODES.ONA: // юстировка ОНА
                     if (mode.onaData) {
                         onaList.push(this.createOnaData(program));
                     }

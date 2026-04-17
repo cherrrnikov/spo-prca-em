@@ -1,4 +1,4 @@
-import { MODE_NAMES, WORK_MODES } from '$lib/constants/schedule';
+import { MODE_CODES, MODE_NAMES, WORK_MODES } from '$lib/constants/schedule';
 import type { WorkMode } from '$lib/types';
 
 export class ModeUtils {
@@ -8,13 +8,13 @@ export class ModeUtils {
 
     private static getDefaultModeTitle(modeType: number): string {
         switch(modeType) {
-            case 9: return 'Астрокоррекции';
-            case 1: return 'Съемки';
-            case 2: return 'Распр. ОМИ';
-            case 4: return 'Режим ТНП';
-            case 7: return 'Калибровка ВД';
-            case 8: return 'Технологическая съемка';
-            case 6: return 'Юстировки ОНА';
+            case MODE_CODES.ASTROCORRECTION: return 'Астрокоррекции';
+            case MODE_CODES.SHOOTING: return 'Съемки';
+            case MODE_CODES.OMI: return 'Распр. ОМИ';
+            case MODE_CODES.TNP: return 'Режим ТНП';
+            case MODE_CODES.KVD: return 'Калибровка ВД';
+            case MODE_CODES.TS: return 'Технологическая съемка';
+            case MODE_CODES.ONA: return 'Юстировки ОНА';
             default: return 'Режим';
         }
     }

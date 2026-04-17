@@ -100,7 +100,7 @@ export class TooltipFormatter {
     // ОМИ (mode 2)
     static formatOmiTooltip(modeData: ProgramModeData): string {
         const lines = [
-            `РАСПРЕДЕЛЕНИЕ ОМИ`,
+            `РАСПРОСТРАНЕНИЕ ОМИ`,
             `Номер КА: ${modeData.numKa}`,
             `ППИ: ${getPpiDisplay(modeData.numPpi)}`,
             `Длительность: ${modeData.dlit} сек`,

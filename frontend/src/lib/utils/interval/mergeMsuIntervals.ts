@@ -1,3 +1,4 @@
+import { MODE_CODES } from '$lib/constants/schedule';
 import type { CreatedProgramData, ProgramModeData } from '$lib/types';
 import { TimeUtils } from '$lib/utils/time';
 
@@ -21,7 +22,7 @@ export function mergeMsuIntervals(createdPrograms: CreatedProgramData[]): Create
     
     for (const program of savedPrograms) {
         const mode = program.modeData.kodMode;
-        if (mode === 8 || mode === 1) {
+        if (mode === MODE_CODES.TS || mode === MODE_CODES.SHOOTING) {
             msuPrograms.push(program);
         } else {
             otherPrograms.push(program);

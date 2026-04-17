@@ -1,6 +1,6 @@
 import { DEFAULT_SHOOTING_DURATION } from '$lib/config/schedule.config';
 import { RECORD_TYPES } from '$lib/constants/recordTypes';
-import { CUSTOMER_CODES } from '$lib/constants/schedule';
+import { CUSTOMER_CODES, MODE_CODES } from '$lib/constants/schedule';
 import type {
     CreatedProgramData,
     Id02Dto,
@@ -58,7 +58,7 @@ export class ProgramCreatorService {
                 numKa,
                 dateOn: kvd.dn,
                 dateOff: kvd.dk,
-                kodMode: 7,
+                kodMode: MODE_CODES.KVD,
                 numPpi: assignment.ppiNum,
                 dlit: TimeUtils.calculateDuration(kvd.dn, kvd.dk),
                 zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
@@ -105,7 +105,7 @@ export class ProgramCreatorService {
                 numKa,
                 dateOn: tnp.dn,
                 dateOff: tnp.dk,
-                kodMode: 4,
+                kodMode: MODE_CODES.TNP,
                 numPpi: assignment.ppiNum,
                 dlit: tnp.dlit,
                 zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
@@ -191,7 +191,7 @@ export class ProgramCreatorService {
                     numKa,
                     dateOn: `${date}T${subInterval.startTime}`,
                     dateOff: `${date}T${subInterval.endTime}`,
-                    kodMode: 8,
+                    kodMode: MODE_CODES.TS,
                     numPpi: assignment.ppiNum,
                     dlit: subInterval.dlit || DEFAULT_SHOOTING_DURATION,
                     zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
@@ -228,7 +228,7 @@ export class ProgramCreatorService {
                 numKa,
                 dateOn: ona.dn,
                 dateOff: ona.dk,
-                kodMode: 6,
+                kodMode: MODE_CODES.ONA,
                 numPpi: assignment.ppiNum,
                 dlit: ona.dlit,
                 zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),

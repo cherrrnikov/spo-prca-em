@@ -1,5 +1,5 @@
 import { RECORD_TYPES } from '$lib/constants/recordTypes';
-import { DEFAULT_NUM_KA } from '$lib/constants/schedule';
+import { DEFAULT_NUM_KA, MODE_CODES } from '$lib/constants/schedule';
 import type {
     CreatedProgramData,
     CreateProgramRequest,
@@ -128,7 +128,7 @@ export class ProgramPreparerService {
             numKa,
             dateOn: kvd.dn,
             dateOff: kvd.dk,
-            kodMode: 7,
+            kodMode: MODE_CODES.KVD,
             numPpi: assignment.ppiNum,
             dlit: TimeUtils.calculateDuration(kvd.dn, kvd.dk),
             kvdData: {
@@ -147,7 +147,7 @@ export class ProgramPreparerService {
             numKa,
             dateOn: tnp.dn,
             dateOff: tnp.dk,
-            kodMode: 4,
+            kodMode: MODE_CODES.TNP,
             numPpi: assignment.ppiNum,
             dlit: tnp.dlit,
             tnpData: {
@@ -166,7 +166,7 @@ export class ProgramPreparerService {
             numKa,
             dateOn: ts.dn,
             dateOff: ts.dk,
-            kodMode: 8,
+            kodMode: MODE_CODES.TS,
             numPpi: assignment.ppiNum,
             dlit: TimeUtils.calculateDuration(ts.dn, ts.dk),
             zakazchik: this.getCustomerLabel(customerCode || 5),
@@ -216,7 +216,7 @@ export class ProgramPreparerService {
             numKa,
             dateOn: ona.dn,
             dateOff: ona.dk,
-            kodMode: 6,  
+            kodMode: MODE_CODES.ONA,  
             numPpi: assignment.ppiNum,
             dlit: ona.dlit,
             onaData: {  
