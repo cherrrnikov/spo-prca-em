@@ -129,12 +129,12 @@
             localFormData.msu1Config = interval.msu1Config || ScheduleConverterService.getDefaultMsuConfig();
             localFormData.msu2Config = interval.msu2Config || ScheduleConverterService.getDefaultMsuConfig();
 
-            if (interval.tsData) {
-                localFormData.prBssd = interval.tsData.prBssd ?? 0;
-                localFormData.prZg = interval.tsData.prZg ?? 0;
-                localFormData.prOtklZg = interval.tsData.prOtklZgBssd ?? 0;
-                localFormData.reg = interval.tsData.reg ?? 0;
-                localFormData.tip = interval.tsData.tip ?? 1;
+            if (interval.msuData) {
+                localFormData.prBssd = interval.msuData.prBssd ?? 0;
+                localFormData.prZg = interval.msuData.prZg ?? 0;
+                localFormData.prOtklZg = interval.msuData.prOtklZgBssd ?? 0;
+                localFormData.reg = interval.msuData.reg ?? 0;
+                localFormData.tip = interval.msuData.tip ?? 1;
             }
         } else if (interval.mode === 2) {
             if (interval.omiData) {

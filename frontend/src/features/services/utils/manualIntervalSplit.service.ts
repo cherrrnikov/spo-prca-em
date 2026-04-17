@@ -53,7 +53,7 @@ export class ManualIntervalSplitService {
                 msu2Config: { ...formData.msu2Config },
                 
                 // Параметры для ТС (БССД, ЗГ, отключение ЗГ)
-                tsData: (formData.modeType === 8 || formData.modeType === 1) ? {
+                msuData: (formData.modeType === 8 || formData.modeType === 1) ? {
                     id: 0,
                     idMain: 0,
                     tip: formData.tip ?? 1,

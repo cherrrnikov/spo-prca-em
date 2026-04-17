@@ -60,18 +60,18 @@ export class TooltipFormatter {
             `Заказчик: ${modeData.zakazchik || 'не указан'}`,
             ``,
             `ПАРАМЕТРЫ СЪЕМКИ:`,
-            `Тип: ${modeData.tsData?.tip === 1 ? 'штатная' : 'учащенная'}`,
-            `Режим: ${formatRegime(modeData.tsData?.reg)}`,
+            `Тип: ${modeData.msuData?.tip === 1 ? 'штатная' : 'учащенная'}`,
+            `Режим: ${formatRegime(modeData.msuData?.reg)}`,
             ``,
-            `МСУ-ГС 1: ${modeData.tsData?.prMsu1 ? 'задействован' : 'не задействован'}`,
-            ...formatMsu1Channels(modeData.tsData),
+            `МСУ-ГС 1: ${modeData.msuData?.prMsu1 ? 'задействован' : 'не задействован'}`,
+            ...formatMsu1Channels(modeData.msuData),
             ``,
-            `МСУ-ГС 2: ${modeData.tsData?.prMsu2 ? 'задействован' : 'не задействован'}`,
-            ...formatMsu2Channels(modeData.tsData),
+            `МСУ-ГС 2: ${modeData.msuData?.prMsu2 ? 'задействован' : 'не задействован'}`,
+            ...formatMsu2Channels(modeData.msuData),
             ``,
-            `БССД: ${modeData.tsData?.prBssd ? 'включен' : 'выключен'}`,
-            `ЗГ: ЗГ${(modeData.tsData?.prZg || 0) + 1}`,
-            `Отключение ЗГ: ${modeData.tsData?.prOtklZgBssd ? 'требуется' : 'не требуется'}`,
+            `БССД: ${modeData.msuData?.prBssd ? 'включен' : 'выключен'}`,
+            `ЗГ: ЗГ${(modeData.msuData?.prZg || 0) + 1}`,
+            `Отключение ЗГ: ${modeData.msuData?.prOtklZgBssd ? 'требуется' : 'не требуется'}`,
             ``,
             `Начало: ${TimeUtils.formatDateTime(modeData.dateOn)}`,
             `Конец: ${TimeUtils.formatDateTime(modeData.dateOff)}`
@@ -144,24 +144,24 @@ function formatRegime(reg: number | undefined): string {
     }
 }
 
-function formatMsu1Channels(tsData: any): string[] {
+function formatMsu1Channels(msuData: any): string[] {
     const lines: string[] = [];
     const vdChannels: string[] = [];
     const ikChannels: string[] = [];
     
     // Проверяем ВД каналы МСУ1
-    if (tsData?.vd1Msu1 === 1) vdChannels.push('ВД1');
-    if (tsData?.vd2Msu1 === 1) vdChannels.push('ВД2');
-    if (tsData?.vd3Msu1 === 1) vdChannels.push('ВД3');
+    if (msuData?.vd1Msu1 === 1) vdChannels.push('ВД1');
+    if (msuData?.vd2Msu1 === 1) vdChannels.push('ВД2');
+    if (msuData?.vd3Msu1 === 1) vdChannels.push('ВД3');
     
     // Проверяем ИК каналы МСУ1
-    if (tsData?.ik4Msu1 === 1) ikChannels.push('ИК4');
-    if (tsData?.ik5Msu1 === 1) ikChannels.push('ИК5');
-    if (tsData?.ik6Msu1 === 1) ikChannels.push('ИК6');
-    if (tsData?.ik7Msu1 === 1) ikChannels.push('ИК7');
-    if (tsData?.ik8Msu1 === 1) ikChannels.push('ИК8');
-    if (tsData?.ik9Msu1 === 1) ikChannels.push('ИК9');
-    if (tsData?.ik10Msu1 === 1) ikChannels.push('ИК10');
+    if (msuData?.ik4Msu1 === 1) ikChannels.push('ИК4');
+    if (msuData?.ik5Msu1 === 1) ikChannels.push('ИК5');
+    if (msuData?.ik6Msu1 === 1) ikChannels.push('ИК6');
+    if (msuData?.ik7Msu1 === 1) ikChannels.push('ИК7');
+    if (msuData?.ik8Msu1 === 1) ikChannels.push('ИК8');
+    if (msuData?.ik9Msu1 === 1) ikChannels.push('ИК9');
+    if (msuData?.ik10Msu1 === 1) ikChannels.push('ИК10');
     
     if (vdChannels.length > 0) {
         lines.push(`  ВД: ${vdChannels.join(', ')}`);
@@ -176,24 +176,24 @@ function formatMsu1Channels(tsData: any): string[] {
     return lines;
 }
 
-function formatMsu2Channels(tsData: any): string[] {
+function formatMsu2Channels(msuData: any): string[] {
     const lines: string[] = [];
     const vdChannels: string[] = [];
     const ikChannels: string[] = [];
     
     // Проверяем ВД каналы МСУ2
-    if (tsData?.vd1Msu2 === 1) vdChannels.push('ВД1');
-    if (tsData?.vd2Msu2 === 1) vdChannels.push('ВД2');
-    if (tsData?.vd3Msu2 === 1) vdChannels.push('ВД3');
+    if (msuData?.vd1Msu2 === 1) vdChannels.push('ВД1');
+    if (msuData?.vd2Msu2 === 1) vdChannels.push('ВД2');
+    if (msuData?.vd3Msu2 === 1) vdChannels.push('ВД3');
     
     // Проверяем ИК каналы МСУ2
-    if (tsData?.ik4Msu2 === 1) ikChannels.push('ИК4');
-    if (tsData?.ik5Msu2 === 1) ikChannels.push('ИК5');
-    if (tsData?.ik6Msu2 === 1) ikChannels.push('ИК6');
-    if (tsData?.ik7Msu2 === 1) ikChannels.push('ИК7');
-    if (tsData?.ik8Msu2 === 1) ikChannels.push('ИК8');
-    if (tsData?.ik9Msu2 === 1) ikChannels.push('ИК9');
-    if (tsData?.ik10Msu2 === 1) ikChannels.push('ИК10');
+    if (msuData?.ik4Msu2 === 1) ikChannels.push('ИК4');
+    if (msuData?.ik5Msu2 === 1) ikChannels.push('ИК5');
+    if (msuData?.ik6Msu2 === 1) ikChannels.push('ИК6');
+    if (msuData?.ik7Msu2 === 1) ikChannels.push('ИК7');
+    if (msuData?.ik8Msu2 === 1) ikChannels.push('ИК8');
+    if (msuData?.ik9Msu2 === 1) ikChannels.push('ИК9');
+    if (msuData?.ik10Msu2 === 1) ikChannels.push('ИК10');
     
     if (vdChannels.length > 0) {
         lines.push(`  ВД: ${vdChannels.join(', ')}`);

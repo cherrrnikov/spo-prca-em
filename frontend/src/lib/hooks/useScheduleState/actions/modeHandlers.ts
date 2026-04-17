@@ -159,7 +159,7 @@ export function createModeHandlers(
         if (interval.mode === 8 || interval.mode === 1) {
             // tsData уже должен быть заполнен при создании интервала через ManualIntervalSplitService
             // если нет — создаем на основе msuConfig
-            const tsData = interval.tsData || {
+            const msuData = interval.msuData || {
                 id: 0,
                 idMain: mainId,
                 tip: 1,
@@ -194,7 +194,7 @@ export function createModeHandlers(
             
             return {
                 ...baseData,
-                tsData: tsData
+                msuData: msuData
             };
         }
         

@@ -60,7 +60,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
 
             if (formData.modeType === 8) {
                 // ТС - берем ВСЕ из формы (данные из ИД06)
-                interval.tsData = {
+                interval.msuData = {
                     id: 0,
                     idMain: 0,
                     tip: formData.tip ?? 1,
@@ -95,7 +95,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                 };
             } else {
                 // Обычная съемка (mode 1) - берем prBssd и prZg из ИД02
-                interval.tsData = {
+                interval.msuData = {
                     id: 0,
                     idMain: 0,
                     tip: formData.tip ?? 1,
@@ -177,9 +177,9 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             updatedInterval.msu1Config = { ...formData.msu1Config };
             updatedInterval.msu2Config = { ...formData.msu2Config };
 
-            updatedInterval.tsData = {
-                id: editingInterval.tsData?.id ?? 0,
-                idMain: editingInterval.tsData?.idMain ?? 0,
+            updatedInterval.msuData = {
+                id: editingInterval.msuData?.id ?? 0,
+                idMain: editingInterval.msuData?.idMain ?? 0,
                 
                 // ВСЕ редактируемые поля берем ИЗ ФОРМЫ
                 tip: formData.tip ?? 1,
@@ -279,7 +279,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             const tip = (formData as any).tip || 1;  
             const reg = (formData as any).reg || 1;
 
-            const baseTsData = {
+            const baseMsuData = {
                 id: 0,
                 idMain: mainId,
                 tip: tip,
@@ -313,8 +313,8 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                 // ТС - берем из формы (данные из ИД06)
                 return {
                     ...baseData,
-                    tsData: {
-                        ...baseTsData,
+                    msuData: {
+                        ...baseMsuData,
                         prBssd: currentBortData?.pr_bssd ?? 0,
                         prZg: currentBortData?.pr_zg ?? 0,
                         prOtklZgBssd: formData.prOtklZg ?? 0
@@ -324,8 +324,8 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                 // Обычная съемка - берем из ИД02
                 return {
                     ...baseData,
-                    tsData: {
-                        ...baseTsData,
+                    msuData: {
+                        ...baseMsuData,
                         prBssd: currentBortData?.pr_bssd ?? 0,
                         prZg: currentBortData?.pr_zg ?? 0,
                         prOtklZgBssd: currentBortData?.pr_otkl_zg ?? 0

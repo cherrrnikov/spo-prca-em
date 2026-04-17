@@ -254,14 +254,14 @@
                   console.log("  ЗГ:", "ЗГ" + (mode.kvdData.prZg + 1));
               }
               
-              if (mode.tsData) {
+              if (mode.msuData) {
                   console.log("- Тип: ТС");
-                  console.log("  Тип съемки:", mode.tsData.tip === 1 ? "штатная" : "учащенная");
-                  console.log("  Режим:", mode.tsData.reg);
-                  console.log("  МСУ1:", mode.tsData.prMsu1 ? "задействован" : "не задействован");
-                  console.log("  МСУ2:", mode.tsData.prMsu2 ? "задействован" : "не задействован");
-                  console.log("  БССД:", mode.tsData.prBssd ? "включен" : "выключен");
-                  console.log("  ЗГ:", "ЗГ" + (mode.tsData.prZg + 1));
+                  console.log("  Тип съемки:", mode.msuData.tip === 1 ? "штатная" : "учащенная");
+                  console.log("  Режим:", mode.msuData.reg);
+                  console.log("  МСУ1:", mode.msuData.prMsu1 ? "задействован" : "не задействован");
+                  console.log("  МСУ2:", mode.msuData.prMsu2 ? "задействован" : "не задействован");
+                  console.log("  БССД:", mode.msuData.prBssd ? "включен" : "выключен");
+                  console.log("  ЗГ:", "ЗГ" + (mode.msuData.prZg + 1));
               }
               
               if (mode.tnpData) {

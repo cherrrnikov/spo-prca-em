@@ -24,7 +24,7 @@ export interface TimeInterval {
         prZg: number; // 0-ЗГ1, 1-ЗГ2, 2-ЗГ3, 3-ЗГ4
     };
     
-    tsData?: {
+    msuData?: {
         id: number;
         idMain: number;
         tip: number;

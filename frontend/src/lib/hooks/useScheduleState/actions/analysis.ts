@@ -1,4 +1,4 @@
-import { DEFAULT_NUM_KA, WORK_MODES } from '$lib/constants/schedule';
+import { DEFAULT_NUM_KA, MODE_CODES, WORK_MODES } from '$lib/constants/schedule';
 import { modal } from '$lib/services/modal.service';
 import type { CreatedProgramData, ProgramModeData, RotationInterval, ShadowInterval, TimeInterval, VkiInterval, ZasvetkaInterval } from '$lib/types';
 import type { ProgramsListItem } from '$lib/types/analysis';
@@ -472,7 +472,7 @@ export function createAnalysisActions(
                             numKa: numKa,
                             dateOn: kvd.dn,
                             dateOff: kvd.dk,
-                            kodMode: 7,
+                            kodMode: MODE_CODES.KVD,
                             numPpi: timeInterval.ppi || 1,
                             dlit: TimeUtils.calculateDuration(kvd.dn, kvd.dk),
                             kvdData: {
@@ -503,7 +503,7 @@ export function createAnalysisActions(
                             numKa: numKa,
                             dateOn: tnp.dn,
                             dateOff: tnp.dk,
-                            kodMode: 4,
+                            kodMode: MODE_CODES.TNP,
                             numPpi: timeInterval.ppi || 1,
                             dlit: tnp.dlit,
                             tnpData: {
@@ -534,10 +534,10 @@ export function createAnalysisActions(
                             numKa: numKa,
                             dateOn: `${date}T${subInterval.startTime}`,
                             dateOff: `${date}T${subInterval.endTime}`,
-                            kodMode: 8,
+                            kodMode: MODE_CODES.TS,
                             numPpi: subInterval.ppi || 1,
                             dlit: subInterval.dlit || 420,
-                            tsData: {
+                            msuData: {
                                 id: ts.id,
                                 idMain: mainId,
                                 tip: ts.tip,
@@ -590,7 +590,7 @@ export function createAnalysisActions(
                             numKa: numKa,
                             dateOn: ona.dn,
                             dateOff: ona.dk,
-                            kodMode: 6,
+                            kodMode: MODE_CODES.ONA,
                             numPpi: timeInterval.ppi || 1,
                             dlit: ona.dlit,
                             onaData: {

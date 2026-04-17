@@ -49,7 +49,7 @@ export class ShootingIntervalService {
                 msu1Config: this.getMsuConfigFromTsRecord(tsRecord, 1),
                 msu2Config: this.getMsuConfigFromTsRecord(tsRecord, 2),
                 
-                tsData: {
+                msuData: {
                     id: tsRecord.id,
                     idMain: tsRecord.id_main,
                     tip: tsRecord.tip,

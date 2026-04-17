@@ -170,7 +170,7 @@ export class ProgramPreparerService {
             numPpi: assignment.ppiNum,
             dlit: TimeUtils.calculateDuration(ts.dn, ts.dk),
             zakazchik: this.getCustomerLabel(customerCode || 5),
-            tsData: {
+            msuData: {
                 id: ts.id,
                 idMain: ts.idMain,
                 tip: ts.tip,

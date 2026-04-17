@@ -26,7 +26,7 @@ export class VpPreparerService {
             switch (mode.kodMode) {
                 case MODE_CODES.SHOOTING: // обычная съёмка
                 case MODE_CODES.TS: // технологическая съёмка
-                    if (mode.tsData) {
+                    if (mode.msuData) {
                         msuList.push(this.createMsuData(program));
                     }
                     break;
@@ -73,7 +73,7 @@ export class VpPreparerService {
     }
 
     private static createMsuData(program: CreatedProgramData): VpMsuData {
-        const ts = program.modeData.tsData!;
+        const ts = program.modeData.msuData!;
         const interval = program.timeInterval;
         const date = interval.date;
 

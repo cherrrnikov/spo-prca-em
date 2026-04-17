@@ -39,7 +39,7 @@ export interface ProgramModeData {
         prZg: number;
     };
     
-    tsData?: {
+    msuData?: {
         id: number;
         idMain: number;
         tip: number;

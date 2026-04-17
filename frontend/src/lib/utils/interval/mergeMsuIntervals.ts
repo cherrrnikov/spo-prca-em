@@ -60,7 +60,7 @@ export function mergeMsuIntervals(createdPrograms: CreatedProgramData[]): Create
         
         // Получаем параметры из первого интервала
         const firstModeData = intervals[0].created.modeData;
-        const tip = firstModeData.tsData?.tip ?? 1;
+        const tip = firstModeData.msuData?.tip ?? 1;
         const stepSeconds = tip === 1 ? 30 * 60 : 15 * 60;
         
         console.log(`Группа: tip=${tip}, шаг=${stepSeconds}сек, интервалов=${intervals.length}`);
@@ -102,8 +102,8 @@ export function mergeMsuIntervals(createdPrograms: CreatedProgramData[]): Create
                 mode: p.modeData.kodMode,
                 start: p.timeInterval.startTime,
                 end: p.timeInterval.endTime,
-                tip: p.modeData.tsData?.tip,
-                prMsu1: p.modeData.tsData?.prMsu1,
+                tip: p.modeData.msuData?.tip,
+                prMsu1: p.modeData.msuData?.prMsu1,
                 willBeSaved: p.timeInterval.willBeSaved
             });
         });
@@ -117,7 +117,7 @@ export function mergeMsuIntervals(createdPrograms: CreatedProgramData[]): Create
  * Все параметры, кроме времени
  */
 function getMsuKey(modeData: ProgramModeData): string {
-    const ts = modeData.tsData;
+    const ts = modeData.msuData;
     if (!ts) return `no-ts-${modeData.kodMode}-${modeData.numPpi}`;
     
     return JSON.stringify({
@@ -174,7 +174,7 @@ function createMergedProgram(block: MsuInterval[]): CreatedProgramData {
         dateOn: `${first.modeData.dateOn.split('T')[0]}T${startTime}`,
         dateOff: `${first.modeData.dateOff.split('T')[0]}T${endTime}`,
         dlit: totalDuration,
-        tsData: first.modeData.tsData ? { ...first.modeData.tsData, dlit: totalDuration } : undefined
+        msuData: first.modeData.msuData ? { ...first.modeData.msuData, dlit: totalDuration } : undefined
     };
     
     // Создаем новый timeInterval

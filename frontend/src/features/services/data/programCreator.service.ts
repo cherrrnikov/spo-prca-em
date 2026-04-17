@@ -151,7 +151,7 @@ export class ProgramCreatorService {
             tsSubIntervals.forEach((subInterval, idx) => {
                 subInterval.customerCode = 1;
 
-                const tsData = {
+                const msuData = {
                     id: ts.id,
                     idMain: mainId,
                     tip: ts.tip ?? 1,
@@ -184,7 +184,7 @@ export class ProgramCreatorService {
                     prOtklZgBssd: ts.pr_otkl_zg
                 };
 
-                subInterval.tsData = tsData;
+                subInterval.msuData = msuData;
 
                 const modeData: ProgramModeData = {
                     numRp: 0,
@@ -195,7 +195,7 @@ export class ProgramCreatorService {
                     numPpi: assignment.ppiNum,
                     dlit: subInterval.dlit || DEFAULT_SHOOTING_DURATION,
                     zakazchik: ModeUtils.getCustomerLabel(CUSTOMER_CODES, 1),
-                    tsData
+                    msuData
                 };
 
                 programs.push({

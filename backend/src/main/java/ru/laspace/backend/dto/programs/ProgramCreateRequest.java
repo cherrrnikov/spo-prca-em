@@ -96,7 +96,7 @@ public class ProgramCreateRequest {
 
         private KvdData kvdData;
         private TnpData tnpData;
-        private TsData tsData;
+        private MsuData MsuData;
         private OnaData onaData;
         private OmiData omiData;
     }
@@ -144,7 +144,7 @@ public class ProgramCreateRequest {
     @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE, creatorVisibility = Visibility.NONE)
     @EqualsAndHashCode
     @ToString
-    public static class TsData {
+    public static class MsuData {
         private Long id;
         private Long idMain;
         private Integer tip;

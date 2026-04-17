@@ -1,3 +1,4 @@
+import { MODE_CODES } from '$lib/constants/schedule';
 import { modal } from '$lib/services/modal.service';
 import type { ModeCreationForm, TimeInterval } from '$lib/types';
 import { checkIntervalOverlap } from '$lib/utils/interval/conflicts';
@@ -122,9 +123,9 @@ export function createIntervalHandlers(
             current.map(program => {
                 if (program.timeInterval.id === currentEditingInterval.id) {
                     const modeData = createProgramModeData(formData, program.tempId);
-                    if (modeData.kodMode === 8) {
+                    if (modeData.kodMode === MODE_CODES.TS) {
                         console.log('=== ОБНОВЛЕННЫЙ modeData.tsData ===');
-                        console.log('Новые данные в modeData.tsData:', modeData.tsData);
+                        console.log('Новые данные в modeData.tsData:', modeData.msuData);
                     }
                     return { 
                         ...program, 

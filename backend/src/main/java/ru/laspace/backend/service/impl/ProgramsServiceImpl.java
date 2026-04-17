@@ -107,8 +107,8 @@ public class ProgramsServiceImpl implements ProgramsService {
 
         if (kodMode == 7 && modeData.getKvdData() != null) {
             saveKvdData(savedMode, modeData.getKvdData());
-        } else if ((kodMode == 8 || kodMode == 1) && modeData.getTsData() != null) {
-            saveMsuData(savedMode, modeData.getTsData());
+        } else if ((kodMode == 8 || kodMode == 1) && modeData.getMsuData() != null) {
+            saveMsuData(savedMode, modeData.getMsuData());
         } else if (kodMode == 2 && modeData.getOmiData() != null) {
             saveOmiData(savedMode, modeData.getOmiData());
         } else if (kodMode == 6 && modeData.getOnaData() != null) {
@@ -128,54 +128,54 @@ public class ProgramsServiceImpl implements ProgramsService {
         log.debug("Сохранены данные КВД для режима id={}", programsMode.getId());
     }
 
-    private void saveMsuData(ProgramsMode programsMode, ProgramCreateRequest.TsData tsData) {
+    private void saveMsuData(ProgramsMode programsMode, ProgramCreateRequest.MsuData msuData) {
         ProgramsModeMsu msu = new ProgramsModeMsu();
         msu.setProgramsMode(programsMode);
-        msu.setTip(tsData.getTip());
-        msu.setReg(tsData.getReg());
-        msu.setDlit(tsData.getDlit());
+        msu.setTip(msuData.getTip());
+        msu.setReg(msuData.getReg());
+        msu.setDlit(msuData.getDlit());
 
-        msu.setPrMsu1(tsData.getPrMsu1());
-        msu.setPrVdMsu1(tsData.getVd1Msu1() != null
-                && (tsData.getVd1Msu1() == 1 || tsData.getVd2Msu1() == 1 || tsData.getVd3Msu1() == 1) ? 1 : 0);
-        msu.setPrIkMsu1(tsData.getIk4Msu1() != null && (tsData.getIk4Msu1() == 1 || tsData.getIk5Msu1() == 1 ||
-                tsData.getIk6Msu1() == 1 || tsData.getIk7Msu1() == 1 || tsData.getIk8Msu1() == 1 ||
-                tsData.getIk9Msu1() == 1 || tsData.getIk10Msu1() == 1) ? 1 : 0);
+        msu.setPrMsu1(msuData.getPrMsu1());
+        msu.setPrVdMsu1(msuData.getVd1Msu1() != null
+                && (msuData.getVd1Msu1() == 1 || msuData.getVd2Msu1() == 1 || msuData.getVd3Msu1() == 1) ? 1 : 0);
+        msu.setPrIkMsu1(msuData.getIk4Msu1() != null && (msuData.getIk4Msu1() == 1 || msuData.getIk5Msu1() == 1 ||
+                msuData.getIk6Msu1() == 1 || msuData.getIk7Msu1() == 1 || msuData.getIk8Msu1() == 1 ||
+                msuData.getIk9Msu1() == 1 || msuData.getIk10Msu1() == 1) ? 1 : 0);
 
-        msu.setVd1Msu1(tsData.getVd1Msu1());
-        msu.setVd2Msu1(tsData.getVd2Msu1());
-        msu.setVd3Msu1(tsData.getVd3Msu1());
+        msu.setVd1Msu1(msuData.getVd1Msu1());
+        msu.setVd2Msu1(msuData.getVd2Msu1());
+        msu.setVd3Msu1(msuData.getVd3Msu1());
 
-        msu.setIk4Msu1(tsData.getIk4Msu1());
-        msu.setIk5Msu1(tsData.getIk5Msu1());
-        msu.setIk6Msu1(tsData.getIk6Msu1());
-        msu.setIk7Msu1(tsData.getIk7Msu1());
-        msu.setIk8Msu1(tsData.getIk8Msu1());
-        msu.setIk9Msu1(tsData.getIk9Msu1());
-        msu.setIk10Msu1(tsData.getIk10Msu1());
+        msu.setIk4Msu1(msuData.getIk4Msu1());
+        msu.setIk5Msu1(msuData.getIk5Msu1());
+        msu.setIk6Msu1(msuData.getIk6Msu1());
+        msu.setIk7Msu1(msuData.getIk7Msu1());
+        msu.setIk8Msu1(msuData.getIk8Msu1());
+        msu.setIk9Msu1(msuData.getIk9Msu1());
+        msu.setIk10Msu1(msuData.getIk10Msu1());
 
-        msu.setPrMsu2(tsData.getPrMsu2());
-        msu.setPrVdMsu2(tsData.getVd1Msu2() != null
-                && (tsData.getVd1Msu2() == 1 || tsData.getVd2Msu2() == 1 || tsData.getVd3Msu2() == 1) ? 1 : 0);
-        msu.setPrIkMsu2(tsData.getIk4Msu2() != null && (tsData.getIk4Msu2() == 1 || tsData.getIk5Msu2() == 1 ||
-                tsData.getIk6Msu2() == 1 || tsData.getIk7Msu2() == 1 || tsData.getIk8Msu2() == 1 ||
-                tsData.getIk9Msu2() == 1 || tsData.getIk10Msu2() == 1) ? 1 : 0);
+        msu.setPrMsu2(msuData.getPrMsu2());
+        msu.setPrVdMsu2(msuData.getVd1Msu2() != null
+                && (msuData.getVd1Msu2() == 1 || msuData.getVd2Msu2() == 1 || msuData.getVd3Msu2() == 1) ? 1 : 0);
+        msu.setPrIkMsu2(msuData.getIk4Msu2() != null && (msuData.getIk4Msu2() == 1 || msuData.getIk5Msu2() == 1 ||
+                msuData.getIk6Msu2() == 1 || msuData.getIk7Msu2() == 1 || msuData.getIk8Msu2() == 1 ||
+                msuData.getIk9Msu2() == 1 || msuData.getIk10Msu2() == 1) ? 1 : 0);
 
-        msu.setVd1Msu2(tsData.getVd1Msu2());
-        msu.setVd2Msu2(tsData.getVd2Msu2());
-        msu.setVd3Msu2(tsData.getVd3Msu2());
+        msu.setVd1Msu2(msuData.getVd1Msu2());
+        msu.setVd2Msu2(msuData.getVd2Msu2());
+        msu.setVd3Msu2(msuData.getVd3Msu2());
 
-        msu.setIk4Msu2(tsData.getIk4Msu2());
-        msu.setIk5Msu2(tsData.getIk5Msu2());
-        msu.setIk6Msu2(tsData.getIk6Msu2());
-        msu.setIk7Msu2(tsData.getIk7Msu2());
-        msu.setIk8Msu2(tsData.getIk8Msu2());
-        msu.setIk9Msu2(tsData.getIk9Msu2());
-        msu.setIk10Msu2(tsData.getIk10Msu2());
+        msu.setIk4Msu2(msuData.getIk4Msu2());
+        msu.setIk5Msu2(msuData.getIk5Msu2());
+        msu.setIk6Msu2(msuData.getIk6Msu2());
+        msu.setIk7Msu2(msuData.getIk7Msu2());
+        msu.setIk8Msu2(msuData.getIk8Msu2());
+        msu.setIk9Msu2(msuData.getIk9Msu2());
+        msu.setIk10Msu2(msuData.getIk10Msu2());
 
-        msu.setPrBssd(tsData.getPrBssd());
-        msu.setPrZg(tsData.getPrZg());
-        msu.setPrOtklZgBssd(tsData.getPrOtklZgBssd());
+        msu.setPrBssd(msuData.getPrBssd());
+        msu.setPrZg(msuData.getPrZg());
+        msu.setPrOtklZgBssd(msuData.getPrOtklZgBssd());
 
         programsModeMsuRepository.save(msu);
         log.debug("Сохранены данные МСУ для режима id={}", programsMode.getId());
