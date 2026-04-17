@@ -160,7 +160,7 @@ export function createModeHandlers(
         if (interval.mode === 8 || interval.mode === 1) {
             // tsData уже должен быть заполнен при создании интервала через ManualIntervalSplitService
             // если нет — создаем на основе msuConfig
-            const msuData = MsuMapper.fromForm(
+            const msuData = interval.msuData || MsuMapper.fromForm(
                 {
                     tip: 1,
                     reg: 0,
