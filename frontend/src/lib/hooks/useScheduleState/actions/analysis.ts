@@ -1,4 +1,5 @@
 import { DEFAULT_NUM_KA, MODE_CODES, WORK_MODES } from '$lib/constants/schedule';
+import { MsuMapper } from '$lib/mappers/msuMapper';
 import { modal } from '$lib/services/modal.service';
 import type { CreatedProgramData, ProgramModeData, RotationInterval, ShadowInterval, TimeInterval, VkiInterval, ZasvetkaInterval } from '$lib/types';
 import type { ProgramsListItem } from '$lib/types/analysis';
@@ -537,38 +538,7 @@ export function createAnalysisActions(
                             kodMode: MODE_CODES.TS,
                             numPpi: subInterval.ppi || 1,
                             dlit: subInterval.dlit || 420,
-                            msuData: {
-                                id: ts.id,
-                                idMain: mainId,
-                                tip: ts.tip,
-                                reg: ts.reg,
-                                dlit: subInterval.dlit || 420,
-                                prMsu1: ts.pr_msu1,
-                                vd1Msu1: ts.pr_vd1_1,
-                                vd2Msu1: ts.pr_vd2_1,
-                                vd3Msu1: ts.pr_vd3_1,
-                                ik4Msu1: ts.pr_ik4_1,
-                                ik5Msu1: ts.pr_ik5_1,
-                                ik6Msu1: ts.pr_ik6_1,
-                                ik7Msu1: ts.pr_ik7_1,
-                                ik8Msu1: ts.pr_ik8_1,
-                                ik9Msu1: ts.pr_ik9_1,
-                                ik10Msu1: ts.pr_ik10_1,
-                                prMsu2: ts.pr_msu2,
-                                vd1Msu2: ts.pr_vd1_2,
-                                vd2Msu2: ts.pr_vd2_2,
-                                vd3Msu2: ts.pr_vd3_2,
-                                ik4Msu2: ts.pr_ik4_2,
-                                ik5Msu2: ts.pr_ik5_2,
-                                ik6Msu2: ts.pr_ik6_2,
-                                ik7Msu2: ts.pr_ik7_2,
-                                ik8Msu2: ts.pr_ik8_2,
-                                ik9Msu2: ts.pr_ik9_2,
-                                ik10Msu2: ts.pr_ik10_2,
-                                prBssd: currentBortData?.pr_bssd ?? 0,
-                                prZg: currentBortData?.pr_zg ?? 0,
-                                prOtklZgBssd: ts.pr_otkl_zg
-                            }
+                            msuData: MsuMapper.fromId06(ts, mainId, currentBortData, subInterval.dlit || 420)
                         };
                         
                         const tempId = `ts_${ts.id}_${idx}_${date.replace(/-/g, '')}`;
