@@ -374,22 +374,22 @@ export function createAnalysisActions(
                 
                 let shouldCopy = false;
                 let typeName = '';
-                if (interval.mode === 7 && !hasKvd) {
+                if (interval.mode === MODE_CODES.KVD && !hasKvd) {
                     shouldCopy = true;
                     typeName = 'КВД';
-                } else if (interval.mode === 4 && !hasTnp) {
+                } else if (interval.mode === MODE_CODES.TNP && !hasTnp) {
                     shouldCopy = true;
                     typeName = 'ТНП';
-                } else if (interval.mode === 8 && !hasTs) {
+                } else if (interval.mode === MODE_CODES.TS && !hasTs) {
                     shouldCopy = true;
                     typeName = 'ТС';
-                } else if (interval.mode === 6 && !hasOna) {
+                } else if (interval.mode === MODE_CODES.ONA && !hasOna) {
                     shouldCopy = true;
                     typeName = 'ОНА';
-                } else if (interval.mode === 1 && !hasTs) {
+                } else if (interval.mode === MODE_CODES.SHOOTING && !hasTs) {
                     shouldCopy = true;
                     typeName = 'Съемка';
-                } else if (interval.mode === 2 && !hasTnp) {
+                } else if (interval.mode === MODE_CODES.OMI && !hasTnp) {
                     shouldCopy = true;
                     typeName = 'ОМИ';
                 }

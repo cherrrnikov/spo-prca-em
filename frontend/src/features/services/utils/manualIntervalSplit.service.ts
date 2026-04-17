@@ -1,3 +1,4 @@
+import { MODE_CODES } from '$lib/constants/schedule';
 import { MsuMapper } from '$lib/mappers/msuMapper';
 import type { ModeCreationForm, TimeInterval } from '$lib/types';
 import { getDefaultIntervalFlags } from '$lib/utils/interval';
@@ -54,7 +55,7 @@ export class ManualIntervalSplitService {
                 msu2Config: { ...formData.msu2Config },
                 
                 // Параметры для ТС (БССД, ЗГ, отключение ЗГ)
-                msuData: (formData.modeType === 8 || formData.modeType === 1) ? MsuMapper.fromForm(
+                msuData: (formData.modeType === MODE_CODES.TS || formData.modeType === MODE_CODES.SHOOTING) ? MsuMapper.fromForm(
                     formData, {
                         id: 0,
                         idMain: 0,

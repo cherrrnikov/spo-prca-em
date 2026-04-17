@@ -1,4 +1,4 @@
-import { CUSTOMER_CODES } from '$lib/constants/schedule';
+import { CUSTOMER_CODES, MODE_CODES } from '$lib/constants/schedule';
 import { MsuMapper } from '$lib/mappers/msuMapper';
 import type {
     ModeCreationForm,
@@ -51,11 +51,11 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             ...getDefaultIntervalFlags()
         };
 
-        if (formData.modeType === 7 && formData.kvdConfig) {
+        if (formData.modeType === MODE_CODES.KVD && formData.kvdConfig) {
             interval.kvdConfig = { ...formData.kvdConfig };
         }
         
-        if (formData.modeType === 8 || formData.modeType === 1) {
+        if (formData.modeType === MODE_CODES.TS || formData.modeType === MODE_CODES.SHOOTING) {
             interval.msu1Config = { ...formData.msu1Config };
             interval.msu2Config = { ...formData.msu2Config };
 
@@ -65,7 +65,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                 { tip: formData.tip ?? 1, reg: formData.reg ?? 0, dlit: formData.duration }
             );
 
-            if (formData.modeType === 8) {
+            if (formData.modeType === MODE_CODES.TS) {
                 interval.msuData = {
                     ...baseMsuData,
                     prBssd: currentBortData?.pr_bssd ?? 0,
@@ -82,11 +82,11 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             }
         }
 
-        if (formData.modeType === 6) {
+        if (formData.modeType === MODE_CODES.ONA) {
             interval.nOna = formData.nOna || 1;
         }
 
-        if (formData.modeType === 2) {
+        if (formData.modeType === MODE_CODES.OMI) {
             interval.omiData = {
                 id: 0,
                 idMain: 0,
@@ -119,11 +119,11 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             customerCode: formData.customerCode,
         };
         
-        if (formData.modeType === 7 && formData.kvdConfig) {
+        if (formData.modeType === MODE_CODES.KVD && formData.kvdConfig) {
             updatedInterval.kvdConfig = { ...formData.kvdConfig };
         }
         
-        if (formData.modeType === 8 || formData.modeType === 1) {
+        if (formData.modeType === MODE_CODES.TS || formData.modeType === MODE_CODES.SHOOTING) {
             updatedInterval.msu1Config = { ...formData.msu1Config };
             updatedInterval.msu2Config = { ...formData.msu2Config };
 
@@ -145,11 +145,11 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             };
         }
 
-        if (formData.modeType === 6) {
+        if (formData.modeType === MODE_CODES.ONA) {
             updatedInterval.nOna = formData.nOna || editingInterval.nOna || 1;
         }
 
-        if (formData.modeType === 2) {
+        if (formData.modeType === MODE_CODES.OMI) {
             updatedInterval.omiData = {
                 id: editingInterval.omiData?.id ?? 0,
                 idMain: editingInterval.omiData?.idMain ?? 0,
@@ -184,7 +184,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             zakazchik: getCustomerLabel(formData.customerCode)
         };
         
-        if (formData.modeType === 7) {
+        if (formData.modeType === MODE_CODES.KVD) {
             const kvdConfig = formData.kvdConfig || { prMsu: 0, prBssd: 0, prZg: 0 };
             return {
                 ...baseData,
@@ -196,7 +196,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     prZg: kvdConfig.prZg
                 }
             };
-        } else if (formData.modeType === 8 || formData.modeType === 1) {
+        } else if (formData.modeType === MODE_CODES.TS || formData.modeType === MODE_CODES.SHOOTING) {
             const msu1Config = formData.msu1Config || ScheduleConverterService.getDefaultMsuConfig();
             const msu2Config = formData.msu2Config || ScheduleConverterService.getDefaultMsuConfig();
             const tip = (formData as any).tip || 1;
@@ -209,7 +209,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                 dlit: baseData.dlit
             });
 
-            if (formData.modeType === 8) {
+            if (formData.modeType === MODE_CODES.TS) {
                 return {
                     ...baseData,
                     msuData: {
@@ -230,7 +230,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     }
                 };
             }
-        } else if (formData.modeType === 4) {
+        } else if (formData.modeType === MODE_CODES.TNP) {
             return {
                 ...baseData,
                 tnpData: {
@@ -241,7 +241,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     prZg: 1
                 }
             };
-        } else if (formData.modeType === 6) {
+        } else if (formData.modeType === MODE_CODES.ONA) {
             return {
                 ...baseData,
                 onaData: {
@@ -254,7 +254,7 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     nPpi: formData.ppiNum
                 }
             };
-        } else if (formData.modeType === 2) {
+        } else if (formData.modeType === MODE_CODES.OMI) {
             return {
                 ...baseData,
                 omiData: {
