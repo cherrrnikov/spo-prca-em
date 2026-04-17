@@ -1,3 +1,4 @@
+import { MsuMapper } from '$lib/mappers/msuMapper';
 import type { ModeCreationForm, TimeInterval } from '$lib/types';
 import { getDefaultIntervalFlags } from '$lib/utils/interval';
 import { CityService } from './cities.service';
@@ -53,38 +54,13 @@ export class ManualIntervalSplitService {
                 msu2Config: { ...formData.msu2Config },
                 
                 // Параметры для ТС (БССД, ЗГ, отключение ЗГ)
-                msuData: (formData.modeType === 8 || formData.modeType === 1) ? {
-                    id: 0,
-                    idMain: 0,
-                    tip: formData.tip ?? 1,
-                    reg: formData.reg ?? 0,
-                    dlit: intervalDuration,
-                    prMsu1: formData.msu1Config.prMsu || 0,
-                    vd1Msu1: formData.msu1Config.vd1 || 0,
-                    vd2Msu1: formData.msu1Config.vd2 || 0,
-                    vd3Msu1: formData.msu1Config.vd3 || 0,
-                    ik4Msu1: formData.msu1Config.ik4 || 0,
-                    ik5Msu1: formData.msu1Config.ik5 || 0,
-                    ik6Msu1: formData.msu1Config.ik6 || 0,
-                    ik7Msu1: formData.msu1Config.ik7 || 0,
-                    ik8Msu1: formData.msu1Config.ik8 || 0,
-                    ik9Msu1: formData.msu1Config.ik9 || 0,
-                    ik10Msu1: formData.msu1Config.ik10 || 0,
-                    prMsu2: formData.msu2Config.prMsu || 0,
-                    vd1Msu2: formData.msu2Config.vd1 || 0,
-                    vd2Msu2: formData.msu2Config.vd2 || 0,
-                    vd3Msu2: formData.msu2Config.vd3 || 0,
-                    ik4Msu2: formData.msu2Config.ik4 || 0,
-                    ik5Msu2: formData.msu2Config.ik5 || 0,
-                    ik6Msu2: formData.msu2Config.ik6 || 0,
-                    ik7Msu2: formData.msu2Config.ik7 || 0,
-                    ik8Msu2: formData.msu2Config.ik8 || 0,
-                    ik9Msu2: formData.msu2Config.ik9 || 0,
-                    ik10Msu2: formData.msu2Config.ik10 || 0,
-                    prBssd: formData.prBssd ?? 0,
-                    prZg: formData.prZg ?? 0,
-                    prOtklZgBssd: formData.prOtklZg ?? 0
-                } : undefined,
+                msuData: (formData.modeType === 8 || formData.modeType === 1) ? MsuMapper.fromForm(
+                    formData, {
+                        id: 0,
+                        idMain: 0,
+                        dlit: intervalDuration
+                    }
+                ) : undefined,
                 
                 ...getDefaultIntervalFlags()
             };

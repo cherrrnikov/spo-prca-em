@@ -262,6 +262,7 @@
             prBssd: localFormData.prBssd,
             prZg: localFormData.prZg,
             prOtklZg: localFormData.prOtklZg,
+            tip: localFormData.tip,
             reg: localFormData.reg,
             typeOmi: localFormData.typeOmi
         };
