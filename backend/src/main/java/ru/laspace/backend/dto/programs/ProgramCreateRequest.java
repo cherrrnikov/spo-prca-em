@@ -96,7 +96,7 @@ public class ProgramCreateRequest {
 
         private KvdData kvdData;
         private TnpData tnpData;
-        private MsuData MsuData;
+        private MsuData msuData;
         private OnaData onaData;
         private OmiData omiData;
     }

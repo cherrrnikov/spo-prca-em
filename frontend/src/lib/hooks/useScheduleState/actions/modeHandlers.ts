@@ -1,5 +1,6 @@
 import { DEFAULT_MODE_DURATION } from '$lib/config/schedule.config';
 import { CUSTOMER_CODES } from '$lib/constants/schedule';
+import { MsuMapper } from '$lib/mappers/msuMapper';
 import { modal } from '$lib/services/modal.service';
 import type { CreatedProgramData, ModeCreationForm, ProgramModeData, TimeInterval } from '$lib/types';
 import { checkIntervalOverlap } from '$lib/utils/interval/conflicts';
@@ -159,38 +160,22 @@ export function createModeHandlers(
         if (interval.mode === 8 || interval.mode === 1) {
             // tsData уже должен быть заполнен при создании интервала через ManualIntervalSplitService
             // если нет — создаем на основе msuConfig
-            const msuData = interval.msuData || {
-                id: 0,
-                idMain: mainId,
-                tip: 1,
-                reg: 0,
-                dlit: interval.dlit || DEFAULT_MODE_DURATION,
-                prMsu1: interval.msu1Config?.prMsu || 0,
-                vd1Msu1: interval.msu1Config?.vd1 || 0,
-                vd2Msu1: interval.msu1Config?.vd2 || 0,
-                vd3Msu1: interval.msu1Config?.vd3 || 0,
-                ik4Msu1: interval.msu1Config?.ik4 || 0,
-                ik5Msu1: interval.msu1Config?.ik5 || 0,
-                ik6Msu1: interval.msu1Config?.ik6 || 0,
-                ik7Msu1: interval.msu1Config?.ik7 || 0,
-                ik8Msu1: interval.msu1Config?.ik8 || 0,
-                ik9Msu1: interval.msu1Config?.ik9 || 0,
-                ik10Msu1: interval.msu1Config?.ik10 || 0,
-                prMsu2: interval.msu2Config?.prMsu || 0,
-                vd1Msu2: interval.msu2Config?.vd1 || 0,
-                vd2Msu2: interval.msu2Config?.vd2 || 0,
-                vd3Msu2: interval.msu2Config?.vd3 || 0,
-                ik4Msu2: interval.msu2Config?.ik4 || 0,
-                ik5Msu2: interval.msu2Config?.ik5 || 0,
-                ik6Msu2: interval.msu2Config?.ik6 || 0,
-                ik7Msu2: interval.msu2Config?.ik7 || 0,
-                ik8Msu2: interval.msu2Config?.ik8 || 0,
-                ik9Msu2: interval.msu2Config?.ik9 || 0,
-                ik10Msu2: interval.msu2Config?.ik10 || 0,
-                prBssd: 0,
-                prZg: 0,
-                prOtklZgBssd: 0
-            };
+            const msuData = MsuMapper.fromForm(
+                {
+                    tip: 1,
+                    reg: 0,
+                    prBssd: 0,
+                    prZg: 0,
+                    prOtklZg: 0,
+                    msu1Config: interval.msu1Config,
+                    msu2Config: interval.msu2Config
+                },
+                {
+                    id: 0,
+                    idMain: mainId,
+                    dlit: interval.dlit || DEFAULT_MODE_DURATION
+                }
+            );
             
             return {
                 ...baseData,
