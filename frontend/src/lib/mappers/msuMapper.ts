@@ -1,4 +1,4 @@
-import type { Id02Dto } from '$lib/types';
+import type { Id02Dto, Id06TsDto } from '$lib/types';
 
 /**
  * Единый маппер для msuData (данные МСУ-ГС)
@@ -8,7 +8,7 @@ export class MsuMapper {
     /**
      * Маппинг из записи ИД06 (ts_list) → msuData
      */
-    static fromId06(ts: any, mainId: number, bortData: Id02Dto | null, dlit: number) {
+    static fromId06(ts: Id06TsDto, mainId: number, bortData: Id02Dto | null, dlit: number) {
         return {
             id: ts.id,
             idMain: mainId,

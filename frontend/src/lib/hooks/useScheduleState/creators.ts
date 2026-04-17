@@ -199,8 +199,8 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
         } else if (formData.modeType === MODE_CODES.TS || formData.modeType === MODE_CODES.SHOOTING) {
             const msu1Config = formData.msu1Config || ScheduleConverterService.getDefaultMsuConfig();
             const msu2Config = formData.msu2Config || ScheduleConverterService.getDefaultMsuConfig();
-            const tip = (formData as any).tip || 1;
-            const reg = (formData as any).reg || 1;
+            const tip = formData.tip ?? 1;
+            const reg = formData.reg ?? 1;
 
             const baseMsuData = MsuMapper.fromMsuConfigs(msu1Config, msu2Config, {
                 idMain: mainId,

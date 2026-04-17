@@ -1,7 +1,10 @@
 import { RECORD_TYPES } from '$lib/constants/recordTypes';
+import { MODE_CODES } from '$lib/constants/schedule';
 import type {
     Id02Dto,
+    Id06KvdDto,
     Id06OnaDto,
+    Id06TnpDto,
     OperatorData,
     PpiAssignment,
     TimeInterval,
@@ -75,11 +78,11 @@ export class ScheduleCreationService {
         return intervals.map(interval => this.applyDefaultIntervalValues(interval, operatorData.main?.k_zajv));
     }
 
-    private static createKvdInterval(kvd: any, ppiNum: number, customerCode?: number): TimeInterval {
+    private static createKvdInterval(kvd: Id06KvdDto, ppiNum: number, customerCode?: number): TimeInterval {
         const date = kvd.dn.split('T')[0];
         return {
             id: `kvd_${kvd.id}`,
-            mode: 7,
+            mode: MODE_CODES.KVD,
             date: date,
             startTime: TimeUtils.extractTimeFromTimestamp(kvd.dn), 
             endTime: TimeUtils.extractTimeFromTimestamp(kvd.dk),
@@ -99,11 +102,11 @@ export class ScheduleCreationService {
         };
     }
 
-    private static createTnpInterval(tnp: any, ppiNum: number, customerCode?: number): TimeInterval {
+    private static createTnpInterval(tnp: Id06TnpDto, ppiNum: number, customerCode?: number): TimeInterval {
         const date = tnp.dn.split('T')[0];
         return {
             id: `tnp_${tnp.id}`,
-            mode: 4,
+            mode: MODE_CODES.TNP,
             date: date,
             startTime: TimeUtils.extractTimeFromTimestamp(tnp.dn), 
             endTime: TimeUtils.extractTimeFromTimestamp(tnp.dk), 
@@ -126,7 +129,7 @@ export class ScheduleCreationService {
         const date = ona.dn.split('T')[0];
         return {
             id: `ona_${ona.id}`,
-            mode: 6,  
+            mode: MODE_CODES.ONA,  
             date: date,
             startTime: TimeUtils.extractTimeFromTimestamp(ona.dn),
             endTime: TimeUtils.extractTimeFromTimestamp(ona.dk),
@@ -148,7 +151,7 @@ export class ScheduleCreationService {
             msu1Config: interval.msu1Config || ScheduleConverterService.getDefaultMsuConfig(),
             msu2Config: interval.msu2Config || ScheduleConverterService.getDefaultMsuConfig(),
             customerCode: interval.customerCode || customerCode || 1,
-            nOna: interval.nOna || (interval.mode === 6 ? 1 : undefined),
+            nOna: interval.nOna || (interval.mode === MODE_CODES.ONA ? 1 : undefined),
             ...getDefaultIntervalFlags()
         };
     }
