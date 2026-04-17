@@ -55,7 +55,6 @@ export function createDataLoaders(
         try {
             const data = await ScheduleApiService.loadBortData(date);
             bortData.set(data);
-            console.log('ИД02:', data);
             return data;
         } catch (error) {
             console.error('Ошибка загрузки данных ID02:', error);

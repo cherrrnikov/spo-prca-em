@@ -50,22 +50,15 @@ export function createIntervalHandlers(
     }
 
     function handleIntervalDelete(intervalId: string) {
-        console.log('=== УДАЛЕНИЕ ИНТЕРВАЛА ===');
-        console.log('intervalId:', intervalId);
 
         const currentIntervals = get(intervals);
         const intervalToDelete = currentIntervals.find(i => i.id === intervalId);
-
-        console.log('Удаляемый интервал:', intervalToDelete);
 
         intervals.set(currentIntervals.filter(interval => interval.id !== intervalId));
 
         const currentPrograms = get(createdPrograms);
 
-        console.log('Было createdPrograms:', currentPrograms.length);
-
         const filteredPrograms = currentPrograms.filter(program => program.timeInterval.id !== intervalId);
-        console.log('Стало createdPrograms:', filteredPrograms.length);
         createdPrograms.set(filteredPrograms);
         
         const currentEditingInterval = get(editingInterval);
@@ -124,8 +117,6 @@ export function createIntervalHandlers(
                 if (program.timeInterval.id === currentEditingInterval.id) {
                     const modeData = createProgramModeData(formData, program.tempId);
                     if (modeData.kodMode === MODE_CODES.TS) {
-                        console.log('=== ОБНОВЛЕННЫЙ modeData.tsData ===');
-                        console.log('Новые данные в modeData.tsData:', modeData.msuData);
                     }
                     return { 
                         ...program, 

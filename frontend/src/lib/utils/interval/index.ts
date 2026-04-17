@@ -94,7 +94,6 @@ export function checkAllConflicts(
         if (interval.inShadow) {
             interval.willBeSaved = interval.willBeSavedInShadow || false;
             if (!interval.willBeSaved) {
-                console.log(`[ТЕНЬ] Интервал ${interval.id} (${interval.startTime}-${interval.endTime}) не будет сохранен: в тени, не победитель`);
             }
         } else {
             interval.willBeSaved = true;
@@ -115,9 +114,7 @@ export function checkAllConflicts(
             }
             
             if (!interval.willBeSaved) {
-                console.log(`[ОГРАНИЧЕНИЕ] Интервал ${interval.id} (${interval.startTime}-${interval.endTime}) не будет сохранен: ${reason}`);
             } else {
-                console.log(`[СОХРАНЯЕТСЯ] Интервал ${interval.id} (${interval.startTime}-${interval.endTime}) будет сохранен`);
             }
         }
     });

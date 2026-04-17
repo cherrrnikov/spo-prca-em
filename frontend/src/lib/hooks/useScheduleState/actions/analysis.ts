@@ -123,8 +123,6 @@ export function createAnalysisActions(
         for (const date of dates) {
             if (date === sourceProgram.date) continue;
             
-            console.log(`\n--- Обработка даты: ${date} ---`);
-            
             const program = await generateProgramForDate(date, sourceProgram);
             if (program) newPrograms.push(program);
         }
@@ -349,14 +347,11 @@ export function createAnalysisActions(
         const currentBortData = get(bortData);
 
         if (operatorDataForDate) {
-            console.log(`Есть данные ИД06 для ${date}, создаём интервалы из них`);
             
             const hasKvd = operatorDataForDate.kvd_list?.length > 0;
             const hasTnp = operatorDataForDate.tnp_list?.length > 0;
             const hasTs = operatorDataForDate.ts_list?.length > 0;
             const hasOna = operatorDataForDate.ona_list?.length > 0;
-            
-            console.log(`Типы в ИД06: КВД:${hasKvd}, ТНП:${hasTnp}, ТС:${hasTs}, ОНА:${hasOna}`);
             
             const intervalsFromId06 = ScheduleCreationService.convertToTimeIntervals(
                 operatorDataForDate,
@@ -581,8 +576,6 @@ export function createAnalysisActions(
             }
             
         } else {
-            console.log(`⚠️ Нет данных ИД06 для ${date}, копируем всё из исходной ПРЦА`);
-            console.log(`  Исходная дата: ${currentProgram.date}, новая дата: ${date}`);
             
             intervalsForDate = currentProgram.intervals.map(interval => ({
                 ...interval,

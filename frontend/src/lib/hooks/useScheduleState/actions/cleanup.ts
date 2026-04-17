@@ -72,8 +72,6 @@ export function createCleanup(stores: ReturnType<typeof createStores>) {
     }
 
     function cleanupAfterSave() {
-        console.log("🔧 cleanupAfterSave ВЫЗВАН!");
-        console.log("=== ОЧИСТКА СЕТКИ ПОСЛЕ СОХРАНЕНИЯ ===");
         
         // 1. Очищаем текущую активную ПРЦА (стора)
         const currentIntervals = get(intervals);
@@ -131,12 +129,7 @@ export function createCleanup(stores: ReturnType<typeof createStores>) {
         selectedIntervalId.set(null);
         creationMode.set(null);
         operatorDataLoaded.set(false);
-        console.log("🔧 Устанавливаем isReadOnly = true");
         isReadOnly.set(true);
-        console.log("🔧 isReadOnly после установки:", get(isReadOnly));
-        
-        console.log(`Очистка завершена. Сохранено интервалов в текущей ПРЦА: ${restoredIntervals.length}`);
-        console.log(`Очищено ПРЦА в списке: ${cleanedProgramsList.length}`);
     }
 
     return {

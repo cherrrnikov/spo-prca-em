@@ -14,7 +14,6 @@ interface MsuInterval {
 export function mergeMsuIntervals(createdPrograms: CreatedProgramData[]): CreatedProgramData[] {
     // 1. Сначала фильтруем все интервалы по willBeSaved
     const savedPrograms = createdPrograms.filter(p => p.timeInterval.willBeSaved === true);
-    console.log(`Отфильтровано по willBeSaved: было ${createdPrograms.length}, осталось ${savedPrograms.length}`);
     
     // 2. Отделяем МСУ интервалы (kodMode = 8 или 1)
     const msuPrograms: CreatedProgramData[] = [];
@@ -33,8 +32,6 @@ export function mergeMsuIntervals(createdPrograms: CreatedProgramData[]): Create
         return savedPrograms;
     }
     
-    console.log(`Найдено МСУ интервалов для объединения: ${msuPrograms.length}`);
-    
     // 3. Группируем по уникальному ключу
     const groups: Map<string, MsuInterval[]> = new Map();
     
@@ -49,8 +46,6 @@ export function mergeMsuIntervals(createdPrograms: CreatedProgramData[]): Create
         groups.get(key)!.push({ created: program, startSeconds, endSeconds });
     }
     
-    console.log(`Сформировано групп для объединения: ${groups.size}`);
-    
     // 4. В каждой группе сортируем и объединяем
     const mergedMsuPrograms: CreatedProgramData[] = [];
     
@@ -62,8 +57,6 @@ export function mergeMsuIntervals(createdPrograms: CreatedProgramData[]): Create
         const firstModeData = intervals[0].created.modeData;
         const tip = firstModeData.msuData?.tip ?? 1;
         const stepSeconds = tip === 1 ? 30 * 60 : 15 * 60;
-        
-        console.log(`Группа: tip=${tip}, шаг=${stepSeconds}сек, интервалов=${intervals.length}`);
         
         // Объединяем
         let currentBlock: MsuInterval[] = [intervals[0]];
@@ -78,10 +71,8 @@ export function mergeMsuIntervals(createdPrograms: CreatedProgramData[]): Create
             
             if (canMerge) {
                 currentBlock.push(curr);
-                console.log(`  Объединен интервал ${i}: начало=${curr.startSeconds}сек, конец=${curr.endSeconds}сек`);
             } else {
                 // Закрываем текущий блок
-                console.log(`  Блок закрыт, размер=${currentBlock.length}`);
                 mergedMsuPrograms.push(createMergedProgram(currentBlock));
                 currentBlock = [curr];
             }
@@ -89,24 +80,9 @@ export function mergeMsuIntervals(createdPrograms: CreatedProgramData[]): Create
         
         // Добавляем последний блок
         if (currentBlock.length > 0) {
-            console.log(`  Последний блок, размер=${currentBlock.length}`);
             mergedMsuPrograms.push(createMergedProgram(currentBlock));
         }
     }
-    
-    console.log(`Результат: было ${msuPrograms.length} интервалов, стало ${mergedMsuPrograms.length} объединенных`);
-    console.log('msuPrograms.length:', msuPrograms.length);
-        msuPrograms.forEach(p => {
-            console.log('Интервал:', {
-                id: p.timeInterval.id,
-                mode: p.modeData.kodMode,
-                start: p.timeInterval.startTime,
-                end: p.timeInterval.endTime,
-                tip: p.modeData.msuData?.tip,
-                prMsu1: p.modeData.msuData?.prMsu1,
-                willBeSaved: p.timeInterval.willBeSaved
-            });
-        });
 
     // 5. Объединяем с остальными программами
     return [...mergedMsuPrograms, ...otherPrograms];
@@ -165,8 +141,6 @@ function createMergedProgram(block: MsuInterval[]): CreatedProgramData {
     const startTime = first.timeInterval.startTime;
     const endTime = last.timeInterval.endTime;
     const totalDuration = block.reduce((sum, item) => sum + (item.created.modeData.dlit || 0), 0);
-    
-    console.log(`  Создан объединенный интервал: ${startTime} - ${endTime}, длительность=${totalDuration}сек`);
     
     // Создаем новый modeData
     const newModeData: ProgramModeData = {

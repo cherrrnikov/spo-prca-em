@@ -149,7 +149,7 @@
         newFormData.modeType = modeId;
         newFormData.duration = ModeDurationService.getDurationForMode(modeId, modeDurations, modeIdToCode);
         
-        if (modeId === 6) {
+        if (modeId === MODE_CODES.ONA) {
             newFormData.nOna = 1;
         }
 
@@ -268,18 +268,8 @@
             typeOmi: localFormData.typeOmi
         };
         
-        if (localFormData.modeType === 6) {
+        if (localFormData.modeType === MODE_CODES.ONA) {
             submitData.nOna = localFormData.nOna || 1;
-        }
-
-        if (localFormData.modeType === 8) {
-            console.log('=== СОХРАНЕНИЕ ТС ===');
-            console.log('ПОСЛЕ редактирования - новые значения из формы:', {
-                prBssd: localFormData.prBssd,
-                prZg: localFormData.prZg,
-                prOtklZg: localFormData.prOtklZg,
-                reg: localFormData.reg
-            });
         }
         
         return submitData;

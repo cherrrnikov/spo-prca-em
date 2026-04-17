@@ -55,8 +55,6 @@ export class VpPreparerService {
             }
         }
 
-        console.log(`ВПРЦА: MSU=${msuList.length}, KVD=${kvdList.length}, TNP=${tnpList.length}, OMI=${omiList.length}, ONA=${onaList.length}`);
-
         return {
             mainData: {
                 numKa,

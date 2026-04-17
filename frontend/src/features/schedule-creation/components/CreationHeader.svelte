@@ -62,14 +62,12 @@
 
         try {
             operatorData = await ScheduleApiService.loadOperatorData(selectedDate);
-            console.log('ИД06:', operatorData);
 
             if (operatorData) {
                 // Есть данные - запрашиваем ППИ
                 await processAllRecords();
             } else {
                 // Нет данных - сразу создаём пустую ПРЦА
-                console.log('Нет данных ИД06, создаём пустую ПРЦА');
                 
                 // Создаём пустой объект OperatorData
                 const emptyOperatorData: OperatorData = {

@@ -112,8 +112,6 @@ async function refreshTokens(cookies: any, refreshToken: string): Promise<boolea
       sameSite: 'strict',
       maxAge: ACCESS_TOKEN_MAX_AGE
     });
-
-    console.log('✅ Tokens refreshed successfully');
     return true;
 
   } catch (error) {
@@ -153,7 +151,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   // Нет access_token, но есть refresh_token - пробуем обновить
   if (!accessToken && refreshToken) {
-    console.log('🔄 No access token, refreshing...');
     const success = await refreshTokens(cookies, refreshToken);
     if (!success) {
       await clearAuthCookies(cookies);
@@ -167,7 +164,6 @@ export const handle: Handle = async ({ event, resolve }) => {
     const needsRefresh = isTokenExpiringSoon(accessToken, 2) || isTokenExpired(accessToken);
     
     if (needsRefresh) {
-      console.log('🔄 Token expiring soon, refreshing...');
       
       // Используем глобальный promise для предотвращения дублирования
       if (!refreshPromise) {
@@ -211,8 +207,6 @@ export const handle: Handle = async ({ event, resolve }) => {
         sameSite: 'strict',
         maxAge: ACCESS_TOKEN_MAX_AGE
       });
-      
-      console.log('🔄 Restored user_data from token');
     }
   }
 

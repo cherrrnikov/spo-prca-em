@@ -22,8 +22,6 @@
         onClose?: () => void;
     }>();
 
-    console.log('Modal render:', { isOpen, title, message, type });
-
     let isVisible = $state(false);
 
     $effect(() => {

@@ -18,10 +18,7 @@
     let isOpen = $state(true);
 
     $effect(() => {
-        console.log("=== СПИСОК ПРЦА В АНАЛИЗЕ ===");
-        console.log(`Всего ПРЦА: ${programs.length}`);
         programs.forEach((p, index) => {
-            console.log(`${index + 1}. ${p.name} (ID: ${p.id}) - ${p.intervals.length} интервалов`);
         });
     });
 </script>

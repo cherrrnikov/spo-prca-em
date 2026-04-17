@@ -30,7 +30,6 @@ export const actions = {
         };
 
         try {
-            console.log('Отправляем запрос на логин для:', username);
             
             const response = await fetch(`${AUTH_BASE_URL}/api/auth/login`, {
                 method: 'POST',
@@ -41,19 +40,15 @@ export const actions = {
                 },
                 body: JSON.stringify(loginRequest)
             });
-
-            console.log('Получен ответ:', response.status, response.statusText);
             
             if (!response.ok) {
                 let errorMessage = `Ошибка: ${response.status}`;
 
                 try {
                     const errorData = await response.json();
-                    console.log('Данные ошибки:', errorData);
                     errorMessage = errorData.message || errorData.error || getSpringErrorMessage(response.status);
                 } catch {
                     const text = await response.text();
-                    console.log('Текст ошибки:', text);
                     if (text) errorMessage = text;
                 }
 
@@ -64,7 +59,6 @@ export const actions = {
             }
 
             const data: JwtResponse = await response.json();
-            console.log('Успешный логин! Получен JWT для:', data.username);
             
             cookies.set('access_token', data.accessToken, {
                 path: '/',
@@ -100,8 +94,6 @@ export const actions = {
                 sameSite: 'strict',
                 maxAge: ACCESS_TOKEN_MAX_AGE
             });
-
-            console.log('Куки установлены, делаю редирект на /schedule');
             throw new RedirectError('redirect:/schedule');
             
         } catch (error) {
@@ -130,7 +122,6 @@ export const actions = {
 
         try {
             if (refreshToken) {
-                console.log('Выполняем logout на сервере');
                 
                 const response = await fetch(`${AUTH_BASE_URL}/api/auth/logout`, {
                     method: 'POST',
@@ -142,9 +133,7 @@ export const actions = {
                 });
 
                 if (!response.ok) {
-                    console.log('Logout response not OK:', response.status);
                 } else {
-                    console.log('Logout успешен');
                 }
             }
         } catch (error) {
@@ -155,8 +144,6 @@ export const actions = {
         ['access_token', 'refresh_token', 'user_data'].forEach(name => {
             cookies.delete(name, { path: '/' });
         });
-
-        console.log('Куки очищены, редирект на главную');
         throw redirect(303, '/');
     }
 } satisfies Actions;
