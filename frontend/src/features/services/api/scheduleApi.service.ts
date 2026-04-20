@@ -70,6 +70,20 @@ export class ScheduleApiService {
         return text  ? JSON.parse(text) : null;
     }
 
+    static async generatePr01(numRp: number, numKa: number): Promise<string> {
+        const response = await fetch(`${this.BASE_URL}/schedule/pr01-proxy`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ numRp, numKa })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ошибка генерации ПР01: ${response.status}`)
+        }
+
+        return await response.text();
+    }
+
     static async loadModeDurations(): Promise<Record<string, number>> {
         const response = await fetch(`${this.BASE_URL}/schedule/durations-proxy`);
         if (!response.ok) return {};

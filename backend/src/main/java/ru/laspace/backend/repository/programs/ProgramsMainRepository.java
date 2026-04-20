@@ -1,5 +1,7 @@
 package ru.laspace.backend.repository.programs;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,4 +15,6 @@ public interface ProgramsMainRepository extends JpaRepository<ProgramsMain, Long
 
     @Query("SELECT MAX(p.numRp) FROM ProgramsMain p WHERE p.numKa = :numKa")
     Long findMaxNumRpByNumKa(@Param("numKa") Long numKa);
+
+    Optional<ProgramsMain> findByNumRpAndNumKa(Long numRp, Long numKa);
 }

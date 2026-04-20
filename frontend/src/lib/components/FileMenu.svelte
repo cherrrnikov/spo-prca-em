@@ -140,6 +140,15 @@
                       console.error(`Ошибка сохранения ВПРЦА для ${program.date}:`, vpError);
                   }
 
+                  try {
+                    await ScheduleApiService.generatePr01(
+                      result.numRp,
+                      numKa || programRequest.mainData.numKa
+                    );
+                  } catch (pr01Error) {
+                    console.error
+                  }
+
                   if (result?.numRp) {
                       program.numRp = result.numRp;
                       const index = programsList.findIndex(p => p.id === program.id);
@@ -245,6 +254,15 @@
               await ScheduleApiService.saveVp(vpRequest);
           } catch (vpError) {
               console.error("Ошибка сохранения ВПРЦА:", vpError);
+          }
+
+          try {
+            await ScheduleApiService.generatePr01(
+              result.numRp,
+              numKa || programRequest.mainData.numKa
+            );
+          } catch (pr01Error) {
+            console.error
           }
           
           if (result?.numRp) {
