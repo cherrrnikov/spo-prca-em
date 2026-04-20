@@ -60,8 +60,8 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
             interval.msu2Config = { ...formData.msu2Config };
 
             const baseMsuData = MsuMapper.fromMsuConfigs(
-                formData.msu1Config,
-                formData.msu2Config,
+                formData.msu1Config || ScheduleConverterService.getDefaultMsuConfig(),
+                formData.msu2Config || ScheduleConverterService.getDefaultMsuConfig(),
                 { tip: formData.tip ?? 1, reg: formData.reg ?? 0, dlit: formData.duration }
             );
 
