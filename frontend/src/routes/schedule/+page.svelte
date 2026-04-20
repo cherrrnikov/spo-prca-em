@@ -338,6 +338,7 @@
             onIntervalDelete={handleIntervalDelete}
             selectedIntervalId={$selectedIntervalId}
             selectedIntervalIds={$selectedIntervalIds}
+            onEmptyClick={handleModeFormCancel}
             isEditing={$isEditing}
             isReadOnly={$isReadOnly}
             operatorDataLoaded={$operatorDataLoaded}

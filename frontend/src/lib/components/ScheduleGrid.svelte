@@ -23,6 +23,7 @@
         onIntervalDelete,
         selectedIntervalId = null,
         selectedIntervalIds = new Set(),
+        onEmptyClick,
         isEditing = false,
         isReadOnly = false,
         operatorDataLoaded = false
@@ -40,6 +41,7 @@
         onIntervalDelete?: (intervalId: string) => void;
         selectedIntervalId?: string | null;
         selectedIntervalIds?: Set<string>;
+        onEmptyClick?: () => void;
         isEditing: boolean;
         isReadOnly?: boolean;
         operatorDataLoaded?: boolean;
@@ -122,7 +124,12 @@
 
         drag.active = false;
 
-        if (!wasDrag || !gridArea) return;
+        if (!wasDrag) {
+            onEmptyClick?.();
+            return;
+        }
+
+        if (!gridArea) return;
 
         const gridRect = gridArea.getBoundingClientRect();
         const selLeft   = gridRect.left + Math.min(drag.startX, drag.currentX);
@@ -130,9 +137,15 @@
         const selRight  = selLeft + Math.abs(drag.currentX - drag.startX);
         const selBottom = selTop  + Math.abs(drag.currentY - drag.startY);
 
+        // Абсолютные координаты точки начала drag
+        const startAbsX = gridRect.left + drag.startX;
+        const startAbsY = gridRect.top  + drag.startY;
+
         const intervalEls = gridArea.querySelectorAll<HTMLElement>('.interval-schedule');
-        let firstMode: number | null = null;
-        const matched: TimeInterval[] = [];
+
+        // Сначала собираем все пересекающиеся интервалы без фильтрации по режиму
+        type Candidate = { interval: TimeInterval; dist: number };
+        const candidates: Candidate[] = [];
 
         intervalEls.forEach(el => {
             const r = el.getBoundingClientRect();
@@ -144,15 +157,26 @@
             if (!id) return;
 
             const interval = intervals.find(i => i.id === id);
-            if (!interval) return;
+            if (!interval || interval.isAstrocorrection) return;
 
-            if (firstMode === null) firstMode = interval.mode;
-            if (interval.mode !== firstMode) return;
+            // Расстояние от точки начала drag до центра интервала
+            const centerX = (r.left + r.right) / 2;
+            const centerY = (r.top + r.bottom) / 2;
+            const dist = Math.hypot(centerX - startAbsX, centerY - startAbsY);
 
-            matched.push(interval);
+            candidates.push({ interval, dist });
         });
 
-        if (matched.length === 0) return;
+        if (candidates.length === 0) return;
+
+        // Режим фиксируем по ближайшему к точке начала drag интервалу
+        candidates.sort((a, b) => a.dist - b.dist);
+        const firstMode = candidates[0].interval.mode;
+
+        // Фильтруем только интервалы того же режима
+        const matched = candidates
+            .filter(c => c.interval.mode === firstMode)
+            .map(c => c.interval);
 
         onIntervalClick?.(matched[0], false);
         for (let i = 1; i < matched.length; i++) {

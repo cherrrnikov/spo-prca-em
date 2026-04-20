@@ -22,6 +22,7 @@ export function createModeHandlers(
         createdPrograms,
         editingInterval,
         selectedIntervalId,
+        selectedIntervalIds,
         selectedMode,
         isEditing,
         operatorDataLoaded,
@@ -251,6 +252,7 @@ export function createModeHandlers(
     function handleModeFormCancel() {
         editingInterval.set(null);
         selectedIntervalId.set(null);
+        selectedIntervalIds.set(new Set());
         isEditing.set(false);
     }
 
