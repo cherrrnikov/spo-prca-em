@@ -86,9 +86,34 @@
 
     onMount(() => {
         loadUserData();
-    });
 
-    $effect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if ($selectedIntervalId) {
+                    handleIntervalDelete($selectedIntervalId);
+                }
+            }
+            if (e.key === 'Escape') {
+                handleModeFormCancel();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                e.preventDefault(); // чтобы не выделялся текст на странице
+                
+                const mode = $selectedMode;
+                if (!mode) return;
+                
+                const modeIntervals = $intervals.filter(i => i.mode === mode && !i.isAstrocorrection);
+                if (modeIntervals.length === 0) return;
+                
+                handleIntervalClick(modeIntervals[0], false);
+                for (let i = 1; i < modeIntervals.length; i++) {
+                    handleIntervalClick(modeIntervals[i], true);
+                }
+            }
+        }
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
     });
 
     function resetAndStartOperatorCreation() {
