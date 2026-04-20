@@ -22,6 +22,7 @@
         onIntervalClick,
         onIntervalDelete,
         selectedIntervalId = null,
+        selectedIntervalIds = new Set(),
         isEditing = false,
         isReadOnly = false,
         operatorDataLoaded = false
@@ -35,9 +36,10 @@
         onModeSelect?: (modeId: number) => void;
         getIntervalColor?: (interval: TimeInterval) => string;
         getIntervalTooltip?: (interval: TimeInterval) => string;
-        onIntervalClick?: (interval: TimeInterval) => void;
+        onIntervalClick?: (interval: TimeInterval, isMultiSelect: boolean) => void;
         onIntervalDelete?: (intervalId: string) => void;
         selectedIntervalId?: string | null;
+        selectedIntervalIds?: Set<string>;
         isEditing: boolean;
         isReadOnly?: boolean;
         operatorDataLoaded?: boolean;
@@ -60,6 +62,103 @@
         y: number;
         intervalId: string;
     };
+
+    // Drag selection
+    type DragState = {
+        active: boolean;
+        startX: number;
+        startY: number;
+        currentX: number;
+        currentY: number;
+    };
+
+    let drag = $state<DragState>({
+        active: false,
+        startX: 0,
+        startY: 0,
+        currentX: 0,
+        currentY: 0
+    });
+
+    let gridArea = $state<HTMLDivElement>();
+
+    const dragRect = $derived(() => {
+        if (!drag.active) return null;
+        return {
+            left:   Math.min(drag.startX, drag.currentX),
+            top:    Math.min(drag.startY, drag.currentY),
+            width:  Math.abs(drag.currentX - drag.startX),
+            height: Math.abs(drag.currentY - drag.startY)
+        };
+    });
+
+    function handleGridMouseDown(event: MouseEvent) {
+        if (event.button !== 0) return;
+        if ((event.target as HTMLElement).closest('.interval-schedule')) return;
+        if (isReadOnly) return;
+
+        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+        drag = {
+            active: true,
+            startX: event.clientX - rect.left,
+            startY: event.clientY - rect.top,
+            currentX: event.clientX - rect.left,
+            currentY: event.clientY - rect.top
+        };
+    }
+
+    function handleGridMouseMove(event: MouseEvent) {
+        if (!drag.active) return;
+        const rect = gridArea!.getBoundingClientRect();
+        drag.currentX = event.clientX - rect.left;
+        drag.currentY = event.clientY - rect.top;
+    }
+
+    function handleGridMouseUp(event: MouseEvent) {
+        if (!drag.active) return;
+
+        const wasDrag = Math.abs(drag.currentX - drag.startX) > 5 ||
+                        Math.abs(drag.currentY - drag.startY) > 5;
+
+        drag.active = false;
+
+        if (!wasDrag || !gridArea) return;
+
+        const gridRect = gridArea.getBoundingClientRect();
+        const selLeft   = gridRect.left + Math.min(drag.startX, drag.currentX);
+        const selTop    = gridRect.top  + Math.min(drag.startY, drag.currentY);
+        const selRight  = selLeft + Math.abs(drag.currentX - drag.startX);
+        const selBottom = selTop  + Math.abs(drag.currentY - drag.startY);
+
+        const intervalEls = gridArea.querySelectorAll<HTMLElement>('.interval-schedule');
+        let firstMode: number | null = null;
+        const matched: TimeInterval[] = [];
+
+        intervalEls.forEach(el => {
+            const r = el.getBoundingClientRect();
+            const overlaps = r.left < selRight && r.right > selLeft &&
+                            r.top  < selBottom && r.bottom > selTop;
+            if (!overlaps) return;
+
+            const id = el.dataset.intervalId;
+            if (!id) return;
+
+            const interval = intervals.find(i => i.id === id);
+            if (!interval) return;
+
+            if (firstMode === null) firstMode = interval.mode;
+            if (interval.mode !== firstMode) return;
+
+            matched.push(interval);
+        });
+
+        if (matched.length === 0) return;
+
+        onIntervalClick?.(matched[0], false);
+        for (let i = 1; i < matched.length; i++) {
+            onIntervalClick?.(matched[i], true);
+        }
+    }
 
     type PositionedInterval = {
         type: 'schedule' | 'astrocorrection';
@@ -157,7 +256,7 @@
 
             selectedMode = interval.mode;
             onModeSelect?.(interval.mode);
-            onIntervalClick?.(interval);
+            onIntervalClick?.(interval, false);
         } else if (event.button === 2) {
             contextMenu = {
                 show: true,
@@ -338,7 +437,7 @@
             }
         }
         
-        if (interval.id === selectedIntervalId) {
+        if (selectedIntervalIds.has(interval.id)) {
             classes.push('selected-interval');
         }
         
@@ -393,11 +492,25 @@
         </div>
 
         <div class="grid-area"
-             style="
+            bind:this={gridArea}
+            style="
                 grid-template-columns: repeat(24, {cellWidth}px); 
                 width: {cellWidth * 24 + 5}px;
                 --cell-width: {cellWidth}px;
-             ">
+            "
+            on:mousedown={handleGridMouseDown}
+            on:mousemove={handleGridMouseMove}
+            on:mouseup={handleGridMouseUp}
+            on:mouseleave={handleGridMouseUp}>
+
+            {#if dragRect() && drag.active}
+                <div class="drag-selection-rect" style="
+                    left: {dragRect()!.left}px;
+                    top: {dragRect()!.top}px;
+                    width: {dragRect()!.width}px;
+                    height: {dragRect()!.height}px;
+                "></div>
+            {/if}
             {#each positionedIntervals() as item (item.id)}
                 {#if item.type === 'astrocorrection'}
                     <div class="interval interval-astrocorrection {item.className}"
@@ -414,6 +527,7 @@
                     </div>
                 {:else if item.type === 'schedule'}
                     <div class="interval interval-schedule {item.className}"
+                        data-interval-id={item.data.id}
                         style="
                             left: {item.position.left}; 
                             width: {item.position.width}; 
@@ -561,8 +675,9 @@
             );
         
         background-position: 0 0;
-        pointer-events: none;
+        /* pointer-events: none; */
         background-size: calc(var(--cell-width) * 24) auto;
+        user-select: none;
     }
     
     .interval {
@@ -700,4 +815,11 @@
         color: white;
     }
 
+    .drag-selection-rect {
+        position: absolute;
+        border: 2px dashed #2b6cb0;
+        background: rgba(43, 108, 176, 0.08);
+        pointer-events: none;
+        z-index: 100;
+    }
 </style>

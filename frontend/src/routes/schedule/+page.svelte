@@ -44,6 +44,7 @@
         createdPrograms,
         editingInterval,
         selectedIntervalId,
+        selectedIntervalIds,
         contextDate,   
         vkiIntervals,
         rotationIntervals,
@@ -104,6 +105,7 @@
         selectedMode.set(null);
         editingInterval.set(null);
         selectedIntervalId.set(null);
+        selectedIntervalIds.set(new Set());
         selectedProgramDate.set('');
         
         // Сбрасываем read-only режим
@@ -335,6 +337,7 @@
             onIntervalClick={handleIntervalClick}
             onIntervalDelete={handleIntervalDelete}
             selectedIntervalId={$selectedIntervalId}
+            selectedIntervalIds={$selectedIntervalIds}
             isEditing={$isEditing}
             isReadOnly={$isReadOnly}
             operatorDataLoaded={$operatorDataLoaded}
@@ -351,6 +354,7 @@
                 onUpdate={handleIntervalUpdate}
                 contextDate={$contextDate}
                 bortData={$bortData}
+                multiSelectCount={$selectedIntervalIds.size}
             />
         {/if}
 

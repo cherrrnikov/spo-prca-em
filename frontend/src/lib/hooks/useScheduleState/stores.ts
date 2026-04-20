@@ -54,6 +54,7 @@ export function createStores() {
     const selectedMode = writable<number | null>(null);
     const editingInterval = writable<TimeInterval | null>(null);
     const selectedIntervalId = writable<string | null>(null);
+    const selectedIntervalIds = writable<Set<string>>(new Set());
 
     // Анализ
     const programsList = writable<ProgramsListItem[]>([]);
@@ -123,6 +124,7 @@ export function createStores() {
         selectedMode,
         editingInterval,
         selectedIntervalId,
+        selectedIntervalIds,
 
         // Анализ 
         programsList,

@@ -30,7 +30,8 @@
         editingInterval = null,
         onUpdate,
         bortData = null,
-        contextDate = ''
+        contextDate = '',
+        multiSelectCount = 1
     } = $props<{
         selectedMode: number;
         onSubmit: (data: ModeCreationForm | TimeInterval[]) => void;
@@ -39,6 +40,7 @@
         onUpdate?: (data: ModeCreationForm) => void;
         bortData?: any;
         contextDate?: string;
+        multiSelectCount?: number;
     }>();
 
     const isPriorityInShadow = $derived(
@@ -52,6 +54,7 @@
     let localFormData = $state<ModeCreationForm>(getInitialFormData());
 
     const isEditMode = $derived(!!editingInterval);
+    const isMultiEdit = $derived(multiSelectCount > 1);
 
     onMount(async () => {
         modeDurations = await ScheduleApiService.loadModeDurations();
@@ -540,26 +543,28 @@
 
                 <!-- Режим редактирования — показываем старую форму -->
                 {#if isEditMode}
-                    <div class="form-group">
-                        <label>Время начала:</label>
-                        <input 
-                            type="time" 
-                            bind:value={localFormData.startTime}
-                            step="1"
-                        />
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Длительность (сек):</label>
-                        <input 
-                            type="number" 
-                            bind:value={localFormData.duration}
-                            min="60"
-                            step="60"
-                            disabled={selectedMode === MODE_CODES.TS}
-                            on:change={handleDurationChange}
-                        />
-                    </div>
+                    {#if !isMultiEdit}
+                        <div class="form-group">
+                            <label>Время начала:</label>
+                            <input 
+                                type="time" 
+                                bind:value={localFormData.startTime}
+                                step="1"
+                            />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Длительность (сек):</label>
+                            <input 
+                                type="number" 
+                                bind:value={localFormData.duration}
+                                min="60"
+                                step="60"
+                                disabled={selectedMode === MODE_CODES.TS}
+                                on:change={handleDurationChange}
+                            />
+                        </div>
+                    {/if}
                 {:else}
                     <!-- Режим создания -->
                     {#if selectedMode === MODE_CODES.TS || selectedMode === MODE_CODES.SHOOTING}
@@ -810,4 +815,5 @@
     .btn-cancel:hover {
         background: #cbd5e0;
     }
+
 </style>
