@@ -47,46 +47,6 @@ export class MsuMapper {
         };
     }
 
-    /**
-     * Маппинг из формы → msuData
-     */
-    static fromForm(formData: any, base?: any) {
-        return {
-            ...base,
-
-            tip: formData.tip ?? base?.tip ?? 1,
-            reg: formData.reg ?? base?.reg ?? 0,
-
-            prMsu1: formData.prMsu1,
-            vd1Msu1: formData.vd1Msu1,
-            vd2Msu1: formData.vd2Msu1,
-            vd3Msu1: formData.vd3Msu1,
-            ik4Msu1: formData.ik4Msu1,
-            ik5Msu1: formData.ik5Msu1,
-            ik6Msu1: formData.ik6Msu1,
-            ik7Msu1: formData.ik7Msu1,
-            ik8Msu1: formData.ik8Msu1,
-            ik9Msu1: formData.ik9Msu1,
-            ik10Msu1: formData.ik10Msu1,
-
-            prMsu2: formData.prMsu2,
-            vd1Msu2: formData.vd1Msu2,
-            vd2Msu2: formData.vd2Msu2,
-            vd3Msu2: formData.vd3Msu2,
-            ik4Msu2: formData.ik4Msu2,
-            ik5Msu2: formData.ik5Msu2,
-            ik6Msu2: formData.ik6Msu2,
-            ik7Msu2: formData.ik7Msu2,
-            ik8Msu2: formData.ik8Msu2,
-            ik9Msu2: formData.ik9Msu2,
-            ik10Msu2: formData.ik10Msu2,
-
-            prBssd: formData.prBssd,
-            prZg: formData.prZg,
-            prOtklZgBssd: formData.prOtklZg
-        };
-    }
-
 /**
      * Маппинг из MsuConfig (msu1Config/msu2Config) → msuData
      * Используется в creators.ts

@@ -8,6 +8,7 @@ import { IntervalValidationService } from '$lib/utils/intervalValidation';
 import { ModeUtils } from '$lib/utils/mode';
 import { TimeUtils } from '$lib/utils/time';
 import { get } from 'svelte/store';
+import { ScheduleConverterService } from '../../../../features/services/data/scheduleConverter.service';
 import type { createCreators } from '../creators';
 import type { createStores } from '../stores';
 import type { createValidation } from '../validation';
@@ -161,20 +162,18 @@ export function createModeHandlers(
         if (interval.mode === MODE_CODES.TS || interval.mode === MODE_CODES.SHOOTING) {
             // tsData уже должен быть заполнен при создании интервала через ManualIntervalSplitService
             // если нет — создаем на основе msuConfig
-            const msuData = interval.msuData || MsuMapper.fromForm(
-                {
-                    tip: 1,
-                    reg: 0,
-                    prBssd: 0,
-                    prZg: 0,
-                    prOtklZg: 0,
-                    msu1Config: interval.msu1Config,
-                    msu2Config: interval.msu2Config
-                },
+            const msuData = interval.msuData || MsuMapper.fromMsuConfigs(
+                interval.msu1Config || ScheduleConverterService.getDefaultMsuConfig(),
+                interval.msu2Config || ScheduleConverterService.getDefaultMsuConfig(),
                 {
                     id: 0,
                     idMain: mainId,
-                    dlit: interval.dlit || DEFAULT_MODE_DURATION
+                    tip: 1,
+                    reg: 0,
+                    dlit: interval.dlit || DEFAULT_MODE_DURATION,
+                    prBssd: 0,
+                    prZg: 0,
+                    prOtklZgBssd: 0
                 }
             );
             

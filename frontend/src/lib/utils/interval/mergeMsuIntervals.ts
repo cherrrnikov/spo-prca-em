@@ -140,15 +140,15 @@ function createMergedProgram(block: MsuInterval[]): CreatedProgramData {
     
     const startTime = first.timeInterval.startTime;
     const endTime = last.timeInterval.endTime;
-    const totalDuration = block.reduce((sum, item) => sum + (item.created.modeData.dlit || 0), 0);
+    const singleDuration = first.modeData.dlit || 0;
     
     // Создаем новый modeData
     const newModeData: ProgramModeData = {
         ...first.modeData,
         dateOn: `${first.modeData.dateOn.split('T')[0]}T${startTime}`,
         dateOff: `${first.modeData.dateOff.split('T')[0]}T${endTime}`,
-        dlit: totalDuration,
-        msuData: first.modeData.msuData ? { ...first.modeData.msuData, dlit: totalDuration } : undefined
+        dlit: singleDuration,
+        msuData: first.modeData.msuData ? { ...first.modeData.msuData, dlit: singleDuration } : undefined
     };
     
     // Создаем новый timeInterval
@@ -156,7 +156,7 @@ function createMergedProgram(block: MsuInterval[]): CreatedProgramData {
         ...first.timeInterval,
         startTime,
         endTime,
-        dlit: totalDuration
+        dlit: singleDuration
     };
     
     return {

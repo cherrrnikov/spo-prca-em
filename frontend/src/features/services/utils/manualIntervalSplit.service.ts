@@ -55,11 +55,18 @@ export class ManualIntervalSplitService {
                 msu2Config: { ...formData.msu2Config },
                 
                 // Параметры для ТС (БССД, ЗГ, отключение ЗГ)
-                msuData: (formData.modeType === MODE_CODES.TS || formData.modeType === MODE_CODES.SHOOTING) ? MsuMapper.fromForm(
-                    formData, {
+                msuData: (formData.modeType === MODE_CODES.TS || formData.modeType === MODE_CODES.SHOOTING) ? MsuMapper.fromMsuConfigs(
+                    formData.msu1Config,
+                    formData.msu2Config,
+                    {
                         id: 0,
                         idMain: 0,
-                        dlit: intervalDuration
+                        tip: formData.tip ?? 1,
+                        reg: formData.reg ?? 0,
+                        dlit: intervalDuration,
+                        prBssd: formData.prBssd ?? 0,
+                        prZg: formData.prZg ?? 0,
+                        prOtklZgBssd: formData.prOtklZg ?? 0
                     }
                 ) : undefined,
                 
