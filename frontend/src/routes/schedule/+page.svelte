@@ -251,7 +251,25 @@
             );
 
             intervals.set(intervalsWithConflicts);
-            createdPrograms.set(newCreatedPrograms); 
+
+            // Синхронизируем msuData в createdPrograms с пересчитанными интервалами
+            // (shadow мог обнулить ВД-каналы победителю тени)
+            const syncedPrograms = newCreatedPrograms.map(program => {
+                const updatedInterval = intervalsWithConflicts.find(i => i.id === program.timeInterval.id);
+                if (updatedInterval?.msuData) {
+                    return {
+                        ...program,
+                        modeData: {
+                            ...program.modeData,
+                            msuData: updatedInterval.msuData
+                        },
+                        timeInterval: updatedInterval
+                    };
+                }
+                return program;
+            });
+
+            createdPrograms.set(syncedPrograms);
             isEditing.set(false);
         }
     }

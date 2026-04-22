@@ -4,7 +4,6 @@ export { checkShadowPriority } from './shadow';
 export { checkZasvetkaProximity } from './zasvetka';
 
 import { MODE_CODES } from '$lib/constants/schedule';
-import { MsuMapper } from '$lib/mappers/msuMapper';
 import { ConstraintValidator } from '$lib/services/constraints/constraintValidator.service';
 import type {
     RotationInterval,
@@ -29,27 +28,6 @@ export function checkAllConflicts(
     const regularIntervals = intervals.filter(i => !i.isAstrocorrection);
     
     const shadowProcessedIntervals = checkShadowPriority(regularIntervals, shadowIntervals || []);
-
-    shadowProcessedIntervals.forEach(interval => {
-        if (interval.willBeSavedInShadow && interval.msu1Config && interval.msu2Config && interval.msuData) {
-            interval.msuData = {
-                ...MsuMapper.fromMsuConfigs(
-                    interval.msu1Config,
-                    interval.msu2Config,
-                    {
-                        id: interval.msuData.id,
-                        idMain: interval.msuData.idMain,
-                        tip: interval.msuData.tip,
-                        reg: interval.msuData.reg,
-                        dlit: interval.msuData.dlit,
-                        prBssd: interval.msuData.prBssd,
-                        prZg: interval.msuData.prZg,
-                        prOtklZgBssd: interval.msuData.prOtklZgBssd
-                    }
-                )
-            };
-        }
-    });
 
     const constraintViolations = ConstraintValidator.validate(
         shadowProcessedIntervals,
@@ -155,30 +133,44 @@ export function checkAllConflicts(
 
     // Финальный расчет willBeSaved
     withConstraints.forEach(interval => {
+        // Проверка пустых МСУ для съёмок — работает для всех интервалов независимо от тени
+        if (interval.mode === MODE_CODES.SHOOTING || interval.mode === MODE_CODES.TS) {
+            const msu1Empty = !interval.msu1Config || (
+                !interval.msu1Config.prMsu &&
+                !interval.msu1Config.vd1 && !interval.msu1Config.vd2 && !interval.msu1Config.vd3 &&
+                !interval.msu1Config.ik4 && !interval.msu1Config.ik5 && !interval.msu1Config.ik6 &&
+                !interval.msu1Config.ik7 && !interval.msu1Config.ik8 && !interval.msu1Config.ik9 &&
+                !interval.msu1Config.ik10
+            );
+            const msu2Empty = !interval.msu2Config || (
+                !interval.msu2Config.prMsu &&
+                !interval.msu2Config.vd1 && !interval.msu2Config.vd2 && !interval.msu2Config.vd3 &&
+                !interval.msu2Config.ik4 && !interval.msu2Config.ik5 && !interval.msu2Config.ik6 &&
+                !interval.msu2Config.ik7 && !interval.msu2Config.ik8 && !interval.msu2Config.ik9 &&
+                !interval.msu2Config.ik10
+            );
+            interval.emptyMsu = msu1Empty && msu2Empty;
+        } else {
+            interval.emptyMsu = false;
+        }
+
+        if (interval.emptyMsu) {
+            interval.willBeSaved = false;
+            return;
+        }
+
         if (interval.inShadow) {
             interval.willBeSaved = interval.willBeSavedInShadow || false;
-            if (!interval.willBeSaved) {
-            }
         } else {
             interval.willBeSaved = true;
-            
-            let reason = null;
             if (interval.hasConflict) {
                 interval.willBeSaved = false;
-                reason = 'hasConflict';
             } else if (interval.zasvetkaConflict) {
                 interval.willBeSaved = false;
-                reason = 'zasvetkaConflict';
             } else if (interval.nearZasvetka) {
                 interval.willBeSaved = false;
-                reason = 'nearZasvetka';
             } else if (interval.constraintViolations && interval.constraintViolations.length > 0) {
                 interval.willBeSaved = false;
-                reason = `constraintViolations: ${interval.constraintViolations.map(v => v.constraintId).join(',')}`;
-            }
-            
-            if (!interval.willBeSaved) {
-            } else {
             }
         }
     });

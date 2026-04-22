@@ -57,18 +57,64 @@ export function checkShadowPriority(
         winner.willBeSavedInShadow = true;
 
         if (winner.mode === 8 || winner.mode === 1) {
+            // Глубокая копия — не мутируем оригинальные объекты в сторе
             if (winner.msu1Config) {
-                winner.msu1Config.prVdMsu = 0;
-                winner.msu1Config.vd1 = 0;
-                winner.msu1Config.vd2 = 0;
-                winner.msu1Config.vd3 = 0;
+                winner.msu1Config = {
+                    ...winner.msu1Config,
+                    prVdMsu: 0,
+                    vd1: 0,
+                    vd2: 0,
+                    vd3: 0
+                };
+                // Если нет ни одного активного канала — МСУ не задействован
+                const hasAnyMsu1Channel = winner.msu1Config.ik4 || winner.msu1Config.ik5 ||
+                    winner.msu1Config.ik6 || winner.msu1Config.ik7 || winner.msu1Config.ik8 ||
+                    winner.msu1Config.ik9 || winner.msu1Config.ik10;
+                if (!hasAnyMsu1Channel) {
+                    winner.msu1Config = { ...winner.msu1Config, prMsu: 0 };
+                }
             }
-            
+
             if (winner.msu2Config) {
-                winner.msu2Config.prVdMsu = 0;
-                winner.msu2Config.vd1 = 0;
-                winner.msu2Config.vd2 = 0;
-                winner.msu2Config.vd3 = 0;
+                winner.msu2Config = {
+                    ...winner.msu2Config,
+                    prVdMsu: 0,
+                    vd1: 0,
+                    vd2: 0,
+                    vd3: 0
+                };
+                const hasAnyMsu2Channel = winner.msu2Config.ik4 || winner.msu2Config.ik5 ||
+                    winner.msu2Config.ik6 || winner.msu2Config.ik7 || winner.msu2Config.ik8 ||
+                    winner.msu2Config.ik9 || winner.msu2Config.ik10;
+                if (!hasAnyMsu2Channel) {
+                    winner.msu2Config = { ...winner.msu2Config, prMsu: 0 };
+                }
+            }
+
+            if (winner.msuData) {
+                winner.msuData = {
+                    ...winner.msuData,
+                    prMsu1: winner.msu1Config?.prMsu ?? 0,  // берём из уже пересчитанного конфига
+                    vd1Msu1: 0, vd2Msu1: 0, vd3Msu1: 0,
+                    prMsu2: winner.msu2Config?.prMsu ?? 0,
+                    vd2Msu2: 0, vd1Msu2: 0, vd3Msu2: 0
+                };
+            }
+
+            // Если после обнуления ВД все каналы пустые — интервал не имеет смысла
+            const msu1HasChannels = winner.msu1Config && (
+                winner.msu1Config.ik4 || winner.msu1Config.ik5 || winner.msu1Config.ik6 ||
+                winner.msu1Config.ik7 || winner.msu1Config.ik8 || winner.msu1Config.ik9 ||
+                winner.msu1Config.ik10
+            );
+            const msu2HasChannels = winner.msu2Config && (
+                winner.msu2Config.ik4 || winner.msu2Config.ik5 || winner.msu2Config.ik6 ||
+                winner.msu2Config.ik7 || winner.msu2Config.ik8 || winner.msu2Config.ik9 ||
+                winner.msu2Config.ik10
+            );
+            winner.emptyMsu = !msu1HasChannels && !msu2HasChannels;
+            if (winner.emptyMsu) {
+                winner.willBeSaved = false;
             }
         }
 

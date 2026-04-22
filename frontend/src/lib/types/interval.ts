@@ -69,6 +69,7 @@ export interface TimeInterval {
 
     msu1Config?: MsuConfig;
     msu2Config?: MsuConfig;
+    emptyMsu?: boolean;
     
     hasConflict?: boolean;
     conflictWith?: number[];

@@ -175,7 +175,8 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
                         constraintViolations: updatedInterval.constraintViolations,
                         msu1Config: updatedInterval.msu1Config ?? interval.msu1Config,
                         msu2Config: updatedInterval.msu2Config ?? interval.msu2Config,
-                        msuData: updatedInterval.msuData ?? interval.msuData
+                        emptyMsu: updatedInterval.emptyMsu ?? false,
+                        msuData: updatedInterval.msuData ?? interval.msuData,
                     };
                 }
                 return interval;
@@ -197,7 +198,11 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
                         willBeSavedInShadow: updatedInterval.willBeSavedInShadow,
                         nearZasvetka: updatedInterval.nearZasvetka,
                         zasvetkaConflict: updatedInterval.zasvetkaConflict
-                    }
+                    },
+                    modeData: updatedInterval.msuData ? {
+                        ...program.modeData,
+                        msuData: updatedInterval.msuData
+                    } : program.modeData
                 };
             }
             return program;

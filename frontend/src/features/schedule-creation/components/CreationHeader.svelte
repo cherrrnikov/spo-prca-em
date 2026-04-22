@@ -9,16 +9,16 @@
 	import PpiSelectionModal from "./PpiSelectionModal.svelte";
 
     const PPI_LIST: Ppi[] = [
-        { id: 1, name: '0 - Обнинск', numPpi: 1 },
-        { id: 2, name: '1 - Долгопрудный', numPpi: 2 },
-        { id: 3, name: '2 - Новосибирск', numPpi: 3 },
-        { id: 4, name: '3 - Хабаровск', numPpi: 4 },
-        { id: 5, name: '4 - Байконур', numPpi: 5 },
-        { id: 6, name: '5 - Ханты-Мансийск', numPpi: 6 },
-        { id: 7, name: '6 - Железногорск', numPpi: 7 },
-        { id: 8, name: '7 - Улан-Удэ', numPpi: 8 },
-        { id: 9, name: '8 - Москва (НЦ ОМЗ)', numPpi: 9 },
-        { id: 10, name: '9 - Москва (НИЦ "Планета")', numPpi: 10 }
+        { id: 1, name: '0 - Обнинск', numPpi: 0 },
+        { id: 2, name: '1 - Долгопрудный', numPpi: 1 },
+        { id: 3, name: '2 - Новосибирск', numPpi: 2 },
+        { id: 4, name: '3 - Хабаровск', numPpi: 3 },
+        { id: 5, name: '4 - Байконур', numPpi: 4 },
+        { id: 6, name: '5 - Ханты-Мансийск', numPpi: 5 },
+        { id: 7, name: '6 - Железногорск', numPpi: 6 },
+        { id: 8, name: '7 - Улан-Удэ', numPpi: 7 },
+        { id: 9, name: '8 - Москва (НЦ ОМЗ)', numPpi: 8 },
+        { id: 10, name: '9 - Москва (НИЦ "Планета")', numPpi: 9 }
     ];
 
     let { onCancel: onCancelProp, onDataProcessed, numKa = $bindable(1525) } = $props<{

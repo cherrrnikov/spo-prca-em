@@ -8,10 +8,14 @@ export function createUiHelpers(stores: ReturnType<typeof createStores>) {
     const { createdPrograms } = stores;
 
     function getIntervalColor(interval: TimeInterval): string {
+        if (interval.emptyMsu) {
+            return '#ffffff';
+        }
+
         if (interval.inShadow && interval.willBeSavedInShadow) {
             return '#ff69b4';
         }
-        
+
         if (interval.hasConflict) {
             return '#ff0000';
         }

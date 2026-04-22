@@ -20,13 +20,16 @@
         { type: 'ik', num: 10, key: 'ik10' }
     ];
 
-    $: isAllSelected = allChannels.every(channel => config[channel.key as keyof MsuConfig] === 1);
+    $: isAllSelected = allChannels
+        .filter(channel => !(channel.type === 'vd' && disableVd))
+        .every(channel => config[channel.key as keyof MsuConfig] === 1);
 
     // Выбрать/снять все каналы
     function toggleAll(checked: boolean) {
         const updatedConfig = { ...config };
         
         allChannels.forEach(channel => {
+            if (channel.type === 'vd' && disableVd) return;
             updatedConfig[channel.key as keyof MsuConfig] = checked ? 1 : 0;
         });
         
@@ -82,10 +85,11 @@
     </div>
     <div class="ts-grid">
         {#each allChannels as channel}
-            <label class="checkbox-label">
+            <label class="checkbox-label" class:disabled={channel.type === 'vd' && disableVd}>
                 <input 
                     type="checkbox"
                     checked={config[channel.key as keyof MsuConfig] === 1}
+                    disabled={channel.type === 'vd' && disableVd}
                     on:change={(e) => {
                         if (channel.type === 'vd') {
                             handleVdChange(channel.num, e.target.checked);
@@ -132,5 +136,10 @@
         gap: 0.5rem;
         cursor: pointer;
         font-size: 0.875rem;
+    }
+
+    .checkbox-label.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
     }
 </style>
