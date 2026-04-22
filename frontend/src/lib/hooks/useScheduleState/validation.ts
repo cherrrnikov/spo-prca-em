@@ -56,21 +56,7 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
                 (newInterval.mode === MODE_CODES.KVD && (existingInterval.mode === MODE_CODES.SHOOTING || existingInterval.mode === MODE_CODES.TS)) ||
                 (existingInterval.mode === MODE_CODES.KVD && (newInterval.mode === MODE_CODES.SHOOTING || newInterval.mode === MODE_CODES.TS));
 
-            if (isKvdWithShooting) {
-                const kvd   = newInterval.mode === MODE_CODES.KVD ? newInterval : existingInterval;
-                const shoot = newInterval.mode === MODE_CODES.KVD ? existingInterval : newInterval;
-
-                const startMismatch = kvd.startTime !== shoot.startTime;
-                const dlitMismatch  = (kvd.dlit ?? 0) !== (shoot.dlit ?? 0);
-
-                if (startMismatch || dlitMismatch) {
-                    hasConflict = true;
-                    if (!conflictWith.includes(existingInterval.mode)) {
-                        conflictWith.push(existingInterval.mode);
-                    }
-                }
-                continue;
-            }
+            if (isKvdWithShooting) continue;
             
             const overlap = checkTwoIntervalsOverlap(
                 newInterval.startTime,
@@ -84,6 +70,41 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
                 if (!conflictWith.includes(existingInterval.mode)) {
                     conflictWith.push(existingInterval.mode);
                 }
+            }
+        }
+
+        // Отдельная проверка КВД — конфликт только если нет совпадающей съёмки
+        if (newInterval.mode === MODE_CODES.KVD) {
+            const overlappingShots = allIntervals.filter(i =>
+                (i.mode === MODE_CODES.SHOOTING || i.mode === MODE_CODES.TS) &&
+                checkTwoIntervalsOverlap(newInterval.startTime, newInterval.endTime, i.startTime, i.endTime)
+            );
+
+            if (overlappingShots.length === 0) {
+                hasConflict = true;
+            } else {
+                const hasMatch = overlappingShots.some(s => {
+                    console.log('MATCH CHECK:', 
+                        'kvdMsu:', newInterval.kvdConfig?.prMsu,
+                        'shootMsu1:', s.msuData?.prMsu1,
+                        'shootMsu2:', s.msuData?.prMsu2,
+                        'kvdBssd:', newInterval.kvdConfig?.prBssd,
+                        'shootBssd:', s.msuData?.prBssd
+                    );
+                    const startOk = s.startTime === newInterval.startTime;
+                    const dlitOk  = (s.dlit ?? 0) === (newInterval.dlit ?? 0);
+
+                    const kvdMsu  = newInterval.kvdConfig?.prMsu ?? 0;  // 0=МСУ1, 1=МСУ2
+                    const kvdBssd = newInterval.kvdConfig?.prBssd ?? 0;
+
+                    // kvdMsu=0 значит МСУ1 - у съёмки prMsu1 должен быть 1 (задействован)
+                    // kvdMsu=1 значит МСУ2 - у съёмки prMsu2 должен быть 1
+                    const msuOk  = kvdMsu === 0 ? (s.msuData?.prMsu1 === 1) : (s.msuData?.prMsu2 === 1);
+                    const bssdOk = kvdBssd === (s.msuData?.prBssd ?? 0);
+
+                    return startOk && dlitOk && msuOk && bssdOk;
+                });
+                hasConflict = !hasMatch;
             }
         }
 

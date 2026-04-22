@@ -172,7 +172,6 @@ export class ConstraintValidator {
         constraint: TimeConstraint
     ) {
         // ВРЕМЕННО
-        console.log('constraint check:', constraint.id, 'from:', from.modeType, 'to:', toIntervals.map(t => t.modeType));
         if (constraint.checkFromStart) {
             // Специальная логика для теней - проверяем от НАЧАЛА from
             this.checkFromStartConstraint(violations, from, toIntervals, constraint);
@@ -321,8 +320,6 @@ export class ConstraintValidator {
             actualGap: gap,
             direction: direction,
         };
-
-        console.log('ADD VIOLATION:', target.modeType, target.originalStart, 'constraint:', constraint.id, 'with:', other.modeType)
 
         if (!violations.has(target.id)) {
             violations.set(target.id, []);

@@ -61,19 +61,7 @@ export function checkAllConflicts(
                 (intervalB.mode === MODE_CODES.KVD && (intervalA.mode === MODE_CODES.SHOOTING || intervalA.mode === MODE_CODES.TS))
             );
 
-            if (isKvdWithShooting) {
-                // КВД красный если время начала или длительность не совпадают со съёмкой
-                const kvd    = intervalA.mode === MODE_CODES.KVD ? intervalA : intervalB;
-                const shoot  = intervalA.mode === MODE_CODES.KVD ? intervalB : intervalA;
-                
-                const startMismatch = kvd.startTime !== shoot.startTime;
-                const dlitMismatch  = (kvd.dlit ?? 0) !== (shoot.dlit ?? 0);
-                
-                if (startMismatch || dlitMismatch) {
-                    kvd.hasConflict = true;
-                }
-                continue; // съёмку не трогаем
-            }
+            if (isKvdWithShooting) continue;
             
             const overlap = checkTwoIntervalsOverlap(
                 intervalA.startTime,
@@ -95,6 +83,39 @@ export function checkAllConflicts(
             }
         }
     }
+
+    // Отдельная проверка КВД — красный только если нет совпадающей съёмки
+    withConstraints
+        .filter(i => i.mode === MODE_CODES.KVD)
+        .forEach(kvd => {
+            const overlappingShots = withConstraints.filter(i =>
+                (i.mode === MODE_CODES.SHOOTING || i.mode === MODE_CODES.TS) &&
+                checkTwoIntervalsOverlap(kvd.startTime, kvd.endTime, i.startTime, i.endTime)
+            );
+
+            if (overlappingShots.length === 0) {
+                // КВД без съёмки — конфликт
+                kvd.hasConflict = true;
+            } else {
+                // Есть ли хотя бы одна съёмка с совпадающим временем и длительностью
+                const hasMatch = overlappingShots.some(s => {
+                    const startOk = s.startTime === kvd.startTime;  // в index.ts — kvd, в validation.ts — newInterval
+                    const dlitOk  = (s.dlit ?? 0) === (kvd.dlit ?? 0);
+                    
+                    // Сравниваем признаки МСУ и БССД
+                    const kvdMsu  = kvd.kvdConfig?.prMsu ?? 0;  // 0=МСУ1, 1=МСУ2
+                    const kvdBssd = kvd.kvdConfig?.prBssd ?? 0;
+
+                    // kvdMsu=0 значит МСУ1 - у съёмки prMsu1 должен быть 1 (задействован)
+                    // kvdMsu=1 значит МСУ2 - у съёмки prMsu2 должен быть 1
+                    const msuOk  = kvdMsu === 0 ? (s.msuData?.prMsu1 === 1) : (s.msuData?.prMsu2 === 1);
+                    const bssdOk = kvdBssd === (s.msuData?.prBssd ?? 0);
+
+                    return startOk && dlitOk && msuOk && bssdOk;
+                });
+                kvd.hasConflict = !hasMatch;
+            }
+        });
     
     // Проверка засветок
     const zasvetkaArray = zasvetkaIntervals || [];
