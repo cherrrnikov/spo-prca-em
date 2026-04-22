@@ -3,6 +3,7 @@ export { getDefaultIntervalFlags } from './defaults';
 export { checkShadowPriority } from './shadow';
 export { checkZasvetkaProximity } from './zasvetka';
 
+import { MODE_CODES } from '$lib/constants/schedule';
 import { ConstraintValidator } from '$lib/services/constraints/constraintValidator.service';
 import type {
     RotationInterval,
@@ -53,6 +54,26 @@ export function checkAllConflicts(
             const intervalB = withConstraints[j];
             
             if (intervalA.mode === intervalB.mode) continue;
+
+            // КВД может работать одновременно со съёмкой — это не конфликт
+            const isKvdWithShooting = (
+                (intervalA.mode === MODE_CODES.KVD && (intervalB.mode === MODE_CODES.SHOOTING || intervalB.mode === MODE_CODES.TS)) ||
+                (intervalB.mode === MODE_CODES.KVD && (intervalA.mode === MODE_CODES.SHOOTING || intervalA.mode === MODE_CODES.TS))
+            );
+
+            if (isKvdWithShooting) {
+                // КВД красный если время начала или длительность не совпадают со съёмкой
+                const kvd    = intervalA.mode === MODE_CODES.KVD ? intervalA : intervalB;
+                const shoot  = intervalA.mode === MODE_CODES.KVD ? intervalB : intervalA;
+                
+                const startMismatch = kvd.startTime !== shoot.startTime;
+                const dlitMismatch  = (kvd.dlit ?? 0) !== (shoot.dlit ?? 0);
+                
+                if (startMismatch || dlitMismatch) {
+                    kvd.hasConflict = true;
+                }
+                continue; // съёмку не трогаем
+            }
             
             const overlap = checkTwoIntervalsOverlap(
                 intervalA.startTime,

@@ -1,4 +1,4 @@
-import { WORK_MODES } from '$lib/constants/schedule';
+import { MODE_CODES, WORK_MODES } from '$lib/constants/schedule';
 import { ConstraintValidator } from '$lib/services/constraints/constraintValidator.service';
 import type { TimeInterval } from '$lib/types';
 import { checkTwoIntervalsOverlap } from '$lib/utils/interval/conflicts';
@@ -50,6 +50,27 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
         
         for (const existingInterval of allIntervals) {
             if (existingInterval.mode === newInterval.mode) continue;
+
+            // КВД может работать одновременно со съёмкой — не конфликт
+            const isKvdWithShooting =
+                (newInterval.mode === MODE_CODES.KVD && (existingInterval.mode === MODE_CODES.SHOOTING || existingInterval.mode === MODE_CODES.TS)) ||
+                (existingInterval.mode === MODE_CODES.KVD && (newInterval.mode === MODE_CODES.SHOOTING || newInterval.mode === MODE_CODES.TS));
+
+            if (isKvdWithShooting) {
+                const kvd   = newInterval.mode === MODE_CODES.KVD ? newInterval : existingInterval;
+                const shoot = newInterval.mode === MODE_CODES.KVD ? existingInterval : newInterval;
+
+                const startMismatch = kvd.startTime !== shoot.startTime;
+                const dlitMismatch  = (kvd.dlit ?? 0) !== (shoot.dlit ?? 0);
+
+                if (startMismatch || dlitMismatch) {
+                    hasConflict = true;
+                    if (!conflictWith.includes(existingInterval.mode)) {
+                        conflictWith.push(existingInterval.mode);
+                    }
+                }
+                continue;
+            }
             
             const overlap = checkTwoIntervalsOverlap(
                 newInterval.startTime,

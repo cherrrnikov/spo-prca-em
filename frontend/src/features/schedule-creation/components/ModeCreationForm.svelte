@@ -560,7 +560,6 @@
                                 bind:value={localFormData.duration}
                                 min="60"
                                 step="60"
-                                disabled={selectedMode === MODE_CODES.TS}
                                 on:change={handleDurationChange}
                             />
                         </div>
@@ -594,7 +593,6 @@
                                 bind:value={localFormData.duration}
                                 min="60"
                                 step="60"
-                                disabled={selectedMode === MODE_CODES.TS}
                                 on:change={handleDurationChange}
                             />
                         </div>

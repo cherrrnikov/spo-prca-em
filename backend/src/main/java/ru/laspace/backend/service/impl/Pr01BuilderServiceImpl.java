@@ -149,7 +149,7 @@ public class Pr01BuilderServiceImpl implements Pr01BuilderService {
                 msu.getIk10Msu2() + "," +
                 msu.getPrBssd() + "," +
                 msu.getPrZg() + "," +
-                "0";
+                msu.getPrOtklZgBssd();
     }
 
     private String buildOmiParams(ProgramsMode mode) {
