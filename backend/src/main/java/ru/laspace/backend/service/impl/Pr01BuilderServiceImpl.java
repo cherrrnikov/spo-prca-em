@@ -1,5 +1,6 @@
 package ru.laspace.backend.service.impl;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -108,11 +109,20 @@ public class Pr01BuilderServiceImpl implements Pr01BuilderService {
                 .orElseThrow(() -> new RuntimeException(
                         "Данные МСУ не найдены для режима id=" + mode.getId()));
 
+        // Вычисляем количество циклов из хранимых данных
+        // tip = 1 (штатная) -> шаг 1800с, иначе 900
+        int stepSeconds = (msu.getTip() != null && msu.getTip() == 2) ? 900 : 1800;
+        long durationSeconds = Duration.between(mode.getDateOn(), mode.getDateOff()).getSeconds();
+        int numCycles = (int) (durationSeconds / stepSeconds) + 1;
+
+        // Время начала последней съемки
+        LocalDateTime lastShotStart = mode.getDateOff().minusSeconds(msu.getDlit());
+
         return fmtDate(mode.getDateOn()) + "," +
                 fmtTime(mode.getDateOn()) + "," +
-                fmtDate(mode.getDateOff()) + "," +
-                fmtTime(mode.getDateOff()) + "," +
-                "9999," +
+                fmtDate(lastShotStart) + "," +
+                fmtTime(lastShotStart) + "," +
+                numCycles + "," +
                 msu.getTip() + "," +
                 msu.getReg() + "," +
                 msu.getDlit() + "," +

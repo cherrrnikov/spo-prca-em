@@ -622,7 +622,7 @@
                     {/if}
                 {/if}
                 
-                {#if selectedMode === MODE_CODES.TS || selectedMode === MODE_CODES.SHOOTING}
+                {#if (selectedMode === MODE_CODES.TS || selectedMode === MODE_CODES.SHOOTING) && !isEditMode}
                     <div class="form-group">
                         <label>Тип съёмки:</label>
                         <div class="radio-group">

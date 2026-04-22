@@ -214,8 +214,8 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     ...baseData,
                     msuData: {
                         ...baseMsuData,
-                        prBssd: currentBortData?.pr_bssd ?? 0,
-                        prZg: currentBortData?.pr_zg ?? 0,
+                        prBssd: formData.prBssd ?? currentBortData?.pr_bssd ?? 0,
+                        prZg: formData.prZg ?? currentBortData?.pr_zg ?? 0,
                         prOtklZgBssd: formData.prOtklZg ?? 0
                     }
                 };
@@ -224,9 +224,9 @@ export function createCreators(stores: ReturnType<typeof import('./stores').crea
                     ...baseData,
                     msuData: {
                         ...baseMsuData,
-                        prBssd: currentBortData?.pr_bssd ?? 0,
-                        prZg: currentBortData?.pr_zg ?? 0,
-                        prOtklZgBssd: currentBortData?.pr_otkl_zg ?? 0
+                        prBssd: formData.prBssd ?? currentBortData?.pr_bssd ?? 0,
+                        prZg: formData.prZg ?? currentBortData?.pr_zg ?? 0,
+                        prOtklZgBssd: formData.prOtklZg ?? 0
                     }
                 };
             }
