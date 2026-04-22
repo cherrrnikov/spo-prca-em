@@ -118,6 +118,16 @@ public class Pr01BuilderServiceImpl implements Pr01BuilderService {
         // Время начала последней съемки
         LocalDateTime lastShotStart = mode.getDateOff().minusSeconds(msu.getDlit());
 
+        // Признак съёмки в тени:
+        // Фронт выставляет prVdMsu=0 интервалу-победителю тени (shadow.ts →
+        // checkShadowPriority).
+        // Если оба ВД-признака = 0, но хотя бы один МСУ активен — съёмка идёт в тени.
+        int prVdMsu1 = msu.getPrVdMsu1() != null ? msu.getPrVdMsu1() : 0;
+        int prVdMsu2 = msu.getPrVdMsu2() != null ? msu.getPrVdMsu2() : 0;
+        int prMsu1 = msu.getPrMsu1() != null ? msu.getPrMsu1() : 0;
+        int prMsu2 = msu.getPrMsu2() != null ? msu.getPrMsu2() : 0;
+        int prShadow = (prVdMsu1 == 0 && prVdMsu2 == 0 && (prMsu1 == 1 || prMsu2 == 1)) ? 1 : 0;
+
         return fmtDate(mode.getDateOn()) + "," +
                 fmtTime(mode.getDateOn()) + "," +
                 fmtDate(lastShotStart) + "," +
@@ -126,7 +136,7 @@ public class Pr01BuilderServiceImpl implements Pr01BuilderService {
                 msu.getTip() + "," +
                 msu.getReg() + "," +
                 msu.getDlit() + "," +
-                "0," +
+                prShadow + "," +
                 msu.getPrMsu1() + "," +
                 msu.getPrVdMsu1() + "," +
                 msu.getPrIkMsu1() + "," +

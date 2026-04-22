@@ -45,9 +45,7 @@
 
     const isPriorityInShadow = $derived(
         editingInterval?.inShadow && 
-        editingInterval?.willBeSavedInShadow === true &&
-        editingInterval?.shadowPriority !== undefined &&
-        editingInterval.shadowPriority < 0.1  // минимальный приоритет (ближе всего к центру)
+        editingInterval?.willBeSavedInShadow === true
     );
 
     let modeDurations = $state<Record<string, number>>({});

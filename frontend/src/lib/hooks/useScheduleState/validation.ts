@@ -172,7 +172,10 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
                         willBeSavedInShadow: updatedInterval.willBeSavedInShadow,
                         shadowPriority: updatedInterval.shadowPriority,
                         willBeSaved: updatedInterval.willBeSaved,
-                        constraintViolations: updatedInterval.constraintViolations
+                        constraintViolations: updatedInterval.constraintViolations,
+                        msu1Config: updatedInterval.msu1Config ?? interval.msu1Config,
+                        msu2Config: updatedInterval.msu2Config ?? interval.msu2Config,
+                        msuData: updatedInterval.msuData ?? interval.msuData
                     };
                 }
                 return interval;

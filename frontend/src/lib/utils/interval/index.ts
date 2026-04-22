@@ -4,6 +4,7 @@ export { checkShadowPriority } from './shadow';
 export { checkZasvetkaProximity } from './zasvetka';
 
 import { MODE_CODES } from '$lib/constants/schedule';
+import { MsuMapper } from '$lib/mappers/msuMapper';
 import { ConstraintValidator } from '$lib/services/constraints/constraintValidator.service';
 import type {
     RotationInterval,
@@ -28,6 +29,27 @@ export function checkAllConflicts(
     const regularIntervals = intervals.filter(i => !i.isAstrocorrection);
     
     const shadowProcessedIntervals = checkShadowPriority(regularIntervals, shadowIntervals || []);
+
+    shadowProcessedIntervals.forEach(interval => {
+        if (interval.willBeSavedInShadow && interval.msu1Config && interval.msu2Config && interval.msuData) {
+            interval.msuData = {
+                ...MsuMapper.fromMsuConfigs(
+                    interval.msu1Config,
+                    interval.msu2Config,
+                    {
+                        id: interval.msuData.id,
+                        idMain: interval.msuData.idMain,
+                        tip: interval.msuData.tip,
+                        reg: interval.msuData.reg,
+                        dlit: interval.msuData.dlit,
+                        prBssd: interval.msuData.prBssd,
+                        prZg: interval.msuData.prZg,
+                        prOtklZgBssd: interval.msuData.prOtklZgBssd
+                    }
+                )
+            };
+        }
+    });
 
     const constraintViolations = ConstraintValidator.validate(
         shadowProcessedIntervals,
