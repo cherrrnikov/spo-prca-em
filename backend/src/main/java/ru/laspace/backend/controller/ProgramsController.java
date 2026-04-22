@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import ru.laspace.backend.dto.programs.ProgramCreateRequest;
 import ru.laspace.backend.service.Pr01Service;
 import ru.laspace.backend.service.Pr03Service;
+import ru.laspace.backend.service.Pr04Service;
 import ru.laspace.backend.service.ProgramsService;
 
 @Slf4j
@@ -33,6 +34,7 @@ public class ProgramsController {
     private final ProgramsService programsService;
     private final Pr01Service pr01Service;
     private final Pr03Service pr03Service;
+    private final Pr04Service pr04Service;
 
     @Operation(summary = "Создать ПРЦА", description = "Сохраняет ПРЦА со всеми режимами")
     @ApiResponses(value = {
@@ -85,6 +87,21 @@ public class ProgramsController {
             @PathVariable Long numKa) {
         log.info("=== Получен запрос на формирование ПР03: numRp={}, numKa={} ===", numRp, numKa);
         String fo = pr03Service.generateAndSave(numRp, numKa);
+        return ResponseEntity.ok(fo);
+    }
+
+    @Operation(summary = "Сформировать и сохранить ПР04")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "ПР04 успешно сформирована"),
+            @ApiResponse(responseCode = "404", description = "ПРЦА не найдена", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера", content = @Content)
+    })
+    @PostMapping("/{numRp}/{numKa}/pr04/generate")
+    public ResponseEntity<String> generatePr04(
+            @PathVariable Long numRp,
+            @PathVariable Long numKa) {
+        log.info("=== Получен запрос на формирование ПР04: numRp={}, numKa={} ===", numRp, numKa);
+        String fo = pr04Service.generateAndSave(numRp, numKa);
         return ResponseEntity.ok(fo);
     }
 }

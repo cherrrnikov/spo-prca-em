@@ -16,6 +16,9 @@ public class PrConfig {
     // Номер ФО ПР03
     public static final String FORM_PR03_NUMBER = "077";
 
+    // Номер ФО ПР04
+    public static final String FORM_PR04_NUMBER = "079";
+
     /**
      * Считает сквозной номер планируемых суток
      * Количество суток от даты запуска до даты планируемых суток

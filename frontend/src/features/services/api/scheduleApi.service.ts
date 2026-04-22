@@ -98,6 +98,20 @@ export class ScheduleApiService {
         return await response.text();
     }
 
+    static async generatePr04(numRp: number, numKa: number): Promise<string> {
+        const response = await fetch(`${this.BASE_URL}/schedule/pr04-proxy`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ numRp, numKa })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ошибка генерации ПР04: ${response.status}`)
+        }
+
+        return await response.text();
+    }
+
     static async loadModeDurations(): Promise<Record<string, number>> {
         const response = await fetch(`${this.BASE_URL}/schedule/durations-proxy`);
         if (!response.ok) return {};
