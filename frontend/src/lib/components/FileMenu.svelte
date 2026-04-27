@@ -167,6 +167,15 @@
                       console.error
                   }
 
+                  try {
+                    await ScheduleApiService.generateVp01(
+                      result.numRp,
+                      numKa || programRequest.mainData.numKa
+                    );
+                  } catch (vp01Error) {
+                      console.error
+                  }
+
                   if (result?.numRp) {
                       program.numRp = result.numRp;
                       const index = programsList.findIndex(p => p.id === program.id);
@@ -298,6 +307,15 @@
               numKa || programRequest.mainData.numKa
             );
           } catch (pr04Error) {
+              console.error
+          }
+
+          try {
+            await ScheduleApiService.generateVp01(
+              result.numRp,
+              numKa || programRequest.mainData.numKa
+            );
+          } catch (vp01Error) {
               console.error
           }
           
