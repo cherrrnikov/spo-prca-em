@@ -40,11 +40,11 @@ public class Vp01BuilderServiceImpl implements Vp01BuilderService {
     private static final int ARRAY_MSU = 1;
     private static final int ARRAY_OMI = 2;
     private static final int ARRAY_RELAY = 3;
-    private static final int ARRAY_ONA = 4;
-    private static final int ARRAY_TNP = 5;
-    private static final int ARRAY_TECH_MSU = 6;
-    private static final int ARRAY_CA_JUST = 7;
-    private static final int ARRAY_KVD = 8;
+    private static final int ARRAY_TNP = 4;
+    private static final int ARRAY_CA_JUST = 5;
+    private static final int ARRAY_ONA = 6;
+    private static final int ARRAY_KVD = 7;
+    private static final int ARRAY_TECH_MSU = 8;
 
     private final Vp01Repository vp01Repository;
     private final Vp01MsuRepository vp01MsuRepository;
@@ -120,19 +120,16 @@ public class Vp01BuilderServiceImpl implements Vp01BuilderService {
             phraseNum++;
         }
 
-        // Массив 3 — ретрансляция (данных нет, r=0)
-        sb.append(phraseNum).append(".").append(ARRAY_RELAY).append(",").append(0).append(";\n");
-        phraseNum++;
-
-        // Массив 4 — юстировка ОНА
-        sb.append(phraseNum).append(".").append(ARRAY_ONA).append(",").append(onaList.size()).append(";\n");
-        phraseNum++;
-        for (int i = 0; i < onaList.size(); i++) {
-            sb.append(phraseNum).append(".").append(buildOnaPhrase(i + 1, onaList.get(i))).append(";\n");
+        // Массив 3 — ретрансляция (источник данных не реализован, пропускаем если
+        // пусто)
+        List<Object> relayList = List.of(); // TODO: заменить на реальный репозиторий когда появятся данные
+        if (!relayList.isEmpty()) {
+            sb.append(phraseNum).append(".").append(ARRAY_RELAY).append(",").append(relayList.size()).append(";\n");
             phraseNum++;
+            // TODO: for (int i = 0; i < relayList.size(); i++) { buildRelayPhrase(...) }
         }
 
-        // Массив 5 — ТНП
+        // Массив 4 — ТНП
         sb.append(phraseNum).append(".").append(ARRAY_TNP).append(",").append(tnpList.size()).append(";\n");
         phraseNum++;
         for (int i = 0; i < tnpList.size(); i++) {
@@ -140,23 +137,36 @@ public class Vp01BuilderServiceImpl implements Vp01BuilderService {
             phraseNum++;
         }
 
-        // Массив 6 — технологические съёмки МСУ-ГС (tip=2)
-        sb.append(phraseNum).append(".").append(ARRAY_TECH_MSU).append(",").append(msuTech.size()).append(";\n");
+        // Массив 5 — юстировка ЦА МСУ-ГС (источник данных не реализован, пропускаем
+        // если пусто)
+        List<Object> caJustList = List.of(); // TODO: заменить на реальный репозиторий когда появятся данные
+        if (!caJustList.isEmpty()) {
+            sb.append(phraseNum).append(".").append(ARRAY_CA_JUST).append(",").append(caJustList.size()).append(";\n");
+            phraseNum++;
+            // TODO: for (int i = 0; i < caJustList.size(); i++) { buildCaJustPhrase(...) }
+        }
+
+        // Массив 6 — юстировка ОНА
+        sb.append(phraseNum).append(".").append(ARRAY_ONA).append(",").append(onaList.size()).append(";\n");
         phraseNum++;
-        for (int i = 0; i < msuTech.size(); i++) {
-            sb.append(phraseNum).append(".").append(buildMsuPhrase(i + 1, msuTech.get(i))).append(";\n");
+        for (int i = 0; i < onaList.size(); i++) {
+            sb.append(phraseNum).append(".").append(buildOnaPhrase(i + 1, onaList.get(i))).append(";\n");
             phraseNum++;
         }
 
-        // Массив 7 — юстировка ЦА (МСУ-ГС), данных нет, g=0
-        sb.append(phraseNum).append(".").append(ARRAY_CA_JUST).append(",").append(0).append(";\n");
-        phraseNum++;
-
-        // Массив 8 — калибровка ВД
+        // Массив 7 — калибровка ВД
         sb.append(phraseNum).append(".").append(ARRAY_KVD).append(",").append(kvdList.size()).append(";\n");
         phraseNum++;
         for (int i = 0; i < kvdList.size(); i++) {
             sb.append(phraseNum).append(".").append(buildKvdPhrase(i + 1, kvdList.get(i))).append(";\n");
+            phraseNum++;
+        }
+
+        // Массив 8 — технологические съёмки МСУ-ГС (tip=2)
+        sb.append(phraseNum).append(".").append(ARRAY_TECH_MSU).append(",").append(msuTech.size()).append(";\n");
+        phraseNum++;
+        for (int i = 0; i < msuTech.size(); i++) {
+            sb.append(phraseNum).append(".").append(buildMsuPhrase(i + 1, msuTech.get(i))).append(";\n");
             phraseNum++;
         }
 
