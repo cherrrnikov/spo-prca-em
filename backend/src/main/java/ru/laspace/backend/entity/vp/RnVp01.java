@@ -27,7 +27,7 @@ public class RnVp01 {
     private Integer rnf;
 
     @Column(name = "dsf")
-    private LocalDateTime dfs;
+    private LocalDateTime dsf;
 
     @Column(name = "n_rp")
     private Integer nRp;
