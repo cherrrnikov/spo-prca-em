@@ -20,8 +20,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.laspace.backend.dto.vp.VpCreateRequest;
-import ru.laspace.backend.service.Vp01Service;
-import ru.laspace.backend.service.VpService;
+import ru.laspace.backend.service.vp.VpService;
+import ru.laspace.backend.service.vp01.Vp01Service;
 
 @Slf4j
 @RestController

@@ -18,8 +18,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ru.laspace.backend.dto.kr01.Kr01DataResponse;
-import ru.laspace.backend.service.Kr01Service;
+import ru.laspace.backend.dto.input.kr01.Kr01DataResponse;
+import ru.laspace.backend.service.input.Kr01Service;
 
 @Slf4j
 @RestController
