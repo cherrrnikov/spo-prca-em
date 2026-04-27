@@ -22,7 +22,7 @@ public class Pr04ServiceImpl implements Pr04Service {
 
     @Override
     @Transactional
-    public String generateAndSave(Long numRp, Long numKa) {
+    public String generateAndSave(Integer numRp, Integer numKa) {
         Integer maxRnf = rnPr04Repository.findMaxRnf();
         Integer rnf = maxRnf + 1;
         log.info("Генерация ПР04: numRp={}, numKa={}, rnf={}", numRp, numKa, rnf);

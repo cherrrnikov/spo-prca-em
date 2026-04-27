@@ -51,10 +51,10 @@ public class ProgramCreateRequest {
     @EqualsAndHashCode
     @ToString
     public static class MainData {
-        private Long numRp;
+        private Integer numRp;
 
         @NotNull(message = "Номер КА обязателен")
-        private Long numKa;
+        private Integer numKa;
 
         @NotNull(message = "Дата начала обязательна")
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -80,8 +80,8 @@ public class ProgramCreateRequest {
     @EqualsAndHashCode
     @ToString
     public static class ModeData {
-        private Long numRp;
-        private Long numKa;
+        private Integer numRp;
+        private Integer numKa;
 
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         private LocalDateTime dateOn;

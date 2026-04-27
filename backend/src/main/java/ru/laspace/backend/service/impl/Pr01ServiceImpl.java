@@ -22,7 +22,7 @@ public class Pr01ServiceImpl implements Pr01Service {
 
     @Override
     @Transactional
-    public String generateAndSave(Long numRp, Long numKa) {
+    public String generateAndSave(Integer numRp, Integer numKa) {
         // Генерируем rnf = max + 1
         Integer maxRnf = rnPr01Repository.findMaxRnf();
         Integer rnf = maxRnf + 1;

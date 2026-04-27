@@ -11,10 +11,10 @@ import ru.laspace.backend.entity.programs.ProgramsMain;
 
 @Repository
 public interface ProgramsMainRepository extends JpaRepository<ProgramsMain, Long> {
-    boolean existsByNumRpAndNumKa(Long numRp, Long numKa);
+    boolean existsByNumRpAndNumKa(Integer numRp, Integer numKa);
 
     @Query("SELECT MAX(p.numRp) FROM ProgramsMain p WHERE p.numKa = :numKa")
-    Long findMaxNumRpByNumKa(@Param("numKa") Long numKa);
+    Integer findMaxNumRpByNumKa(@Param("numKa") Integer numKa);
 
-    Optional<ProgramsMain> findByNumRpAndNumKa(Long numRp, Long numKa);
+    Optional<ProgramsMain> findByNumRpAndNumKa(Integer numRp, Integer numKa);
 }

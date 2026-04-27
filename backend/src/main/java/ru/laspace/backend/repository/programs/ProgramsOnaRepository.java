@@ -14,7 +14,7 @@ public interface ProgramsOnaRepository extends JpaRepository<ProgramsOna, Long> 
 
     @Query("SELECT o FROM ProgramsOna o WHERE o.programsMain.numRp = :numRp AND o.programsMain.numKa = :numKa AND o.nOna = :nOna ORDER BY o.dN")
     List<ProgramsOna> findByNumRpAndNumKaAndNOnaOrderByDN(
-            @Param("numRp") Long numRp,
-            @Param("numKa") Long numKa,
+            @Param("numRp") Integer numRp,
+            @Param("numKa") Integer numKa,
             @Param("nOna") Integer nOna);
 }

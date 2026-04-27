@@ -17,12 +17,12 @@ public class ProgramNumberServiceImpl implements ProgramNumberService {
 
     @Override
     @Transactional(readOnly = true)
-    public Long generateNextProgramNumber(Long numKa) {
+    public Integer generateNextProgramNumber(Integer numKa) {
         // Ищем максимальный numRp для данного numKa
-        Long maxNumRp = programsMainRepository.findMaxNumRpByNumKa(numKa);
+        Integer maxNumRp = programsMainRepository.findMaxNumRpByNumKa(numKa);
 
         // Если записей нет, начинаем с 1
-        long nextNumber = (maxNumRp == null) ? 1 : maxNumRp + 1;
+        Integer nextNumber = (maxNumRp == null) ? 1 : maxNumRp + 1;
 
         log.info("Сгенерирован номер ПРЦА для КА {}: {}", numKa, nextNumber);
 

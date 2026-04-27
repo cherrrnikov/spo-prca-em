@@ -55,7 +55,7 @@ public class Vp01BuilderServiceImpl implements Vp01BuilderService {
     private final FormInRepository formInRepository;
 
     @Override
-    public String build(Long numRp, Long numKa, Integer rnf) {
+    public String build(Integer numRp, Integer numKa, Integer rnf) {
         // Находим главную запись ВПРЦА
         Vp01 vp01 = vp01Repository.findByNumRpAndNumKa(numRp, numKa)
                 .orElseThrow(() -> new RuntimeException(

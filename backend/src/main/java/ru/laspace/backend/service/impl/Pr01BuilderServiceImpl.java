@@ -41,7 +41,7 @@ public class Pr01BuilderServiceImpl implements Pr01BuilderService {
     private final ProgramsModeKvdRepository programsModeKvdRepository;
 
     @Override
-    public String build(Long numRp, Long numKa, Integer rnf) {
+    public String build(Integer numRp, Integer numKa, Integer rnf) {
         ProgramsMain main = programsMainRepository.findByNumRpAndNumKa(numRp, numKa)
                 .orElseThrow(() -> new RuntimeException(
                         "ПРЦА не найдена: numRp=" + numRp + ", numKa=" + numKa));

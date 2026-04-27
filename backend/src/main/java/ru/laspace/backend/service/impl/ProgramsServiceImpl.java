@@ -39,10 +39,10 @@ public class ProgramsServiceImpl implements ProgramsService {
 
     @Override
     @Transactional
-    public Long saveProgram(ProgramCreateRequest request) {
+    public Integer saveProgram(ProgramCreateRequest request) {
         log.info("=== Начало сохранения ПРЦА ===");
-        Long numKa = request.getMainData().getNumKa();
-        Long newNumRp = programNumberService.generateNextProgramNumber(numKa);
+        Integer numKa = request.getMainData().getNumKa();
+        Integer newNumRp = programNumberService.generateNextProgramNumber(numKa);
 
         log.info("Номер КА: {}, новый номер ПРЦА: {}", numKa, newNumRp);
         log.info("Всего режимов в запросе: {}", request.getModes().size());
@@ -75,7 +75,7 @@ public class ProgramsServiceImpl implements ProgramsService {
         return newNumRp;
     }
 
-    private ProgramsMain createProgramsMain(ProgramCreateRequest.MainData mainData, Long newNumRp) {
+    private ProgramsMain createProgramsMain(ProgramCreateRequest.MainData mainData, Integer newNumRp) {
         ProgramsMain programsMain = new ProgramsMain();
         programsMain.setNumRp(newNumRp);
         programsMain.setNumKa(mainData.getNumKa());
@@ -86,7 +86,7 @@ public class ProgramsServiceImpl implements ProgramsService {
         return programsMain;
     }
 
-    private void saveMode(ProgramsMain programsMain, ModeData modeData, Long newNumRp) {
+    private void saveMode(ProgramsMain programsMain, ModeData modeData, Integer newNumRp) {
         // 2.1. Сохраняем ProgramsMode с новым numRp
         ProgramsMode programsMode = new ProgramsMode();
         programsMode.setProgramsMain(programsMain);

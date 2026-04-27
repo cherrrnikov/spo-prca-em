@@ -28,10 +28,10 @@ public class ProgramsMode {
     private ProgramsMain programsMain;
 
     @Column(name = "num_rp")
-    private Long numRp;
+    private Integer numRp;
 
     @Column(name = "num_ka")
-    private Long numKa;
+    private Integer numKa;
 
     @Column(name = "date_on")
     private LocalDateTime dateOn;

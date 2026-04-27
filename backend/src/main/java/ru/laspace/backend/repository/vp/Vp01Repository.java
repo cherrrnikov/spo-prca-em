@@ -9,7 +9,7 @@ import ru.laspace.backend.entity.vp.Vp01;
 
 @Repository
 public interface Vp01Repository extends JpaRepository<Vp01, Long> {
-    boolean existsByNumRpAndNumKa(Long numRp, Long numKa);
+    boolean existsByNumRpAndNumKa(Integer numRp, Integer numKa);
 
-    Optional<Vp01> findByNumRpAndNumKa(Long numRp, Long numKa);
+    Optional<Vp01> findByNumRpAndNumKa(Integer numRp, Integer numKa);
 }

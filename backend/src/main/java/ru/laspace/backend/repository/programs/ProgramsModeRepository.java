@@ -12,5 +12,5 @@ import ru.laspace.backend.entity.programs.ProgramsMode;
 @Repository
 public interface ProgramsModeRepository extends JpaRepository<ProgramsMode, Long> {
     @Query("SELECT m FROM ProgramsMode m WHERE m.programsMain.numRp = :numRp AND m.programsMain.numKa = :numKa ORDER BY m.dateOn ASC")
-    List<ProgramsMode> findByNumRpAndNumKaOrderByDateOn(@Param("numRp") Long numRp, @Param("numKa") Long numKa);
+    List<ProgramsMode> findByNumRpAndNumKaOrderByDateOn(@Param("numRp") Integer numRp, @Param("numKa") Integer numKa);
 }
