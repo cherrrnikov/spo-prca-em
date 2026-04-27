@@ -1,7 +1,7 @@
 import { MsuMapper } from '$lib/mappers/msuMapper';
 import type { Id02Dto, Id06TsDto, MsuConfig, TimeInterval } from '$lib/types';
 import { getDefaultIntervalFlags } from '$lib/utils/interval';
-import { CityService } from '../utils/cities.service';
+import { CityService } from './cities.service';
 
 export class ShootingIntervalService {
     static convertTsToSubIntervals(

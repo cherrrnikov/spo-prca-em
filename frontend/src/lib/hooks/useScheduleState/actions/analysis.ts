@@ -3,7 +3,7 @@ import { MsuMapper } from '$lib/mappers/msuMapper';
 import { modal } from '$lib/services/modal.service';
 import type { CreatedProgramData, ProgramModeData, RotationInterval, ShadowInterval, TimeInterval, VkiInterval, ZasvetkaInterval } from '$lib/types';
 import type { ProgramsListItem } from '$lib/types/analysis';
-import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
+import { AstrocorrectionService } from '$lib/utils/astrocorrection';
 import { checkAllConflicts } from '$lib/utils/interval';
 import { TimeUtils } from '$lib/utils/time';
 import { get } from 'svelte/store';

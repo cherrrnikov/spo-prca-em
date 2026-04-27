@@ -1,4 +1,4 @@
-import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
+import { AstrocorrectionService } from '$lib/utils/astrocorrection';
 import { get } from 'svelte/store';
 import { ScheduleApiService } from '../../../../features/services/api/scheduleApi.service';
 import { ScheduleConverterService } from '../../../../features/services/data/scheduleConverter.service';

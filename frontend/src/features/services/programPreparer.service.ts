@@ -8,7 +8,7 @@ import type {
     ProgramModeData
 } from '$lib/types';
 import { TimeUtils } from '$lib/utils/time';
-import type { ScheduleStatus } from '../../schedule-creation/types';
+import type { ScheduleStatus } from '../schedule-creation/types';
 
 export class ProgramPreparerService {
     static prepareProgramData(
