@@ -7,15 +7,13 @@
   import type { UserResponse } from '$lib/types/auth';
   import { mergeMsuIntervals } from '$lib/utils/interval/mergeMsuIntervals';
   import { onMount } from 'svelte';
-  import { ScheduleApiService } from '../../features/services/api/scheduleApi.service';
-  import { ProgramPreparerService } from '../../features/services/data/programPreparer.service';
-  import { VpPreparerService } from '../../features/services/data/vpPreparer.service';
+  import { ProgramPreparerService } from '../../features/services/programPreparer.service';
+  import { ScheduleApiService } from '../../features/services/scheduleApi.service';
+  import { VpPreparerService } from '../../features/services/vpPreparer.service';
   
   let isOpen = $state(false);
   let isSubMenuOpen = $state(false);
   let menuRef = $state<HTMLDivElement | null>(null);
-  let logoutForm: HTMLFormElement;
-  let pendingLogout = false;
 
   let {
     userData,

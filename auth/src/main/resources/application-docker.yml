@@ -4,11 +4,6 @@ spring:
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
 
-  cache:
-    type: redis
-    redis:
-      time-to-live: 1800000
-
   data:
     redis:
       host: redis
@@ -23,8 +18,3 @@ jwt:
 security:
   max-failed-attempts: ${MAX_FAILED_ATTEMPTS}
   account-lock-duration-minutes: ${ACCOUNT_LOCK_DURATION}
-
-logging:
-  level:
-    root: INFO
-    '[ru.laspace.auth]': DEBUG

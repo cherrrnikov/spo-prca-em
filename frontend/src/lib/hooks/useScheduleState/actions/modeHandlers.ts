@@ -8,7 +8,7 @@ import { IntervalValidationService } from '$lib/utils/intervalValidation';
 import { ModeUtils } from '$lib/utils/mode';
 import { TimeUtils } from '$lib/utils/time';
 import { get } from 'svelte/store';
-import { ScheduleConverterService } from '../../../../features/services/data/scheduleConverter.service';
+import { ScheduleConverterService } from '../../../../features/services/scheduleConverter.service';
 import type { createCreators } from '../creators';
 import type { createStores } from '../stores';
 import type { createValidation } from '../validation';

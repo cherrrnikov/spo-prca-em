@@ -12,9 +12,9 @@ import type {
 } from '$lib/types';
 import { getDefaultIntervalFlags } from '$lib/utils/interval';
 import { TimeUtils } from '$lib/utils/time';
-import { ScheduleConverterService } from './data/scheduleConverter.service';
-import { ShootingIntervalService } from './data/shootingInterval.service';
-import { CityService } from './utils/cities.service';
+import { CityService } from './cities.service';
+import { ScheduleConverterService } from './scheduleConverter.service';
+import { ShootingIntervalService } from './shootingInterval.service';
 
 export class ScheduleCreationService {
     // Вспомогательная функция для получения номера ППИ

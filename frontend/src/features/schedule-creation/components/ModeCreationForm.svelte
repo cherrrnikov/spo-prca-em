@@ -12,10 +12,10 @@
     import { IntervalValidationService } from "$lib/utils/intervalValidation";
     import { TimeUtils } from "$lib/utils/time";
     import { onMount } from "svelte";
-    import { ScheduleApiService } from "../../services/api/scheduleApi.service";
-    import { ScheduleConverterService } from "../../services/data/scheduleConverter.service";
-    import { ManualIntervalSplitService } from '../../services/utils/manualIntervalSplit.service';
-    import { ModeDurationService } from "../../services/utils/modeDuration.service";
+    import { ManualIntervalSplitService } from "../../services/manualIntervalSplit.service";
+    import { ModeDurationService } from "../../services/modeDuration.service";
+    import { ScheduleApiService } from "../../services/scheduleApi.service";
+    import { ScheduleConverterService } from "../../services/scheduleConverter.service";
     import MsuCheckboxGroup from "./MsuCheckboxGroup.svelte";
 
     const customerCodes = CUSTOMER_CODES;

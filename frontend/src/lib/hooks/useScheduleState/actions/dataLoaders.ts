@@ -1,7 +1,7 @@
 import { AstrocorrectionService } from '$lib/utils/astrocorrection';
 import { get } from 'svelte/store';
-import { ScheduleApiService } from '../../../../features/services/api/scheduleApi.service';
-import { ScheduleConverterService } from '../../../../features/services/data/scheduleConverter.service';
+import { ScheduleApiService } from '../../../../features/services/scheduleApi.service';
+import { ScheduleConverterService } from '../../../../features/services/scheduleConverter.service';
 import type { createStores } from '../stores';
 import type { createValidation } from '../validation';
 

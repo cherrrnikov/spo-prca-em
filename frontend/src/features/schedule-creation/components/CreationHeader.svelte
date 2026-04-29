@@ -3,7 +3,7 @@
 	import { modal } from "$lib/services/modal.service";
 	import type { OperatorData, Ppi, PpiAssignment, PpiSelectionModal as PpiSelectionModalType } from "$lib/types";
 	import { onMount } from "svelte";
-	import { ScheduleApiService } from "../../services/api/scheduleApi.service";
+	import { ScheduleApiService } from "../../services/scheduleApi.service";
 	import type { ScheduleStatus } from "../types";
 	import CreationForm from "./CreationForm.svelte";
 	import PpiSelectionModal from "./PpiSelectionModal.svelte";

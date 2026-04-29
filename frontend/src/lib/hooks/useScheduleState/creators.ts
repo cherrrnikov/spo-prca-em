@@ -9,8 +9,8 @@ import { getDefaultIntervalFlags } from '$lib/utils/interval';
 import { ModeUtils } from '$lib/utils/mode';
 import { TimeUtils } from '$lib/utils/time';
 import { get } from 'svelte/store';
-import { ScheduleConverterService } from '../../../features/services/data/scheduleConverter.service';
-import { CityService } from '../../../features/services/utils/cities.service';
+import { CityService } from '../../../features/services/cities.service';
+import { ScheduleConverterService } from '../../../features/services/scheduleConverter.service';
 
 export function createCreators(stores: ReturnType<typeof import('./stores').createStores>) {
     const {

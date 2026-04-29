@@ -27,7 +27,7 @@ public class Vp01Ona {
     @JoinColumn(name = "id_pr")
     private Vp01 vp01;
 
-    @Column(name = "num_ustONA")
+    @Column(name = "num_ust_ona")
     private Integer numUstOna;
 
     @Column(name = "date_nach")

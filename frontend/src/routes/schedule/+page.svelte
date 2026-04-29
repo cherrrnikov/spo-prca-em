@@ -13,19 +13,19 @@
     import CreationHeader from '../../features/schedule-creation/components/CreationHeader.svelte';
     import ModeCreationFormComponent from '../../features/schedule-creation/components/ModeCreationForm.svelte';
     
-    import { ScheduleApiService } from '../../features/services/api/scheduleApi.service';
     import { ScheduleCreationService } from '../../features/services/scheduleCreation.service';
     
-    import { AstrocorrectionService } from '$lib/utils/astrocorrection.service';
     import { TimeUtils } from '$lib/utils/time';
     
     import { modal } from '$lib/services/modal.service';
     import type { OperatorData, PpiAssignment } from '$lib/types';
+    import { AstrocorrectionService } from '$lib/utils/astrocorrection';
     import { checkAllConflicts } from '$lib/utils/interval/index';
     import AnalysisModal from '../../features/schedule-creation/components/AnalysisModal.svelte';
     import ProgramsSelector from '../../features/schedule-creation/components/ProgramsSelector.svelte';
-    import { ProgramCreatorService } from '../../features/services/data/programCreator.service';
-    import { ScheduleConverterService } from '../../features/services/data/scheduleConverter.service';
+    import { ProgramCreatorService } from '../../features/services/programCreator.service';
+    import { ScheduleApiService } from '../../features/services/scheduleApi.service';
+    import { ScheduleConverterService } from '../../features/services/scheduleConverter.service';
 
     const cities = CITIES;
     const workModes = WORK_MODES;

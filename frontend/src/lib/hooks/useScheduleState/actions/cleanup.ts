@@ -2,7 +2,7 @@ import type { ProgramsListItem } from '$lib/types/analysis';
 import { getDefaultIntervalFlags } from '$lib/utils/interval';
 import { TooltipFormatter } from '$lib/utils/tooltipFormatter';
 import { get } from 'svelte/store';
-import { CityService } from '../../../../features/services/utils/cities.service';
+import { CityService } from '../../../../features/services/cities.service';
 import type { createStores } from '../stores';
 
 export function createCleanup(stores: ReturnType<typeof createStores>) {
