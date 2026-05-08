@@ -6,6 +6,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169e1?logo=postgresql&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-7-dc382d?logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ed?logo=docker&logoColor=white)
+![CI](https://github.com/cherrrnikov/spo-prca-em/actions/workflows/ci.yml/badge.svg)
 
 Веб-система оперативного планирования работы целевой аппаратуры гидрометеорологического космического аппарата **ГГКС «Электро-М»**. Разработана для НПО им. С.А. Лавочкина (Роскосмос) в рамках выпускной квалификационной работы (МАИ, группа М6О-408Б-22).
 
