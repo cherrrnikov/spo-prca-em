@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: spo-auth-service-test
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 1800000
+      cache-null-values: false
+
+jwt:
+  secret: test-secret-key-for-ci-at-least-32-characters-long
+  access-token-expiration: 900000
+  refresh-token-expiration: 604800000
+  issuer: spo-auth-service-test
+
+security:
+  max-failed-attempts: 5
+  account-lock-duration-minutes: 15
+  enable-brute-force-protection: true
+  login-delay-millis: 0
+
+springdoc:
+  api-docs:
+    enabled: false

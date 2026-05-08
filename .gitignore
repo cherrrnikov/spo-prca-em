@@ -37,3 +37,7 @@ build/
 
 /info
 application.yml
+
+# Allow test application.yml
+!auth/src/test/resources/application.yml
+!backend/src/test/resources/application.yml
