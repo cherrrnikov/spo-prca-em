@@ -15,7 +15,7 @@
     isRefreshing = true;
     
     try {
-      const response = await fetch('/api/auth/validate', {
+      const response = await fetch('/proxy/auth/validate', {
         method: 'GET',
         credentials: 'same-origin'
       });

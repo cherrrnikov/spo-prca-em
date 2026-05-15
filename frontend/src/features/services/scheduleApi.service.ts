@@ -9,7 +9,7 @@ import type {
 } from '$lib/types';
 
 export class ScheduleApiService {
-    private static BASE_URL = '/api';
+    private static BASE_URL = '/proxy';
 
     static async loadOperatorData(date: string): Promise<OperatorData | null> {
         const response = await fetch(`${this.BASE_URL}/schedule/proxy?date=${date}`);
