@@ -25,6 +25,9 @@ security:
   enable-brute-force-protection: true
   login-delay-millis: 0
 
+cors:
+  allowed-origins: http://localhost:5173,http://localhost
+
 springdoc:
   api-docs:
     enabled: false

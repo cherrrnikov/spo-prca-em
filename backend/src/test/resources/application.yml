@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: spo-backend-service-test
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+jwt:
+  secret: test-secret-key-for-ci-at-least-32-characters-long
+  issuer: spo-backend-service-test
+
+cors:
+  allowed-origins: http://localhost:5173,http://localhost
+
+springdoc:
+  api-docs:
+    enabled: false
