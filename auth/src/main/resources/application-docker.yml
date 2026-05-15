@@ -19,6 +19,9 @@ security:
   max-failed-attempts: ${MAX_FAILED_ATTEMPTS}
   account-lock-duration-minutes: ${ACCOUNT_LOCK_DURATION}
 
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://localhost,http://localhost:5173,http://localhost}
+
 logging:
   level:
     org.springframework.web.cors: DEBUG
