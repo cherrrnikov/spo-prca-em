@@ -93,8 +93,8 @@ services:
       backend:
         condition: service_healthy
     environment:
-      AUTH_INTERNAL_URL: http://auth-service:8080
-      BACKEND_INTERNAL_URL: http://backend-service:8081
+      AUTH_INTERNAL_URL: http://auth:8080
+      BACKEND_INTERNAL_URL: http://backend:8081
     expose:
       - "3000"
     healthcheck:
@@ -108,6 +108,9 @@ services:
   nginx:
     image: nginx:alpine
     container_name: nginx
+    depends_on:
+      frontend:
+        condition: service_healthy
     ports:
       - "80:80"
     volumes:
