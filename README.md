@@ -65,7 +65,7 @@
 
 ```bash
 # Клонировать репозиторий
-git clone https://github.com/ВАШ_USERNAME/spo-prca-em.git
+git clone https://github.com/cherrrnikov/spo-prca-em.git
 cd spo-prca-em
 
 # Создать файл окружения и заполнить переменные
