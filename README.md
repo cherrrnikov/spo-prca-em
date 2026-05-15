@@ -77,7 +77,7 @@ cp auth/src/main/resources/application.yml.example \
 cp backend/src/main/resources/application.yml.example \
    backend/src/main/resources/application.yml
 
-# Запустить
+# Запустить всё
 docker compose up --build -d
 ```
 
