@@ -42,20 +42,20 @@ export const actions = {
             });
             
             if (!response.ok) {
-                let errorMessage = `Ошибка: ${response.status}`;
-
+                let errorMessage = getSpringErrorMessage(response.status);
                 try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorData.error || getSpringErrorMessage(response.status);
-                } catch {
                     const text = await response.text();
-                    if (text) errorMessage = text;
-                }
+                    if (text) {
+                        try {
+                            const errorData = JSON.parse(text);
+                            errorMessage = errorData.message || errorData.error || errorMessage;
+                        } catch {
+                            errorMessage = text;
+                        }
+                    }
+                } catch { /* ignore */ }
 
-                return fail(response.status, {
-                    username,
-                    error: errorMessage
-                });
+                return fail(response.status, { username, error: errorMessage });
             }
 
             const data: JwtResponse = await response.json();

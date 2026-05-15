@@ -18,3 +18,7 @@ jwt:
 security:
   max-failed-attempts: ${MAX_FAILED_ATTEMPTS}
   account-lock-duration-minutes: ${ACCOUNT_LOCK_DURATION}
+
+logging:
+  level:
+    org.springframework.web.cors: DEBUG

@@ -56,7 +56,12 @@ public class SecurityConfig {
 
                 configuration.setAllowedOrigins(Arrays.asList(
                                 "http://localhost:5173",
-                                "http://127.0.0.1:5173"));
+                                "http://127.0.0.1:5173",
+                                "http://localhost",
+                                "http://localhost:3000",
+                                "http://frontend-service:3000",
+                                "https://localhost"
+                        ));
 
                 configuration.setAllowedMethods(Arrays.asList(
                                 "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
@@ -90,7 +95,8 @@ public class SecurityConfig {
                                                                 "/v3/api-docs/**",
                                                                 "/swagger-ui/**",
                                                                 "/webjars/**",
-                                                                "/swagger-resources/**")
+                                                                "/swagger-resources/**",
+                                                                "/actuator/health")
                                                 .permitAll()
                                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                                 .anyRequest().authenticated())
