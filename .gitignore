@@ -34,10 +34,10 @@ build/
 .vscode/
 .env
 *.env
-
+docker-compose.override.yml
 /info
 application.yml
 
 # Allow test application.yml
 !auth/src/test/resources/application.yml
-!backend/src/test/resources/application.yml
+!backend/src/test/resources/application.yml"docker-compose.override.yml" 
