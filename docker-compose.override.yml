@@ -1,7 +1,0 @@
-services:
-  auth:
-    ports:
-      - "8080:8080"
-  backend:
-    ports:
-      - "8081:8081"
