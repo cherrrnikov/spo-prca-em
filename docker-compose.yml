@@ -97,6 +97,7 @@ services:
     environment:
       AUTH_INTERNAL_URL: http://auth:8080
       BACKEND_INTERNAL_URL: http://backend:8081
+      COOKIE_SECURE: ${COOKIE_SECURE}
     expose:
       - "3000"
     healthcheck:

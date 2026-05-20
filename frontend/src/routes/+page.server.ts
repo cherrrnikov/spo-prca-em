@@ -63,7 +63,7 @@ export const actions = {
             cookies.set('access_token', data.accessToken, {
                 path: '/',
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: process.env.COOKIE_SECURE === 'true',
                 sameSite: 'strict',
                 maxAge: ACCESS_TOKEN_MAX_AGE 
             });
@@ -71,7 +71,7 @@ export const actions = {
             cookies.set('refresh_token', data.refreshToken, {
                 path: '/',
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: process.env.COOKIE_SECURE === 'true',
                 sameSite: 'strict',
                 maxAge: REFRESH_TOKEN_MAX_AGE
             });
@@ -90,7 +90,7 @@ export const actions = {
             cookies.set('user_data', JSON.stringify(userData), {
                 path: '/',
                 httpOnly: false, 
-                secure: process.env.NODE_ENV === 'production',
+                secure: process.env.COOKIE_SECURE === 'true',
                 sameSite: 'strict',
                 maxAge: ACCESS_TOKEN_MAX_AGE
             });
