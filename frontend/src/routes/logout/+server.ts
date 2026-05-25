@@ -20,7 +20,11 @@ export const POST: RequestHandler = async ({ cookies, fetch }) => {
     } catch { /* ignore */ }
 
     ['access_token', 'refresh_token', 'user_data'].forEach(name => {
-        cookies.delete(name, { path: '/' });
+        cookies.delete(name, { 
+            path: '/',
+            sameSite: 'strict',
+            secure: process.env.COOKIE_SECURE === 'true'
+        });
     });
 
     throw redirect(303, '/login');

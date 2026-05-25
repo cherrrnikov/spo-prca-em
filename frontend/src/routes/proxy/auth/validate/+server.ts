@@ -41,7 +41,11 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
     if (!refreshResponse.ok) {
       // Очищаем cookies при ошибке
       ['access_token', 'refresh_token', 'user_data'].forEach(name => {
-        cookies.delete(name, { path: '/' });
+        cookies.delete(name, { 
+          path: '/',
+          sameSite: 'strict',
+          secure: process.env.COOKIE_SECURE === 'true'
+        });
       });
       return json({ status: 'unauthorized' }, { status: 401 });
     }
