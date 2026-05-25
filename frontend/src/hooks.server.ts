@@ -132,7 +132,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   const { cookies, url } = event;
   
   // Публичные маршруты - пропускаем
-  const publicRoutes = ['/', '/api/auth/login', '/api/auth/refresh'];
+  const publicRoutes = ['/login', '/api/auth/login', '/api/auth/refresh'];
   if (publicRoutes.includes(url.pathname)) {
     return await resolve(event);
   }
@@ -144,7 +144,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   if (!refreshToken) {
     if (url.pathname.startsWith('/schedule')) {
       await clearAuthCookies(cookies);
-      throw redirect(303, '/');
+      throw redirect(303, '/login');
     }
     return await resolve(event);
   }
@@ -154,7 +154,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     const success = await refreshTokens(cookies, refreshToken);
     if (!success) {
       await clearAuthCookies(cookies);
-      throw redirect(303, '/');
+      throw redirect(303, '/login');
     }
     return await resolve(event);
   }
