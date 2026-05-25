@@ -353,7 +353,7 @@
       'Вы уверены, что хотите выйти?',
       async () => {
         // Отправляем запрос на выход
-        const response = await fetch('/?/logout', {
+        const response = await fetch('/logout', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',

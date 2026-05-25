@@ -22,7 +22,7 @@
           {/if}
         </div>
         
-        <form method="POST" action="/?/logout">
+        <form method="POST" action="/logout">
           <button type="submit" class="logout-btn">Выйти</button>
         </form>
       </div>
