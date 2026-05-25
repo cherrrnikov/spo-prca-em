@@ -52,7 +52,7 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
     cookies.set('access_token', tokens.accessToken, {
       path: '/',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.COOKIE_SECURE === 'true',
       sameSite: 'strict',
       maxAge: ACCESS_TOKEN_MAX_AGE
     });
@@ -81,7 +81,7 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
     }), {
       path: '/',
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.COOKIE_SECURE === 'true',
       sameSite: 'strict',
       maxAge: ACCESS_TOKEN_MAX_AGE
     });

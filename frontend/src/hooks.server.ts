@@ -77,7 +77,7 @@ async function refreshTokens(cookies: any, refreshToken: string): Promise<boolea
     cookies.set('access_token', tokens.accessToken, {
       path: '/',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.COOKIE_SECURE === 'true',
       sameSite: 'strict',
       maxAge: ACCESS_TOKEN_MAX_AGE
     });
@@ -108,7 +108,7 @@ async function refreshTokens(cookies: any, refreshToken: string): Promise<boolea
     cookies.set('user_data', JSON.stringify(userData), {
       path: '/',
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.COOKIE_SECURE === 'true',
       sameSite: 'strict',
       maxAge: ACCESS_TOKEN_MAX_AGE
     });
@@ -203,7 +203,7 @@ export const handle: Handle = async ({ event, resolve }) => {
       cookies.set('user_data', JSON.stringify(userData), {
         path: '/',
         httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.COOKIE_SECURE === 'true',
         sameSite: 'strict',
         maxAge: ACCESS_TOKEN_MAX_AGE
       });
