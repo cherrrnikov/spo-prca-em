@@ -123,7 +123,11 @@ async function refreshTokens(cookies: any, refreshToken: string): Promise<boolea
 // Очистка cookies
 async function clearAuthCookies(cookies: any) {
   ['access_token', 'refresh_token', 'user_data'].forEach(name => {
-    cookies.delete(name, { path: '/' });
+      cookies.delete(name, { 
+        path: '/',
+        sameSite: 'strict',
+        secure: process.env.COOKIE_SECURE === 'true'
+      });
   });
 }
 
