@@ -29,7 +29,7 @@
         } else if (data.status === 'valid') {
         }
       } else if (response.status === 401) {
-        window.location.href = '/';
+        window.location.href = '/login';
       }
     } catch (error) {
       console.error('Keepalive error:', error);
