@@ -1,5 +1,6 @@
 <script lang="ts">
   import Modal from '$lib/components/Modal.svelte';
+  import Spinner from '$lib/components/Spinner.svelte';
   import { KEEPALIVE_INTERVAL_MS } from '$lib/config/api.config';
   import { modal } from '$lib/services/modal.service';
   import { onDestroy, onMount } from 'svelte';
@@ -82,5 +83,7 @@
     }}
     onClose={modal.close}
 />
+
+<Spinner />
 
 {@render children()}

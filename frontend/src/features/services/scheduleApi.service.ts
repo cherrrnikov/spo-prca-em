@@ -1,3 +1,4 @@
+import { loading } from '$lib/services/loading.service';
 import type {
     CreateProgramRequest,
     ForecastData,
@@ -41,89 +42,107 @@ export class ScheduleApiService {
     }
 
     static async saveProgram(programData: CreateProgramRequest): Promise<{ numRp: number }> {
-        const response = await fetch(`${this.BASE_URL}/schedule/programs-proxy`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(programData)
-        });
-
-        if (!response.ok) {
-            throw new Error(`Ошибка сохранения: ${response.status}`);
+        loading.start();
+        try {
+            const response = await fetch(`${this.BASE_URL}/schedule/programs-proxy`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(programData)
+            });
+            if (!response.ok) {
+                throw new Error(`Ошибка сохранения: ${response.status}`);
+            }
+            const text = await response.text();
+            return text ? JSON.parse(text) : null;
+        } finally {
+            loading.stop();
         }
-
-        const text = await response.text();
-        return text ? JSON.parse(text) : null;
     }
 
     static async saveVp(vpData: VpCreateRequest): Promise<{vpId: number}> {
-        const response = await fetch(`${this.BASE_URL}/schedule/vp-proxy`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(vpData)
-        });
-
-        if (!response.ok) {
-            throw new Error(`Ошибка сохранения: ${response.status}`);
+        loading.start();
+        try {
+            const response = await fetch(`${this.BASE_URL}/schedule/vp-proxy`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(vpData)
+            });
+            if (!response.ok) {
+                throw new Error(`Ошибка сохранения: ${response.status}`);
+            }
+            const text = await response.text();
+            return text ? JSON.parse(text) : null;
+        } finally {
+            loading.stop();
         }
-
-        const text = await response.text();
-        return text  ? JSON.parse(text) : null;
     }
 
     static async generatePr01(numRp: number, numKa: number): Promise<string> {
-        const response = await fetch(`${this.BASE_URL}/schedule/pr01-proxy`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ numRp, numKa })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Ошибка генерации ПР01: ${response.status}`)
+        loading.start();
+        try {
+            const response = await fetch(`${this.BASE_URL}/schedule/pr01-proxy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ numRp, numKa })
+            });
+            if (!response.ok) {
+                throw new Error(`Ошибка генерации ПР01: ${response.status}`);
+            }
+            return await response.text();
+        } finally {
+            loading.stop();
         }
-
-        return await response.text();
     }
 
     static async generatePr03(numRp: number, numKa: number): Promise<string> {
-        const response = await fetch(`${this.BASE_URL}/schedule/pr03-proxy`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ numRp, numKa })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Ошибка генерации ПР03: ${response.status}`)
+        loading.start();
+        try {
+            const response = await fetch(`${this.BASE_URL}/schedule/pr03-proxy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ numRp, numKa })
+            });
+            if (!response.ok) {
+                throw new Error(`Ошибка генерации ПР03: ${response.status}`);
+            }
+            return await response.text();
+        } finally {
+            loading.stop();
         }
-
-        return await response.text();
     }
 
     static async generatePr04(numRp: number, numKa: number): Promise<string> {
-        const response = await fetch(`${this.BASE_URL}/schedule/pr04-proxy`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ numRp, numKa })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Ошибка генерации ПР04: ${response.status}`)
+        loading.start();
+        try {
+            const response = await fetch(`${this.BASE_URL}/schedule/pr04-proxy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ numRp, numKa })
+            });
+            if (!response.ok) {
+                throw new Error(`Ошибка генерации ПР04: ${response.status}`);
+            }
+            return await response.text();
+        } finally {
+            loading.stop();
         }
-
-        return await response.text();
     }
 
     static async generateVp01(numRp: number, numKa: number): Promise<string> {
-        const response = await fetch(`${this.BASE_URL}/schedule/vp01-generate-proxy`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ numRp, numKa })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Ошибка генерации ВП01: ${response.status}`);
+        loading.start();
+        try {
+            const response = await fetch(`${this.BASE_URL}/schedule/vp01-generate-proxy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ numRp, numKa })
+            });
+            if (!response.ok) {
+                throw new Error(`Ошибка генерации ВП01: ${response.status}`);
+            }
+            return await response.text();
+        } finally {
+            loading.stop();
         }
-
-        return await response.text();
     }
 
     static async loadModeDurations(): Promise<Record<string, number>> {
@@ -231,18 +250,22 @@ export class ScheduleApiService {
         vkiData: Kr01DataResponse | null;
         rotationData: Ro02DataResponse | null;
     }> {
-        const [operatorData, forecastData, vkiData, rotationData] = await Promise.allSettled([
-            this.loadOperatorData(date).catch(() => null),
-            this.loadForecastData(date).catch(() => null),
-            this.loadVkiData(date).catch(() => null),
-            this.loadRotationData(date).catch(() => null)
-        ]);
-        
-        return {
-            operatorData: operatorData.status === 'fulfilled' ? operatorData.value : null,
-            forecastData: forecastData.status === 'fulfilled' ? forecastData.value : null,
-            vkiData: vkiData.status === 'fulfilled' ? vkiData.value : null,
-            rotationData: rotationData.status === 'fulfilled' ? rotationData.value : null
-        };
+        loading.start();
+        try {
+            const [operatorData, forecastData, vkiData, rotationData] = await Promise.allSettled([
+                this.loadOperatorData(date).catch(() => null),
+                this.loadForecastData(date).catch(() => null),
+                this.loadVkiData(date).catch(() => null),
+                this.loadRotationData(date).catch(() => null)
+            ]);
+            return {
+                operatorData: operatorData.status === 'fulfilled' ? operatorData.value : null,
+                forecastData: forecastData.status === 'fulfilled' ? forecastData.value : null,
+                vkiData: vkiData.status === 'fulfilled' ? vkiData.value : null,
+                rotationData: rotationData.status === 'fulfilled' ? rotationData.value : null
+            };
+        } finally {
+            loading.stop();
+        }
     }
 }
