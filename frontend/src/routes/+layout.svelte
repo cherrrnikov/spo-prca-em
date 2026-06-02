@@ -1,5 +1,6 @@
 <script lang="ts">
   import Modal from '$lib/components/Modal.svelte';
+  import Spinner from '$lib/components/Spinner.svelte';
   import { KEEPALIVE_INTERVAL_MS } from '$lib/config/api.config';
   import { modal } from '$lib/services/modal.service';
   import { onDestroy, onMount } from 'svelte';
@@ -29,7 +30,7 @@
         } else if (data.status === 'valid') {
         }
       } else if (response.status === 401) {
-        window.location.href = '/';
+        window.location.href = '/login';
       }
     } catch (error) {
       console.error('Keepalive error:', error);
@@ -82,5 +83,7 @@
     }}
     onClose={modal.close}
 />
+
+<Spinner />
 
 {@render children()}

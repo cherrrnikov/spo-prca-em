@@ -27,8 +27,7 @@
 </script>
 
 <main>
-    <h1 class="main-header">Макет СПО ПРЦА Электро-М"
-    </h1>
+    <h1 class="main-header">Макет СПО ПРЦА Электро-М</h1>
     <div class="login-container">
         <h2>Авторизация в системе</h2>
         <form method="POST" action="?/login" use:enhance>
