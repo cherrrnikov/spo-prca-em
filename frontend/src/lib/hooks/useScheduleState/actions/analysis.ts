@@ -348,11 +348,6 @@ export function createAnalysisActions(
 
         if (operatorDataForDate) {
             
-            const hasKvd = operatorDataForDate.kvd_list?.length > 0;
-            const hasTnp = operatorDataForDate.tnp_list?.length > 0;
-            const hasTs = operatorDataForDate.ts_list?.length > 0;
-            const hasOna = operatorDataForDate.ona_list?.length > 0;
-            
             const intervalsFromId06 = ScheduleCreationService.convertToTimeIntervals(
                 operatorDataForDate,
                 currentProgram.ppiAssignments,
@@ -361,95 +356,6 @@ export function createAnalysisActions(
                 currentBortData
             );
             intervalsForDate = [...intervalsFromId06];
-            const existingIds = new Set(intervalsFromId06.map(i => i.id));
-            
-            // Добавляем типы из исходной ПРЦА, которых нет в ИД06
-            currentProgram.intervals.forEach(interval => {
-                if (interval.isAstrocorrection) return;
-                
-                let shouldCopy = false;
-                let typeName = '';
-                if (interval.mode === MODE_CODES.KVD && !hasKvd) {
-                    shouldCopy = true;
-                    typeName = 'КВД';
-                } else if (interval.mode === MODE_CODES.TNP && !hasTnp) {
-                    shouldCopy = true;
-                    typeName = 'ТНП';
-                } else if (interval.mode === MODE_CODES.TS && !hasTs) {
-                    shouldCopy = true;
-                    typeName = 'ТС';
-                } else if (interval.mode === MODE_CODES.ONA && !hasOna) {
-                    shouldCopy = true;
-                    typeName = 'ОНА';
-                } else if (interval.mode === MODE_CODES.SHOOTING && !hasTs) {
-                    shouldCopy = true;
-                    typeName = 'Съемка';
-                } else if (interval.mode === MODE_CODES.OMI && !hasTnp) {
-                    shouldCopy = true;
-                    typeName = 'ОМИ';
-                }
-                
-                if (shouldCopy) {
-                    const newInterval = {
-                        ...interval,
-                        id: `${interval.id}_${date.replace(/-/g, '')}`,
-                        date: date
-                    };
-                    
-                    if (!existingIds.has(newInterval.id)) {
-                        intervalsForDate.push(newInterval);
-                        existingIds.add(newInterval.id);
-                        
-                        const originalProgram = currentProgram.createdPrograms.find(p => 
-                            p.timeInterval.id === interval.id
-                        );
-                        
-                        if (originalProgram) {
-                            const newModeData = { ...originalProgram.modeData };
-                            
-                            // Обновляем основные поля дат
-                            newModeData.dateOn = originalProgram.modeData.dateOn.replace(
-                                originalProgram.timeInterval.date, 
-                                date
-                            );
-                            newModeData.dateOff = originalProgram.modeData.dateOff.replace(
-                                originalProgram.timeInterval.date, 
-                                date
-                            );
-                            
-                            // Обновляем даты в специализированных полях
-                            if (newModeData.onaData) {
-                                newModeData.onaData.dN = newModeData.onaData.dN.replace(
-                                    originalProgram.timeInterval.date, 
-                                    date
-                                );
-                                newModeData.onaData.dK = newModeData.onaData.dK.replace(
-                                    originalProgram.timeInterval.date, 
-                                    date
-                                );
-                            }
-                            
-                            if (newModeData.omiData) {
-                                newModeData.omiData.dateNach = newModeData.omiData.dateNach.replace(
-                                    originalProgram.timeInterval.date, 
-                                    date
-                                );
-                                newModeData.omiData.dateCon = newModeData.omiData.dateCon.replace(
-                                    originalProgram.timeInterval.date, 
-                                    date
-                                );
-                            }
-                            
-                            createdProgramsForDate.push({
-                                ...originalProgram,
-                                tempId: `${originalProgram.tempId}_${date.replace(/-/g, '')}`,
-                                modeData: newModeData,
-                                timeInterval: newInterval
-                            });
-                        }
-                    }
-                }
-            });
             
             // Создаём createdPrograms для интервалов из ИД06
             const mainId = operatorDataForDate.main?.id || 0;
