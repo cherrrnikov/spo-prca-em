@@ -131,6 +131,39 @@ export function checkAllConflicts(
         interval.zasvetkaDistance = zasvetkaCheck.minDistance;
     });
 
+    // Постобработка: ОМИ + съёмка вдвоём — не конфликт
+    withConstraints.forEach(interval => {
+        const isShootingMode = interval.mode === MODE_CODES.SHOOTING || interval.mode === MODE_CODES.TS;
+        const isOmi = interval.mode === MODE_CODES.OMI;
+
+        if (!isShootingMode && !isOmi) return;
+        if (!interval.hasConflict) return;
+
+        if (isShootingMode) {
+            const onlyOmi = interval.conflictWith!.every(m => m === MODE_CODES.OMI);
+            if (onlyOmi) {
+                interval.hasConflict = false;
+                interval.conflictOnlyWithOmi = true;
+            }
+        }
+
+        if (isOmi) {
+            const onlyShooting = interval.conflictWith!.every(
+                m => m === MODE_CODES.SHOOTING || m === MODE_CODES.TS
+            );
+            if (onlyShooting) {
+                interval.hasConflict = false;
+                interval.constraintViolations = interval.constraintViolations?.filter(
+                    v => v.withIntervalId === undefined || 
+                    !withConstraints.some(i => 
+                        (i.mode === MODE_CODES.SHOOTING || i.mode === MODE_CODES.TS) && 
+                        i.id === v.withIntervalId
+                    )
+                ) ?? [];
+            }
+        }
+    });
+
     // Финальный расчет willBeSaved
     withConstraints.forEach(interval => {
         // Проверка пустых МСУ для съёмок — работает для всех интервалов независимо от тени
@@ -163,31 +196,10 @@ export function checkAllConflicts(
             interval.willBeSaved = interval.willBeSavedInShadow || false;
         } else {
             interval.willBeSaved = true;
-            if (interval.hasConflict) {
+            if (interval.conflictOnlyWithOmi) {
                 interval.willBeSaved = false;
-                // Конфликт съёмки с ОМИ
-                const isShootingMode = interval.mode === MODE_CODES.SHOOTING || interval.mode === MODE_CODES.TS;
-                if (isShootingMode) {
-                    const conflictsOnlyWithOmi = interval.conflictWith?.length > 0 && 
-                        interval.conflictWith.every((mode: number) => mode === MODE_CODES.OMI);
-                    if (conflictsOnlyWithOmi) {
-                        interval.conflictOnlyWithOmi = true;
-                        interval.hasConflict = false;
-                        interval.willBeSaved = false;
-                    }
-                }
-
-                if (interval.mode === MODE_CODES.OMI) {
-                    const conflictsOnlyWithShooting = (interval.conflictWith?.length ?? 0) > 0 &&
-                        interval.conflictWith!.every((mode: number) => 
-                            mode === MODE_CODES.SHOOTING || mode === MODE_CODES.TS
-                        );
-                    
-                    if (conflictsOnlyWithShooting) {
-                        interval.hasConflict = false;
-                        interval.willBeSaved = true;
-                    }
-                }
+            } else if (interval.hasConflict) {
+                interval.willBeSaved = false;
             } else if (interval.zasvetkaConflict) {
                 interval.willBeSaved = false;
             } else if (interval.nearZasvetka) {

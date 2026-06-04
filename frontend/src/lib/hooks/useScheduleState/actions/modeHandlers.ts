@@ -39,7 +39,7 @@ export function createModeHandlers(
     } = creators;
 
     const {
-        checkAndUpdateAllConflictsForNewInterval,
+        // checkAndUpdateAllConflictsForNewInterval,
         updateAllConflicts,
         syncCurrentProgramWithStore
     } = validation;
@@ -94,9 +94,9 @@ export function createModeHandlers(
             intervals.update(current => [...current, ...intervalsToAdd]);
             
             // Обновляем конфликты для всех новых интервалов
-            intervalsToAdd.forEach(interval => {
-                checkAndUpdateAllConflictsForNewInterval(interval);
-            });
+            // intervalsToAdd.forEach(interval => {
+            //     checkAndUpdateAllConflictsForNewInterval(interval);
+            // });
             updateAllConflicts();
             
         } else {
@@ -132,7 +132,7 @@ export function createModeHandlers(
 
             createdPrograms.update(current => [...current, { tempId, modeData, timeInterval }]);
             intervals.update(current => [...current, timeInterval]);
-            checkAndUpdateAllConflictsForNewInterval(timeInterval);
+            // checkAndUpdateAllConflictsForNewInterval(timeInterval);
             updateAllConflicts();
         }
         
