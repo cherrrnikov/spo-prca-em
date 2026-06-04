@@ -156,6 +156,17 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
             currentVki,
             currentRotations 
         );
+
+        const omiResult = intervalsWithConflicts.find(i => i.mode === MODE_CODES.OMI);
+        if (omiResult) {
+            console.log('OMI после checkAllConflicts:', {
+                hasConflict: omiResult.hasConflict,
+                willBeSaved: omiResult.willBeSaved,
+                conflictWith: omiResult.conflictWith,
+                conflictOnlyWithOmi: omiResult.conflictOnlyWithOmi,
+                color: omiResult.color
+            });
+        }
         
         intervals.set(
             currentIntervals.map(interval => {
@@ -165,6 +176,7 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
                         ...interval,
                         hasConflict: updatedInterval.hasConflict,
                         conflictWith: updatedInterval.conflictWith,
+                        conflictOnlyWithOmi: updatedInterval.conflictOnlyWithOmi,
                         nearZasvetka: updatedInterval.nearZasvetka,
                         zasvetkaConflict: updatedInterval.zasvetkaConflict,
                         zasvetkaDistance: updatedInterval.zasvetkaDistance,
@@ -176,12 +188,21 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
                         msu1Config: updatedInterval.msu1Config ?? interval.msu1Config,
                         msu2Config: updatedInterval.msu2Config ?? interval.msu2Config,
                         emptyMsu: updatedInterval.emptyMsu ?? false,
-                        msuData: updatedInterval.msuData ?? interval.msuData,
+                        msuData: updatedInterval.msuData ?? interval.msuData
                     };
                 }
                 return interval;
             })
         );
+
+        const omiInStore = get(intervals).find(i => i.mode === MODE_CODES.OMI);
+        if (omiInStore) {
+            console.log('OMI в сторе после set:', {
+                hasConflict: omiInStore.hasConflict,
+                willBeSaved: omiInStore.willBeSaved,
+                color: omiInStore.color
+            });
+        }
 
         const currentCreatedPrograms = get(createdPrograms);
         const updatedCreatedPrograms = currentCreatedPrograms.map(program => {
@@ -193,6 +214,7 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
                         ...program.timeInterval,
                         willBeSaved: updatedInterval.willBeSaved,
                         hasConflict: updatedInterval.hasConflict,
+                        conflictOnlyWithOmi: updatedInterval.conflictOnlyWithOmi,
                         constraintViolations: updatedInterval.constraintViolations,
                         inShadow: updatedInterval.inShadow,
                         willBeSavedInShadow: updatedInterval.willBeSavedInShadow,

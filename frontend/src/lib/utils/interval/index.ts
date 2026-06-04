@@ -165,6 +165,29 @@ export function checkAllConflicts(
             interval.willBeSaved = true;
             if (interval.hasConflict) {
                 interval.willBeSaved = false;
+                // Конфликт съёмки с ОМИ
+                const isShootingMode = interval.mode === MODE_CODES.SHOOTING || interval.mode === MODE_CODES.TS;
+                if (isShootingMode) {
+                    const conflictsOnlyWithOmi = interval.conflictWith?.length > 0 && 
+                        interval.conflictWith.every((mode: number) => mode === MODE_CODES.OMI);
+                    if (conflictsOnlyWithOmi) {
+                        interval.conflictOnlyWithOmi = true;
+                        interval.hasConflict = false;
+                        interval.willBeSaved = false;
+                    }
+                }
+
+                if (interval.mode === MODE_CODES.OMI) {
+                    const conflictsOnlyWithShooting = (interval.conflictWith?.length ?? 0) > 0 &&
+                        interval.conflictWith!.every((mode: number) => 
+                            mode === MODE_CODES.SHOOTING || mode === MODE_CODES.TS
+                        );
+                    
+                    if (conflictsOnlyWithShooting) {
+                        interval.hasConflict = false;
+                        interval.willBeSaved = true;
+                    }
+                }
             } else if (interval.zasvetkaConflict) {
                 interval.willBeSaved = false;
             } else if (interval.nearZasvetka) {

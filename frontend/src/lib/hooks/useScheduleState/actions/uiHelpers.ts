@@ -1,4 +1,5 @@
 import { ONA_CONSTRAINT_IDS } from '$lib/config/schedule.config';
+import { MODE_CODES } from '$lib/constants/schedule';
 import type { TimeInterval } from '$lib/types';
 import { TooltipFormatter } from '$lib/utils/tooltipFormatter';
 import { get } from 'svelte/store';
@@ -8,12 +9,29 @@ export function createUiHelpers(stores: ReturnType<typeof createStores>) {
     const { createdPrograms } = stores;
 
     function getIntervalColor(interval: TimeInterval): string {
+        if (interval.mode === MODE_CODES.OMI) {
+            console.log('OMI interval:', {
+                id: interval.id,
+                hasConflict: interval.hasConflict,
+                conflictOnlyWithOmi: interval.conflictOnlyWithOmi,
+                willBeSaved: interval.willBeSaved,
+                conflictWith: interval.conflictWith,
+                inShadow: interval.inShadow,
+                emptyMsu: interval.emptyMsu,
+                color: interval.color
+            });
+        }
+
         if (interval.emptyMsu) {
             return '#ffffff';
         }
 
         if (interval.inShadow && interval.willBeSavedInShadow) {
             return '#ff69b4';
+        }
+
+        if (interval.conflictOnlyWithOmi) {
+            return '#ffffff';
         }
 
         if (interval.hasConflict) {
