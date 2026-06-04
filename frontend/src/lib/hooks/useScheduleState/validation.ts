@@ -1,11 +1,6 @@
-import { MODE_CODES, WORK_MODES } from '$lib/constants/schedule';
-import { ConstraintValidator } from '$lib/services/constraints/constraintValidator.service';
-import type { TimeInterval } from '$lib/types';
-import { checkTwoIntervalsOverlap } from '$lib/utils/interval/conflicts';
+import { MODE_CODES } from '$lib/constants/schedule';
 import { checkAllConflicts } from '$lib/utils/interval/index';
-import { checkZasvetkaProximity } from '$lib/utils/interval/zasvetka';
 import { get } from 'svelte/store';
-import { ScheduleCreationService } from '../../../features/services/scheduleCreation.service';
 import type { createStores } from './stores';
 
 export function createValidation(stores: ReturnType<typeof createStores>) {
@@ -22,125 +17,125 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
         createdPrograms
     } = stores;
 
-    function checkAndUpdateAllConflictsForNewInterval(newInterval: TimeInterval) {
-        const currentIntervals = get(intervals);
-        const currentOperatorData = get(operatorData);
-        const currentPpiAssignments = get(ppiAssignments);
-        const currentZasvetkaIntervals = get(zasvetkaIntervals);
-        const currentVki = get(vkiIntervals);
-        const currentRotations = get(rotationIntervals);
-        const currentAstro = currentIntervals.filter(i => i.isAstrocorrection);
+    // function checkAndUpdateAllConflictsForNewInterval(newInterval: TimeInterval) {
+    //     const currentIntervals = get(intervals);
+    //     const currentOperatorData = get(operatorData);
+    //     const currentPpiAssignments = get(ppiAssignments);
+    //     const currentZasvetkaIntervals = get(zasvetkaIntervals);
+    //     const currentVki = get(vkiIntervals);
+    //     const currentRotations = get(rotationIntervals);
+    //     const currentAstro = currentIntervals.filter(i => i.isAstrocorrection);
 
-        const nonAstroIntervals = currentIntervals.filter(i => !i.isAstrocorrection);
+    //     const nonAstroIntervals = currentIntervals.filter(i => !i.isAstrocorrection);
 
-        const allIntervals = [
-            ...nonAstroIntervals,
-            ...(currentOperatorData ? 
-                ScheduleCreationService.convertToTimeIntervals(
-                    currentOperatorData, 
-                    currentPpiAssignments, 
-                    WORK_MODES
-                ) : 
-                [])
-        ];
+    //     const allIntervals = [
+    //         ...nonAstroIntervals,
+    //         ...(currentOperatorData ? 
+    //             ScheduleCreationService.convertToTimeIntervals(
+    //                 currentOperatorData, 
+    //                 currentPpiAssignments, 
+    //                 WORK_MODES
+    //             ) : 
+    //             [])
+    //     ];
         
-        // Проверка конфликтов с другими режимами
-        let hasConflict = false;
-        const conflictWith: number[] = [];
+    //     // Проверка конфликтов с другими режимами
+    //     let hasConflict = false;
+    //     const conflictWith: number[] = [];
         
-        for (const existingInterval of allIntervals) {
-            if (existingInterval.mode === newInterval.mode) continue;
+    //     for (const existingInterval of allIntervals) {
+    //         if (existingInterval.mode === newInterval.mode) continue;
 
-            // КВД может работать одновременно со съёмкой — не конфликт
-            const isKvdWithShooting =
-                (newInterval.mode === MODE_CODES.KVD && (existingInterval.mode === MODE_CODES.SHOOTING || existingInterval.mode === MODE_CODES.TS)) ||
-                (existingInterval.mode === MODE_CODES.KVD && (newInterval.mode === MODE_CODES.SHOOTING || newInterval.mode === MODE_CODES.TS));
+    //         // КВД может работать одновременно со съёмкой — не конфликт
+    //         const isKvdWithShooting =
+    //             (newInterval.mode === MODE_CODES.KVD && (existingInterval.mode === MODE_CODES.SHOOTING || existingInterval.mode === MODE_CODES.TS)) ||
+    //             (existingInterval.mode === MODE_CODES.KVD && (newInterval.mode === MODE_CODES.SHOOTING || newInterval.mode === MODE_CODES.TS));
 
-            if (isKvdWithShooting) continue;
+    //         if (isKvdWithShooting) continue;
             
-            const overlap = checkTwoIntervalsOverlap(
-                newInterval.startTime,
-                newInterval.endTime,
-                existingInterval.startTime,
-                existingInterval.endTime
-            );
+    //         const overlap = checkTwoIntervalsOverlap(
+    //             newInterval.startTime,
+    //             newInterval.endTime,
+    //             existingInterval.startTime,
+    //             existingInterval.endTime
+    //         );
             
-            if (overlap) {
-                hasConflict = true;
-                if (!conflictWith.includes(existingInterval.mode)) {
-                    conflictWith.push(existingInterval.mode);
-                }
-            }
-        }
+    //         if (overlap) {
+    //             hasConflict = true;
+    //             if (!conflictWith.includes(existingInterval.mode)) {
+    //                 conflictWith.push(existingInterval.mode);
+    //             }
+    //         }
+    //     }
 
-        // Отдельная проверка КВД — конфликт только если нет совпадающей съёмки
-        if (newInterval.mode === MODE_CODES.KVD) {
-            const overlappingShots = allIntervals.filter(i =>
-                (i.mode === MODE_CODES.SHOOTING || i.mode === MODE_CODES.TS) &&
-                checkTwoIntervalsOverlap(newInterval.startTime, newInterval.endTime, i.startTime, i.endTime)
-            );
+    //     // Отдельная проверка КВД — конфликт только если нет совпадающей съёмки
+    //     if (newInterval.mode === MODE_CODES.KVD) {
+    //         const overlappingShots = allIntervals.filter(i =>
+    //             (i.mode === MODE_CODES.SHOOTING || i.mode === MODE_CODES.TS) &&
+    //             checkTwoIntervalsOverlap(newInterval.startTime, newInterval.endTime, i.startTime, i.endTime)
+    //         );
 
-            if (overlappingShots.length === 0) {
-                hasConflict = true;
-            } else {
-                const hasMatch = overlappingShots.some(s => {
-                    console.log('MATCH CHECK:', 
-                        'kvdMsu:', newInterval.kvdConfig?.prMsu,
-                        'shootMsu1:', s.msuData?.prMsu1,
-                        'shootMsu2:', s.msuData?.prMsu2,
-                        'kvdBssd:', newInterval.kvdConfig?.prBssd,
-                        'shootBssd:', s.msuData?.prBssd
-                    );
-                    const startOk = s.startTime === newInterval.startTime;
-                    const dlitOk  = (s.dlit ?? 0) === (newInterval.dlit ?? 0);
+    //         if (overlappingShots.length === 0) {
+    //             hasConflict = true;
+    //         } else {
+    //             const hasMatch = overlappingShots.some(s => {
+    //                 console.log('MATCH CHECK:', 
+    //                     'kvdMsu:', newInterval.kvdConfig?.prMsu,
+    //                     'shootMsu1:', s.msuData?.prMsu1,
+    //                     'shootMsu2:', s.msuData?.prMsu2,
+    //                     'kvdBssd:', newInterval.kvdConfig?.prBssd,
+    //                     'shootBssd:', s.msuData?.prBssd
+    //                 );
+    //                 const startOk = s.startTime === newInterval.startTime;
+    //                 const dlitOk  = (s.dlit ?? 0) === (newInterval.dlit ?? 0);
 
-                    const kvdMsu  = newInterval.kvdConfig?.prMsu ?? 0;  // 0=МСУ1, 1=МСУ2
-                    const kvdBssd = newInterval.kvdConfig?.prBssd ?? 0;
+    //                 const kvdMsu  = newInterval.kvdConfig?.prMsu ?? 0;  // 0=МСУ1, 1=МСУ2
+    //                 const kvdBssd = newInterval.kvdConfig?.prBssd ?? 0;
 
-                    // kvdMsu=0 значит МСУ1 - у съёмки prMsu1 должен быть 1 (задействован)
-                    // kvdMsu=1 значит МСУ2 - у съёмки prMsu2 должен быть 1
-                    const msuOk  = kvdMsu === 0 ? (s.msuData?.prMsu1 === 1) : (s.msuData?.prMsu2 === 1);
-                    const bssdOk = kvdBssd === (s.msuData?.prBssd ?? 0);
+    //                 // kvdMsu=0 значит МСУ1 - у съёмки prMsu1 должен быть 1 (задействован)
+    //                 // kvdMsu=1 значит МСУ2 - у съёмки prMsu2 должен быть 1
+    //                 const msuOk  = kvdMsu === 0 ? (s.msuData?.prMsu1 === 1) : (s.msuData?.prMsu2 === 1);
+    //                 const bssdOk = kvdBssd === (s.msuData?.prBssd ?? 0);
 
-                    return startOk && dlitOk && msuOk && bssdOk;
-                });
-                hasConflict = !hasMatch;
-            }
-        }
+    //                 return startOk && dlitOk && msuOk && bssdOk;
+    //             });
+    //             hasConflict = !hasMatch;
+    //         }
+    //     }
 
-        // Проверка ограничений
-        const constraintViolations = ConstraintValidator.validate(
-            [newInterval],
-            currentVki,
-            currentRotations,
-            currentAstro,
-            get(shadowIntervals),
-            currentZasvetkaIntervals
-        );
+    //     // Проверка ограничений
+    //     const constraintViolations = ConstraintValidator.validate(
+    //         [newInterval],
+    //         currentVki,
+    //         currentRotations,
+    //         currentAstro,
+    //         get(shadowIntervals),
+    //         currentZasvetkaIntervals
+    //     );
 
-        const hasViolations = constraintViolations.has(newInterval.id);
+    //     const hasViolations = constraintViolations.has(newInterval.id);
         
-        // Проверка засветок
-        const zasvetkaCheck = checkZasvetkaProximity(
-            newInterval.startTime,
-            newInterval.endTime,
-            currentZasvetkaIntervals
-        );
+    //     // Проверка засветок
+    //     const zasvetkaCheck = checkZasvetkaProximity(
+    //         newInterval.startTime,
+    //         newInterval.endTime,
+    //         currentZasvetkaIntervals
+    //     );
 
-        newInterval.hasConflict = hasConflict;
-        newInterval.conflictWith = conflictWith;
-        newInterval.nearZasvetka = zasvetkaCheck.nearZasvetka;
-        newInterval.zasvetkaConflict = zasvetkaCheck.zasvetkaConflict;
-        newInterval.zasvetkaDistance = zasvetkaCheck.minDistance;
-        newInterval.constraintViolations = constraintViolations.get(newInterval.id) || [];
+    //     newInterval.hasConflict = hasConflict;
+    //     newInterval.conflictWith = conflictWith;
+    //     newInterval.nearZasvetka = zasvetkaCheck.nearZasvetka;
+    //     newInterval.zasvetkaConflict = zasvetkaCheck.zasvetkaConflict;
+    //     newInterval.zasvetkaDistance = zasvetkaCheck.minDistance;
+    //     newInterval.constraintViolations = constraintViolations.get(newInterval.id) || [];
         
-        // Финальный расчет willBeSaved
-        newInterval.willBeSaved = 
-            !hasConflict && 
-            !zasvetkaCheck.zasvetkaConflict && 
-            !zasvetkaCheck.nearZasvetka &&
-            !hasViolations;
-    }
+    //     // Финальный расчет willBeSaved
+    //     newInterval.willBeSaved = 
+    //         !hasConflict && 
+    //         !zasvetkaCheck.zasvetkaConflict && 
+    //         !zasvetkaCheck.nearZasvetka &&
+    //         !hasViolations;
+    // }
 
     function updateAllConflicts() {
         const currentIntervals = get(intervals);
@@ -156,6 +151,17 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
             currentVki,
             currentRotations 
         );
+
+        const omiResult = intervalsWithConflicts.find(i => i.mode === MODE_CODES.OMI);
+        if (omiResult) {
+            console.log('OMI после checkAllConflicts:', {
+                hasConflict: omiResult.hasConflict,
+                willBeSaved: omiResult.willBeSaved,
+                conflictWith: omiResult.conflictWith,
+                conflictOnlyWithOmi: omiResult.conflictOnlyWithOmi,
+                color: omiResult.color
+            });
+        }
         
         intervals.set(
             currentIntervals.map(interval => {
@@ -165,6 +171,7 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
                         ...interval,
                         hasConflict: updatedInterval.hasConflict,
                         conflictWith: updatedInterval.conflictWith,
+                        conflictOnlyWithOmi: updatedInterval.conflictOnlyWithOmi,
                         nearZasvetka: updatedInterval.nearZasvetka,
                         zasvetkaConflict: updatedInterval.zasvetkaConflict,
                         zasvetkaDistance: updatedInterval.zasvetkaDistance,
@@ -176,12 +183,21 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
                         msu1Config: updatedInterval.msu1Config ?? interval.msu1Config,
                         msu2Config: updatedInterval.msu2Config ?? interval.msu2Config,
                         emptyMsu: updatedInterval.emptyMsu ?? false,
-                        msuData: updatedInterval.msuData ?? interval.msuData,
+                        msuData: updatedInterval.msuData ?? interval.msuData
                     };
                 }
                 return interval;
             })
         );
+
+        const omiInStore = get(intervals).find(i => i.mode === MODE_CODES.OMI);
+        if (omiInStore) {
+            console.log('OMI в сторе после set:', {
+                hasConflict: omiInStore.hasConflict,
+                willBeSaved: omiInStore.willBeSaved,
+                color: omiInStore.color
+            });
+        }
 
         const currentCreatedPrograms = get(createdPrograms);
         const updatedCreatedPrograms = currentCreatedPrograms.map(program => {
@@ -193,6 +209,7 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
                         ...program.timeInterval,
                         willBeSaved: updatedInterval.willBeSaved,
                         hasConflict: updatedInterval.hasConflict,
+                        conflictOnlyWithOmi: updatedInterval.conflictOnlyWithOmi,
                         constraintViolations: updatedInterval.constraintViolations,
                         inShadow: updatedInterval.inShadow,
                         willBeSavedInShadow: updatedInterval.willBeSavedInShadow,
@@ -243,7 +260,7 @@ export function createValidation(stores: ReturnType<typeof createStores>) {
     }
 
     return {
-        checkAndUpdateAllConflictsForNewInterval,
+        // checkAndUpdateAllConflictsForNewInterval,
         updateAllConflicts,
         syncCurrentProgramWithStore
     };

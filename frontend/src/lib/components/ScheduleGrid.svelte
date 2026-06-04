@@ -253,7 +253,7 @@
             : []
     );
 
-    const positionedIntervals = $derived(() => 
+    const positionedIntervals = $derived(
         getPositionedIntervals()
     );
 
@@ -535,7 +535,7 @@
                     height: {dragRect()!.height}px;
                 "></div>
             {/if}
-            {#each positionedIntervals() as item (item.id)}
+            {#each positionedIntervals as item (item.id)}
                 {#if item.type === 'astrocorrection'}
                     <div class="interval interval-astrocorrection {item.className}"
                         style="

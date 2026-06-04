@@ -214,7 +214,6 @@
       try {
           await updateAllConflicts();
 
-
           const redIntervals = createdPrograms.filter(p => p.timeInterval.hasConflict === true);
 
           if (redIntervals.length > 0) {

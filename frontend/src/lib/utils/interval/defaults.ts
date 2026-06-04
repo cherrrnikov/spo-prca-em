@@ -9,6 +9,7 @@ export function getDefaultIntervalFlags() {
         willBeSaved: true,
         nearZasvetka: false,
         zasvetkaConflict: false,
-        zasvetkaDistance: 0
+        zasvetkaDistance: 0,
+        conflictOnlyWithOmi: false
     }
 }

@@ -82,6 +82,7 @@ export interface TimeInterval {
     zasvetkaDistance?: number;
     isAstrocorrection?: boolean;
     constraintViolations?: ConstraintViolation[];
+    conflictOnlyWithOmi?: boolean;
 }
 
 export interface ModeCreationForm {
